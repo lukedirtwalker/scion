@@ -36,6 +36,7 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathstorage"
 	"github.com/scionproto/scion/go/lib/periodic"
+	"github.com/scionproto/scion/go/path_srv/internal/downsegsync"
 	"github.com/scionproto/scion/go/path_srv/internal/handlers"
 	"github.com/scionproto/scion/go/path_srv/internal/psconfig"
 	"github.com/scionproto/scion/go/path_srv/internal/segsyncer"
@@ -153,6 +154,18 @@ func realMain() int {
 		}
 		for _, segsync := range segSyncers {
 			defer segsync.Stop()
+		}
+	}
+	if core {
+		msger.AddHandler(infra.SegChangesIdReq, handlers.NewSegChangesIDHandler(args))
+		msger.AddHandler(infra.SegChangesReq, handlers.NewSegChangesHandler(args))
+		segSyncers, err := downsegsync.StartAll(args, msger)
+		if err != nil {
+			log.Crit("Failed to create downSegSync")
+			return 1
+		}
+		for _, segSync := range segSyncers {
+			defer segSync.Stop()
 		}
 	}
 	msger.AddHandler(infra.SegRev, handlers.NewRevocHandler(args))
