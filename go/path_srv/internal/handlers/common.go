@@ -120,7 +120,7 @@ func (h *baseHandler) fetchSegsFromDBRetry(ctx context.Context,
 }
 
 func (h *baseHandler) verifyAndStore(ctx context.Context, src net.Addr,
-	recs []*seg.Meta, revInfos []*path_mgmt.SignedRevInfo) {
+	recs []*seg.Meta, parsedRevInfos []*path_mgmt.SignedRevInfoParsed) {
 	// TODO(lukedirtwalker): collect the verified segs/revoc and return them.
 
 	// verify and store the segments
@@ -136,7 +136,7 @@ func (h *baseHandler) verifyAndStore(ctx context.Context, src net.Addr,
 			insertedSegmentIDs = append(insertedSegmentIDs, s.Segment.GetLoggingID())
 		}
 	}
-	verifiedRev := func(ctx context.Context, rev *path_mgmt.SignedRevInfo) {
+	verifiedRev := func(ctx context.Context, rev *path_mgmt.SignedRevInfoParsed) {
 		if _, err := h.revCache.Insert(ctx, rev); err != nil {
 			h.logger.Error("Unable to insert revocation into revcache", "rev", rev, "err", err)
 		}
@@ -144,11 +144,11 @@ func (h *baseHandler) verifyAndStore(ctx context.Context, src net.Addr,
 	segErr := func(s *seg.Meta, err error) {
 		h.logger.Warn("Segment verification failed", "segment", s.Segment, "err", err)
 	}
-	revErr := func(revocation *path_mgmt.SignedRevInfo, err error) {
+	revErr := func(revocation *path_mgmt.SignedRevInfoParsed, err error) {
 		h.logger.Warn("Revocation verification failed", "revocation", revocation, "err", err)
 	}
 	segverifier.Verify(ctx, h.trustStore, src, recs,
-		revInfos, verifiedSeg, verifiedRev, segErr, revErr)
+		parsedRevInfos, verifiedSeg, verifiedRev, segErr, revErr)
 	if len(insertedSegmentIDs) > 0 {
 		log.Debug("Segments inserted in DB", "count", len(insertedSegmentIDs),
 			"segments", insertedSegmentIDs)

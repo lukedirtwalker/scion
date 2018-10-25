@@ -53,17 +53,17 @@ type SegVerificationFailed func(*seg.Meta, error)
 
 // RevVerified is the callback for a successful revocation verification.
 // The function must adhere to the given context.
-type RevVerified func(context.Context, *path_mgmt.SignedRevInfo)
+type RevVerified func(context.Context, *path_mgmt.SignedRevInfoParsed)
 
 // RevVerificationFailed is the callback for a failed revocation verification.
 // The function must return immediately.
-type RevVerificationFailed func(*path_mgmt.SignedRevInfo, error)
+type RevVerificationFailed func(*path_mgmt.SignedRevInfoParsed, error)
 
 // Verify starts the verification for the given segMeta and sRevInfos.
 // The verifiedSeg and verifiedRev callbacks are called for verified segs/revs.
 // The segError/revError callbacks are called for verification errors.
 func Verify(ctx context.Context, store infra.TrustStore, server net.Addr, segMetas []*seg.Meta,
-	sRevInfos []*path_mgmt.SignedRevInfo, verifiedSeg SegVerified, verifiedRev RevVerified,
+	sRevInfos []*path_mgmt.SignedRevInfoParsed, verifiedSeg SegVerified, verifiedRev RevVerified,
 	segError SegVerificationFailed, revError RevVerificationFailed) {
 
 	unitResultsC, units := StartVerification(ctx, store, server, segMetas, sRevInfos)
@@ -94,7 +94,7 @@ Loop:
 // and spawns verify method on the units.
 // StartVerification returns a channel for the UnitResult and the expected amount of results.
 func StartVerification(ctx context.Context, store infra.TrustStore, server net.Addr,
-	segMetas []*seg.Meta, sRevInfos []*path_mgmt.SignedRevInfo) (chan UnitResult, int) {
+	segMetas []*seg.Meta, sRevInfos []*path_mgmt.SignedRevInfoParsed) (chan UnitResult, int) {
 
 	units := BuildUnits(segMetas, sRevInfos)
 	unitResultsC := make(chan UnitResult, len(units))
@@ -107,22 +107,19 @@ func StartVerification(ctx context.Context, store infra.TrustStore, server net.A
 // Unit contains multiple verification items.
 type Unit struct {
 	SegMeta   *seg.Meta
-	SRevInfos []*path_mgmt.SignedRevInfo
+	SRevInfos []*path_mgmt.SignedRevInfoParsed
 }
 
 // BuildUnits constructs one verification unit for each segment,
 // together with its associated revocations.
 func BuildUnits(segMetas []*seg.Meta,
-	sRevInfos []*path_mgmt.SignedRevInfo) []*Unit {
+	sRevInfos []*path_mgmt.SignedRevInfoParsed) []*Unit {
 
 	var units []*Unit
 	for _, segMeta := range segMetas {
 		unit := &Unit{SegMeta: segMeta}
 		for _, sRevInfo := range sRevInfos {
-			revInfo, err := sRevInfo.RevInfo()
-			if err != nil {
-				panic(err)
-			}
+			revInfo := sRevInfo.RevInfo
 			if segMeta.Segment.ContainsInterface(revInfo.IA(), common.IFIDType(revInfo.IfID)) {
 				unit.SRevInfos = append(unit.SRevInfos, sRevInfo)
 			}
@@ -208,7 +205,7 @@ func VerifySegment(ctx context.Context, store infra.TrustStore, server net.Addr,
 }
 
 func verifyRevInfo(ctx context.Context, store infra.TrustStore, server net.Addr, index int,
-	signedRevInfo *path_mgmt.SignedRevInfo, ch chan ElemResult) {
+	signedRevInfo *path_mgmt.SignedRevInfoParsed, ch chan ElemResult) {
 
 	err := VerifyRevInfo(ctx, store, server, signedRevInfo)
 	select {
@@ -219,13 +216,9 @@ func verifyRevInfo(ctx context.Context, store infra.TrustStore, server net.Addr,
 }
 
 func VerifyRevInfo(ctx context.Context, store infra.TrustStore, server net.Addr,
-	signedRevInfo *path_mgmt.SignedRevInfo) error {
+	signedRevInfo *path_mgmt.SignedRevInfoParsed) error {
 
-	revInfo, err := signedRevInfo.RevInfo()
-	if err != nil {
-		return err
-	}
-	chain, err := store.GetValidChain(ctx, revInfo.IA(), server)
+	chain, err := store.GetValidChain(ctx, signedRevInfo.RevInfo.IA(), server)
 	if err != nil {
 		return err
 	}

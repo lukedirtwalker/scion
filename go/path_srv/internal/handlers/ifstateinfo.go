@@ -56,12 +56,17 @@ func (h *ifStateInfoHandler) Handle() {
 }
 
 func (h *ifStateInfoHandler) verifyAndStore(ctx context.Context, rev *path_mgmt.SignedRevInfo) {
-	err := segverifier.VerifyRevInfo(ctx, h.trustStore, h.request.Peer, rev)
+	sRevInfoParsed, err := rev.Parse()
+	if err != nil {
+		h.logger.Warn("[ifStateHandler] Unparsable rev", "rev", rev, "err", err)
+		return
+	}
+	err = segverifier.VerifyRevInfo(ctx, h.trustStore, h.request.Peer, sRevInfoParsed)
 	if err != nil {
 		h.logger.Error("[ifStateHandler] Failed to verify revInfo", "rev", rev, "err", err)
 		return
 	}
-	_, err = h.revCache.Insert(ctx, rev)
+	_, err = h.revCache.Insert(ctx, sRevInfoParsed)
 	if err != nil {
 		h.logger.Error("[ifStateHandler] Failed to insert revInfo", "rev", rev, "err", err)
 	}

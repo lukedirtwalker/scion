@@ -45,26 +45,23 @@ func (k Key) String() string {
 type RevCache interface {
 	// Get item with key k from the cache. Returns the item or nil,
 	// and a bool indicating whether the key was found.
-	Get(ctx context.Context, k *Key) (*path_mgmt.SignedRevInfo, bool, error)
+	Get(ctx context.Context, k *Key) (*path_mgmt.SignedRevInfoParsed, bool, error)
 	// GetAll gets all revocations for the given keys.
-	GetAll(ctx context.Context, keys map[Key]struct{}) ([]*path_mgmt.SignedRevInfo, error)
+	GetAll(ctx context.Context, keys map[Key]struct{}) ([]*path_mgmt.SignedRevInfoParsed, error)
 	// Insert inserts or updates the given revocation into the cache.
 	// Returns whether an insert was performed.
-	Insert(ctx context.Context, rev *path_mgmt.SignedRevInfo) (bool, error)
+	Insert(ctx context.Context, rev *path_mgmt.SignedRevInfoParsed) (bool, error)
 }
 
 // FilterNew filters the given revocations against the revCache, only the ones which are not in the
 // cache are returned.
 // Note: Modifies revocations slice.
 func FilterNew(ctx context.Context, revCache RevCache,
-	revocations []*path_mgmt.SignedRevInfo) ([]*path_mgmt.SignedRevInfo, error) {
+	revocations []*path_mgmt.SignedRevInfoParsed) ([]*path_mgmt.SignedRevInfoParsed, error) {
 
 	filtered := revocations[:0]
 	for _, r := range revocations {
-		info, err := r.RevInfo()
-		if err != nil {
-			panic(fmt.Sprintf("Revocation should have been sanitized, err: %s", err))
-		}
+		info := r.RevInfo
 		existingRev, ok, err := revCache.Get(ctx, NewKey(info.IA(), info.IfID))
 		if err != nil {
 			return nil, err
@@ -73,10 +70,7 @@ func FilterNew(ctx context.Context, revCache RevCache,
 			filtered = append(filtered, r)
 			continue
 		}
-		existingInfo, err := existingRev.RevInfo()
-		if err != nil {
-			panic("Revocation should be sanitized in cache")
-		}
+		existingInfo := existingRev.RevInfo
 		if newerInfo(info, existingInfo) {
 			filtered = append(filtered, r)
 		}

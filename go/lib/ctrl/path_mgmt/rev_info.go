@@ -175,3 +175,45 @@ func (sr *SignedRevInfo) RevInfo() (*RevInfo, error) {
 func (sr *SignedRevInfo) String() string {
 	return fmt.Sprintf("SignedRevInfo: %s %s", sr.Blob, sr.Sign)
 }
+
+type SignedRevInfoParsed struct {
+	*SignedRevInfo
+	RevInfo *RevInfo
+}
+
+func (sr *SignedRevInfo) Parse() (*SignedRevInfoParsed, error) {
+	r, err := sr.RevInfo()
+	if err != nil {
+		return nil, err
+	}
+	return &SignedRevInfoParsed{
+		SignedRevInfo: sr,
+		RevInfo:       r,
+	}, nil
+}
+
+// ParseAll parses all revInfos and returns parsed and unparsable.
+func ParseAll(revInfos []*SignedRevInfo) ([]*SignedRevInfoParsed, []*SignedRevInfo) {
+	parsedRevInfos := make([]*SignedRevInfoParsed, 0, len(revInfos))
+	var unparsable []*SignedRevInfo
+	for i := range revInfos {
+		r, err := revInfos[i].RevInfo()
+		if err != nil {
+			unparsable = append(unparsable, revInfos[i])
+		} else {
+			parsedRevInfos = append(parsedRevInfos, &SignedRevInfoParsed{
+				SignedRevInfo: revInfos[i],
+				RevInfo:       r,
+			})
+		}
+	}
+	return parsedRevInfos, unparsable
+}
+
+func Unwrap(parsedRevInfos []*SignedRevInfoParsed) []*SignedRevInfo {
+	unparsed := make([]*SignedRevInfo, len(parsedRevInfos))
+	for i := range parsedRevInfos {
+		unparsed[i] = parsedRevInfos[i].SignedRevInfo
+	}
+	return unparsed
+}

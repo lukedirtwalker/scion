@@ -182,7 +182,7 @@ func (s *SegSyncer) createMessages(ctx context.Context,
 		msg := &path_mgmt.SegSync{
 			SegRecs: &path_mgmt.SegRecs{
 				Recs:      []*seg.Meta{seg.NewMeta(qr.Seg, proto.PathSegType_down)},
-				SRevInfos: revs,
+				SRevInfos: path_mgmt.Unwrap(revs),
 			},
 		}
 		msgs = append(msgs, &msgWithTimestamp{

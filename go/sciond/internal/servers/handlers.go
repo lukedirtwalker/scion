@@ -277,9 +277,9 @@ func (h *RevNotificationHandler) Handle(transport infra.Transport, src net.Addr,
 	defer workCancelF()
 	revNotification := pld.RevNotification
 	revReply := sciond.RevReply{}
-	revInfo, err := h.verifySRevInfo(workCtx, revNotification.SRevInfo)
+	sRevInfoParsed, err := h.verifySRevInfo(workCtx, revNotification.SRevInfo)
 	if err == nil {
-		_, err = h.RevCache.Insert(workCtx, revNotification.SRevInfo)
+		_, err = h.RevCache.Insert(workCtx, sRevInfoParsed)
 		if err != nil {
 			logger.Error("Failed to insert revocations", "err", err)
 		}
@@ -311,22 +311,22 @@ func (h *RevNotificationHandler) Handle(transport infra.Transport, src net.Addr,
 		logger.Warn("Unable to reply to client", "client", src, "err", err)
 		return
 	}
-	logger.Trace("Sent reply", "revInfo", revInfo)
+	logger.Trace("Sent reply", "revInfo", sRevInfoParsed.RevInfo)
 }
 
 // verifySRevInfo first checks if the RevInfo can be extracted from sRevInfo,
 // and immediately returns with an error if it cannot. Then, revocation
 // verification is performed and the result is returned.
 func (h *RevNotificationHandler) verifySRevInfo(ctx context.Context,
-	sRevInfo *path_mgmt.SignedRevInfo) (*path_mgmt.RevInfo, error) {
+	sRevInfo *path_mgmt.SignedRevInfo) (*path_mgmt.SignedRevInfoParsed, error) {
 
 	// Error out immediately if RevInfo is bad
-	info, err := sRevInfo.RevInfo()
+	sRevInfoParsed, err := sRevInfo.Parse()
 	if err != nil {
 		return nil, common.NewBasicError("Unable to extract RevInfo", nil)
 	}
-	err = segverifier.VerifyRevInfo(ctx, h.TrustStore, nil, sRevInfo)
-	return info, err
+	err = segverifier.VerifyRevInfo(ctx, h.TrustStore, nil, sRevInfoParsed)
+	return sRevInfoParsed, err
 }
 
 // isValid is a placeholder. It should return true if and only if revocation

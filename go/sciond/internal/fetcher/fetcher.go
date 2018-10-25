@@ -453,7 +453,7 @@ func (f *fetcherHandler) fetchAndVerify(ctx context.Context, cancelF context.Can
 			insertedSegmentIDs = append(insertedSegmentIDs, s.Segment.GetLoggingID())
 		}
 	}
-	verifiedRev := func(ctx context.Context, rev *path_mgmt.SignedRevInfo) {
+	verifiedRev := func(ctx context.Context, rev *path_mgmt.SignedRevInfoParsed) {
 		if _, err := f.revocationCache.Insert(ctx, rev); err != nil {
 			f.logger.Error("Unable to insert revocation into revcache", "rev", rev, "err", err)
 		}
@@ -461,14 +461,16 @@ func (f *fetcherHandler) fetchAndVerify(ctx context.Context, cancelF context.Can
 	segErr := func(s *seg.Meta, err error) {
 		f.logger.Warn("Segment verification failed", "segment", s.Segment, "err", err)
 	}
-	revErr := func(revocation *path_mgmt.SignedRevInfo, err error) {
+	revErr := func(revocation *path_mgmt.SignedRevInfoParsed, err error) {
 		f.logger.Warn("Revocation verification failed", "revocation", revocation, "err", err)
 	}
-	revInfos, err := revcache.FilterNew(ctx, f.revocationCache, reply.Recs.SRevInfos)
+	// TODO(lukedirtwalker): log unparsable stuff!
+	parsedRevInfos, _ := path_mgmt.ParseAll(reply.Recs.SRevInfos)
+	revInfos, err := revcache.FilterNew(ctx, f.revocationCache, parsedRevInfos)
 	if err != nil {
 		f.logger.Error("Failed to determine new revocations", "err", err)
 		// Assume all are new
-		revInfos = reply.Recs.SRevInfos
+		revInfos = parsedRevInfos
 	}
 	segverifier.Verify(ctx, f.trustStore, ps, reply.Recs.Recs, revInfos,
 		verifiedSeg, verifiedRev, segErr, revErr)

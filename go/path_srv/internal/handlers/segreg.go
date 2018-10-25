@@ -53,5 +53,7 @@ func (h *segRegHandler) Handle() {
 	logSegRecs(h.logger, "[segRegHandler]", h.request.Peer, segReg.SegRecs)
 	subCtx, cancelF := context.WithTimeout(h.request.Context(), HandlerTimeout)
 	defer cancelF()
-	h.verifyAndStore(subCtx, h.request.Peer, segReg.Recs, segReg.SRevInfos)
+	// TODO(lukedirtwalker): log unparsable stuff!
+	parsedRevInfos, _ := path_mgmt.ParseAll(segReg.SRevInfos)
+	h.verifyAndStore(subCtx, h.request.Peer, segReg.Recs, parsedRevInfos)
 }

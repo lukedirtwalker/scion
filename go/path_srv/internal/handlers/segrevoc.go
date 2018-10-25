@@ -47,23 +47,21 @@ func (h *revocHandler) Handle() {
 	}
 	logger = logger.New("signer", revocation.Sign.Src)
 
-	revInfo, err := revocation.RevInfo()
+	sRevInfoParsed, err := revocation.Parse()
 	if err != nil {
 		logger.Warn("[revocHandler] Couldn't parse revocation", "err", err)
 		return
 	}
-	logger = logger.New("revInfo", revInfo)
+	logger = logger.New("revInfo", sRevInfoParsed.RevInfo)
 	logger.Debug("[revocHandler] Received revocation")
-
 	subCtx, cancelF := context.WithTimeout(h.request.Context(), HandlerTimeout)
 	defer cancelF()
-	err = segverifier.VerifyRevInfo(subCtx, h.trustStore, h.request.Peer, revocation)
+	err = segverifier.VerifyRevInfo(subCtx, h.trustStore, h.request.Peer, sRevInfoParsed)
 	if err != nil {
 		logger.Warn("Couldn't verify revocation", "err", err)
 		return
 	}
-
-	_, err = h.revCache.Insert(subCtx, revocation)
+	_, err = h.revCache.Insert(subCtx, sRevInfoParsed)
 	if err != nil {
 		logger.Error("Failed to insert revInfo", "err", err)
 	}

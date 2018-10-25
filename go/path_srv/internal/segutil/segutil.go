@@ -34,7 +34,7 @@ func NoRevokedHopIntf(ctx context.Context, revCache revcache.RevCache,
 
 // RelevantRevInfos finds all revocations for the given segments.
 func RelevantRevInfos(ctx context.Context, revCache revcache.RevCache,
-	allSegs ...[]*seg.PathSegment) ([]*path_mgmt.SignedRevInfo, error) {
+	allSegs ...[]*seg.PathSegment) ([]*path_mgmt.SignedRevInfoParsed, error) {
 
 	revKeys := make(map[revcache.Key]struct{})
 	for _, segs := range allSegs {

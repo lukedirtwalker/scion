@@ -41,7 +41,7 @@ func New(defaultExpiration, cleanupInterval time.Duration) revcache.RevCache {
 }
 
 func (c *memRevCache) Get(_ context.Context,
-	k *revcache.Key) (*path_mgmt.SignedRevInfo, bool, error) {
+	k *revcache.Key) (*path_mgmt.SignedRevInfoParsed, bool, error) {
 
 	c.lock.RLock()
 	defer c.lock.RUnlock()
@@ -49,20 +49,20 @@ func (c *memRevCache) Get(_ context.Context,
 	return v, ok, nil
 }
 
-func (c *memRevCache) get(key string) (*path_mgmt.SignedRevInfo, bool) {
+func (c *memRevCache) get(key string) (*path_mgmt.SignedRevInfoParsed, bool) {
 	obj, ok := c.c.Get(key)
 	if !ok {
 		return nil, false
 	}
-	return obj.(*path_mgmt.SignedRevInfo), true
+	return obj.(*path_mgmt.SignedRevInfoParsed), true
 }
 
 func (c *memRevCache) GetAll(_ context.Context,
-	keys map[revcache.Key]struct{}) ([]*path_mgmt.SignedRevInfo, error) {
+	keys map[revcache.Key]struct{}) ([]*path_mgmt.SignedRevInfoParsed, error) {
 
 	c.lock.RLock()
 	defer c.lock.RUnlock()
-	revs := make([]*path_mgmt.SignedRevInfo, 0, len(keys))
+	revs := make([]*path_mgmt.SignedRevInfoParsed, 0, len(keys))
 	for k := range keys {
 		if revInfo, ok := c.get(k.String()); ok {
 			revs = append(revs, revInfo)
@@ -71,13 +71,10 @@ func (c *memRevCache) GetAll(_ context.Context,
 	return revs, nil
 }
 
-func (c *memRevCache) Insert(_ context.Context, rev *path_mgmt.SignedRevInfo) (bool, error) {
+func (c *memRevCache) Insert(_ context.Context, rev *path_mgmt.SignedRevInfoParsed) (bool, error) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
-	newInfo, err := rev.RevInfo()
-	if err != nil {
-		panic(err)
-	}
+	newInfo := rev.RevInfo
 	ttl := newInfo.Expiration().Sub(time.Now())
 	if ttl <= 0 {
 		return false, nil
@@ -89,10 +86,7 @@ func (c *memRevCache) Insert(_ context.Context, rev *path_mgmt.SignedRevInfo) (b
 		c.c.Set(key, rev, ttl)
 		return true, nil
 	}
-	existingInfo, err := val.RevInfo()
-	if err != nil {
-		panic(err)
-	}
+	existingInfo := val.RevInfo
 	if newInfo.Timestamp().After(existingInfo.Timestamp()) {
 		c.c.Set(key, rev, ttl)
 		return true, nil

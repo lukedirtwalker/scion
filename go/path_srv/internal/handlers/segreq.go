@@ -124,15 +124,17 @@ func (h *segReqHandler) fetchAndSaveSegs(ctx context.Context, msger infra.Messen
 	}
 	segs = segs.Sanitize(h.logger)
 	var recs []*seg.Meta
-	var revInfos []*path_mgmt.SignedRevInfo
+	var revInfos []*path_mgmt.SignedRevInfoParsed
 	if segs.Recs != nil {
 		logSegRecs(h.logger, "[segReqHandler]", cPSAddr, segs.Recs)
 		recs = segs.Recs.Recs
-		revInfos, err = revcache.FilterNew(ctx, h.revCache, segs.Recs.SRevInfos)
+		// TODO(lukedirtwalker): log unparsable stuff!
+		parsedRevInfos, _ := path_mgmt.ParseAll(segs.Recs.SRevInfos)
+		revInfos, err = revcache.FilterNew(ctx, h.revCache, parsedRevInfos)
 		if err != nil {
 			h.logger.Error("[segReqHandler] Failed to filter new revocations", "err", err)
 			// in case of error we just assume all of them are new and continue.
-			revInfos = segs.Recs.SRevInfos
+			revInfos = parsedRevInfos
 		}
 		h.verifyAndStore(ctx, cPSAddr, recs, revInfos)
 		// TODO(lukedirtwalker): If we didn't receive anything we should retry earlier.
@@ -154,7 +156,7 @@ func (h *segReqHandler) sendReply(ctx context.Context, msger infra.Messenger,
 	}
 	recs := &path_mgmt.SegRecs{
 		Recs:      h.collectSegs(upSegs, coreSegs, downSegs),
-		SRevInfos: revs,
+		SRevInfos: path_mgmt.Unwrap(revs),
 	}
 	reply := &path_mgmt.SegReply{
 		Req:  segReq,
