@@ -84,7 +84,7 @@ func (s *SegReply) Sanitize(logger log.Logger) *SegReply {
 		}
 	}
 	for _, revocation := range s.Recs.SRevInfos {
-		_, err := revocation.RevInfo()
+		err := revocation.Validate()
 		if err != nil {
 			if logger != nil {
 				logger.Warn("Discarding bad revocation", "revocation", revocation, "err", err)

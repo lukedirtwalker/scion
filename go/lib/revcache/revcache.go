@@ -61,10 +61,7 @@ func FilterNew(ctx context.Context, revCache RevCache,
 
 	filtered := revocations[:0]
 	for _, r := range revocations {
-		info, err := r.RevInfo()
-		if err != nil {
-			panic(fmt.Sprintf("Revocation should have been sanitized, err: %s", err))
-		}
+		info := r.MustRevInfo()
 		existingRev, ok, err := revCache.Get(ctx, NewKey(info.IA(), info.IfID))
 		if err != nil {
 			return nil, err
@@ -73,10 +70,7 @@ func FilterNew(ctx context.Context, revCache RevCache,
 			filtered = append(filtered, r)
 			continue
 		}
-		existingInfo, err := existingRev.RevInfo()
-		if err != nil {
-			panic("Revocation should be sanitized in cache")
-		}
+		existingInfo := existingRev.MustRevInfo()
 		if newerInfo(info, existingInfo) {
 			filtered = append(filtered, r)
 		}

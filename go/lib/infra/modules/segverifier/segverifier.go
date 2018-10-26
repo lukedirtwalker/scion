@@ -96,7 +96,7 @@ Loop:
 func StartVerification(ctx context.Context, store infra.TrustStore, server net.Addr,
 	segMetas []*seg.Meta, sRevInfos []*path_mgmt.SignedRevInfo) (chan UnitResult, int) {
 
-	units := BuildUnits(segMetas, sRevInfos)
+	units := buildUnits(segMetas, sRevInfos)
 	unitResultsC := make(chan UnitResult, len(units))
 	for _, unit := range units {
 		go unit.Verify(ctx, store, server, unitResultsC)
@@ -110,19 +110,16 @@ type Unit struct {
 	SRevInfos []*path_mgmt.SignedRevInfo
 }
 
-// BuildUnits constructs one verification unit for each segment,
+// buildUnits constructs one verification unit for each segment,
 // together with its associated revocations.
-func BuildUnits(segMetas []*seg.Meta,
+func buildUnits(segMetas []*seg.Meta,
 	sRevInfos []*path_mgmt.SignedRevInfo) []*Unit {
 
 	var units []*Unit
 	for _, segMeta := range segMetas {
 		unit := &Unit{SegMeta: segMeta}
 		for _, sRevInfo := range sRevInfos {
-			revInfo, err := sRevInfo.RevInfo()
-			if err != nil {
-				panic(err)
-			}
+			revInfo := sRevInfo.MustRevInfo()
 			if segMeta.Segment.ContainsInterface(revInfo.IA(), common.IFIDType(revInfo.IfID)) {
 				unit.SRevInfos = append(unit.SRevInfos, sRevInfo)
 			}
@@ -221,10 +218,7 @@ func verifyRevInfo(ctx context.Context, store infra.TrustStore, server net.Addr,
 func VerifyRevInfo(ctx context.Context, store infra.TrustStore, server net.Addr,
 	signedRevInfo *path_mgmt.SignedRevInfo) error {
 
-	revInfo, err := signedRevInfo.RevInfo()
-	if err != nil {
-		return err
-	}
+	revInfo := signedRevInfo.MustRevInfo()
 	chain, err := store.GetValidChain(ctx, revInfo.IA(), server)
 	if err != nil {
 		return err

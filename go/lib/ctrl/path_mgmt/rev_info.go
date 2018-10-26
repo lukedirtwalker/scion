@@ -172,6 +172,29 @@ func (sr *SignedRevInfo) RevInfo() (*RevInfo, error) {
 	return sr.revInfo, err
 }
 
+func (sr *SignedRevInfo) MustRevInfo() *RevInfo {
+	sr.MustBeValidated()
+	return sr.revInfo
+}
+
 func (sr *SignedRevInfo) String() string {
 	return fmt.Sprintf("SignedRevInfo: %s %s", sr.Blob, sr.Sign)
+}
+
+func (sr *SignedRevInfo) Validate() error {
+	var err error
+	if sr.revInfo == nil {
+		sr.revInfo, err = NewRevInfoFromRaw(sr.Blob)
+	}
+	return err
+}
+
+func (sr *SignedRevInfo) IsValidated() bool {
+	return sr.revInfo != nil
+}
+
+func (sr *SignedRevInfo) MustBeValidated() {
+	if sr.revInfo == nil {
+		panic("SignedRevInfo is not validated")
+	}
 }

@@ -321,12 +321,12 @@ func (h *RevNotificationHandler) verifySRevInfo(ctx context.Context,
 	sRevInfo *path_mgmt.SignedRevInfo) (*path_mgmt.RevInfo, error) {
 
 	// Error out immediately if RevInfo is bad
-	info, err := sRevInfo.RevInfo()
+	err := sRevInfo.Validate()
 	if err != nil {
 		return nil, common.NewBasicError("Unable to extract RevInfo", nil)
 	}
 	err = segverifier.VerifyRevInfo(ctx, h.TrustStore, nil, sRevInfo)
-	return info, err
+	return sRevInfo.MustRevInfo(), err
 }
 
 // isValid is a placeholder. It should return true if and only if revocation
