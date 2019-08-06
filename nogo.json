@@ -1,19 +1,20 @@
 {
   "assign": {
     "exclude_files": {
-      "gazelle/walk/walk.go": ""
+      "gazelle/walk/walk\\.go": ""
     }
   },
   "composites": {
     "exclude_files": {
-      "gazelle/language/go/resolve.go": ""
+      "gazelle/language/go/resolve\\.go": "",
+      "org_golang_x_tools": ""
     }
   },
   "nilness": {
     "exclude_files": {
-      "gazelle/cmd/gazelle/diff.go": "",
-      "/in_gopkg_yaml_v2/decode.go": "",
-      "/com_zombiezen_go_capnproto2/schemas/schemas.go": "",
+      "gazelle/cmd/gazelle/diff\\.go": "",
+      "/in_gopkg_yaml_v2/decode\\.go": "",
+      "/com_zombiezen_go_capnproto2/schemas/schemas\\.go": "",
       "/com_github_mattn_go_sqlite3": "",
       "/com_github_lucas_clemente_quic_go": "many vendored dependencies have issues",
       "/com_github_vishvananda_netlink": ""
@@ -55,7 +56,7 @@
   },
   "gocall": {
     "exclude_files": {
-      "(vendor|external)/*": "Only applies to internal files",
+      "(vendor|external)/.*": "Only applies to internal files",
       "xtest/*": "",
       "_test.go": "Doesn't apply for test files"
     }

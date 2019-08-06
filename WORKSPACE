@@ -6,7 +6,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file"
 git_repository(
     name = "io_bazel_rules_go",
     remote = "https://github.com/bazelbuild/rules_go.git",
-    tag = "0.18.6",
+    tag = "0.19.1",
 )
 
 load("@io_bazel_rules_go//go:deps.bzl", "go_download_sdk", "go_rules_dependencies", "go_register_toolchains")
@@ -25,8 +25,8 @@ go_register_toolchains(nogo = "@//:nogo")
 # Gazelle
 http_archive(
     name = "bazel_gazelle",
-    urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/0.17.0/bazel-gazelle-0.17.0.tar.gz"],
-    sha256 = "3c681998538231a2d24d0c07ed5a7658cb72bfb5fd4bf9911157c0e9ac6a2687",
+    urls = ["https://github.com/bazelbuild/bazel-gazelle/releases/download/0.18.1/bazel-gazelle-0.18.1.tar.gz"],
+    sha256 = "be9296bfd64882e3c08e3283c58fcb461fa6dd3c171764fcc4cf322f60615a9b",
 )
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies", "go_repository")
@@ -187,7 +187,7 @@ go_repository(
 
 go_repository(
     name = "com_github_golang_mock",
-    commit = "73dc87cad333b55a02058f4b3d872dbbafddc2b0",
+    commit = "dd8d2a22370e4c8a334e80ca8477f71356c8e4bb",
     importpath = "github.com/golang/mock",  # gomock
 )
 
@@ -413,12 +413,6 @@ go_repository(
     name = "org_golang_x_sys",
     commit = "314a259e304ff91bd6985da2a7149bbf91237993",
     importpath = "golang.org/x/sys",  # unix
-)
-
-go_repository(
-    name = "org_golang_x_tools",
-    commit = "5e2ae75eb72a62985e086eed33a5982a929e4fff",
-    importpath = "golang.org/x/tools",  # cover
 )
 
 go_repository(
