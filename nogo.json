@@ -17,7 +17,8 @@
       "/com_zombiezen_go_capnproto2/schemas/schemas\\.go": "",
       "/com_github_mattn_go_sqlite3": "",
       "/com_github_lucas_clemente_quic_go": "many vendored dependencies have issues",
-      "/com_github_vishvananda_netlink": ""
+      "/com_github_vishvananda_netlink": "",
+      "/tmp/rules_go_work.*.go": ""
     }
   },
   "printf": {
@@ -36,7 +37,8 @@
   "unsafeptr": {
     "exclude_files": {
       "/com_github_mattn_go_sqlite3/": "",
-      "/com_github_google_gopacket/afpacket/": ""
+      "/com_github_google_gopacket/afpacket/": "",
+      "/tmp/rules_go_work.*.go": ""
     }
   },
   "shift": {
@@ -57,6 +59,7 @@
   "gocall": {
     "exclude_files": {
       "(vendor|external)/.*": "Only applies to internal files",
+      "/tmp/rules_go_work.*.go": "",
       "xtest/*": "",
       "_test.go": "Doesn't apply for test files"
     }
