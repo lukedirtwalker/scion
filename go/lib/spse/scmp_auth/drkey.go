@@ -31,6 +31,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spse"
 )
 
@@ -94,7 +95,7 @@ func NewDRKeyExtn() *DRKeyExtn {
 
 func (s DRKeyExtn) SetDirection(dir Dir) error {
 	if dir > HostToHostReversed {
-		return common.NewBasicError("Invalid direction", nil, "dir", dir)
+		return serrors.New("Invalid direction", "dir", dir)
 	}
 	s.Direction = dir
 	return nil

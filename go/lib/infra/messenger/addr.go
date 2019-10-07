@@ -105,22 +105,22 @@ func (r AddressRewriter) RedirectToQUIC(ctx context.Context, a net.Addr) (net.Ad
 func (r AddressRewriter) buildFullAddress(ctx context.Context, a net.Addr) (*snet.Addr, error) {
 	snetAddr, ok := a.(*snet.Addr)
 	if !ok {
-		return nil, common.NewBasicError("address type not supported", nil, "addr", a)
+		return nil, serrors.New("address type not supported", "addr", a)
 	}
 	if snetAddr.Host == nil {
-		return nil, common.NewBasicError("host address not specified", nil, "addr", snetAddr)
+		return nil, serrors.New("host address not specified", "addr", snetAddr)
 	}
 	if snetAddr.Host.L3 == nil {
-		return nil, common.NewBasicError("host address missing L3 address", nil, "addr", snetAddr)
+		return nil, serrors.New("host address missing L3 address", "addr", snetAddr)
 	}
 	if snetAddr.Host.L4 == nil {
-		return nil, common.NewBasicError("host address missing L4 address", nil, "addr", snetAddr)
+		return nil, serrors.New("host address missing L4 address", "addr", snetAddr)
 	}
 	if t := snetAddr.Host.L3.Type(); !addr.HostTypeCheck(t) {
-		return nil, common.NewBasicError("host address L3 address not supported", nil, "type", t)
+		return nil, serrors.New("host address L3 address not supported", "type", t)
 	}
 	if t := snetAddr.Host.L4.Type(); t != common.L4UDP {
-		return nil, common.NewBasicError("host address L4 address not supported", nil, "type", t)
+		return nil, serrors.New("host address L4 address not supported", "type", t)
 	}
 	newAddr := snetAddr.Copy()
 

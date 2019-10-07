@@ -52,7 +52,7 @@ func ValidateExtensions(extns []common.Extension) ([]common.Extension, []common.
 		// case, the code below should be uncommented.
 		//
 		// if _, ok := seen[extn.Type()]; ok {
-		//   return nil, nil, common.NewBasicError("duplicate extension", nil, "type", extn.Type())
+		//   return nil, nil, serrors.New("duplicate extension", "type", extn.Type())
 		// }
 		switch extn.Type().Class {
 		case common.HopByHopClass:

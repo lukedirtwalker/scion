@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/hostinfo"
 	"github.com/scionproto/scion/go/lib/infra"
@@ -123,12 +122,12 @@ func (f *fetcherHandler) GetPaths(ctx context.Context, req *sciond.PathReq,
 	}
 	if !req.Src.IA().Equal(f.topology.ISD_AS) {
 		return f.buildSCIONDReply(nil, 0, sciond.ErrorBadSrcIA),
-			common.NewBasicError("Bad source AS", nil, "ia", req.Src.IA())
+			serrors.New("Bad source AS", "ia", req.Src.IA())
 	}
 	// Check destination
 	if req.Dst.IA().I == 0 {
 		return f.buildSCIONDReply(nil, 0, sciond.ErrorBadDstIA),
-			common.NewBasicError("Bad destination AS", nil, "ia", req.Dst.IA())
+			serrors.New("Bad destination AS", "ia", req.Dst.IA())
 	}
 	if req.Dst.IA().Equal(f.topology.ISD_AS) {
 		return f.buildSCIONDReply(nil, 0, sciond.ErrorOk), nil

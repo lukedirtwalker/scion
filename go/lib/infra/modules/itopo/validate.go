@@ -141,7 +141,7 @@ func (v *svcValidator) General(topo *topology.Topo) error {
 		return err
 	}
 	if _, err := topo.GetTopoAddr(v.id, v.svc); err != nil {
-		return common.NewBasicError("Topo must contain service", nil, "id", v.id, "svc", v.svc)
+		return serrors.New("Topo must contain service", "id", v.id, "svc", v.svc)
 	}
 	return nil
 }
@@ -178,7 +178,7 @@ func (v *brValidator) General(topo *topology.Topo) error {
 		return err
 	}
 	if _, ok := topo.BR[v.id]; !ok {
-		return common.NewBasicError("Topo must contain border router", nil, "id", v.id)
+		return serrors.New("Topo must contain border router", "id", v.id)
 	}
 	return nil
 }

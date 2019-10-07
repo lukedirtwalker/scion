@@ -30,6 +30,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var _ common.Extension = (*Extn)(nil)
@@ -135,7 +136,7 @@ func NewExtn(secMode SecMode) (*Extn, error) {
 		metaLen = GcmAes128MetaLength
 		authLen = GcmAes128AuthLength
 	default:
-		return nil, common.NewBasicError("Invalid SecMode code", nil, "SecMode", secMode)
+		return nil, serrors.New("Invalid SecMode code", "SecMode", secMode)
 	}
 
 	s.Metadata = make(common.RawBytes, metaLen)

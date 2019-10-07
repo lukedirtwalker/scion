@@ -118,7 +118,7 @@ func (srv *Server) listen() (net.Listener, error) {
 	case "rsock":
 		listener, err = reliable.Listen(srv.address)
 	default:
-		return nil, common.NewBasicError("unknown network", nil, "net", srv.network)
+		return nil, serrors.New("unknown network", "net", srv.network)
 	}
 	if err != nil {
 		return nil, err

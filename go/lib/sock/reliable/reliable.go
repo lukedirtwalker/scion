@@ -355,7 +355,7 @@ func createUDPAddrFromAppAddr(address *addr.AppAddr) (*net.UDPAddr, error) {
 	var port int
 	if address.L4 != nil {
 		if address.L4.Type() != common.L4UDP {
-			return nil, common.NewBasicError("bad L4 type", nil, "type", address.L4.Type())
+			return nil, serrors.New("bad L4 type", "type", address.L4.Type())
 		}
 		port = int(address.L4.Port())
 	}

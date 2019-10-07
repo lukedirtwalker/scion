@@ -214,7 +214,7 @@ func (h *Handler) issueChain(ctx context.Context, c *cert.Certificate,
 	}
 	if n == 0 {
 		tx.Rollback()
-		return nil, common.NewBasicError("Chain already in DB", nil, "chain", chain)
+		return nil, serrors.New("Chain already in DB", "chain", chain)
 	}
 	if err = tx.Commit(); err != nil {
 		return nil, serrors.WrapStr("Failed to commit transaction", err)
@@ -243,7 +243,7 @@ func (h *Handler) getIssuerCert(ctx context.Context) (*cert.Certificate, error) 
 		return nil, err
 	}
 	if issCrt == nil {
-		return nil, common.NewBasicError("Issuer certificate not found", nil, "ia", h.IA)
+		return nil, serrors.New("Issuer certificate not found", "ia", h.IA)
 	}
 	return issCrt, nil
 }

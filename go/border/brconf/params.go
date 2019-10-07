@@ -17,10 +17,10 @@ package brconf
 import (
 	"io"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/infra/modules/idiscovery"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var _ config.Config = (*Config)(nil)
@@ -129,7 +129,7 @@ func (f *FailAction) Validate() error {
 	case FailActionFatal, FailActionContinue:
 		return nil
 	default:
-		return common.NewBasicError("Unknown FailAction", nil, "input", *f)
+		return serrors.New("Unknown FailAction", "input", *f)
 	}
 }
 
@@ -140,7 +140,7 @@ func (f *FailAction) UnmarshalText(text []byte) error {
 	case FailActionContinue:
 		*f = FailActionContinue
 	default:
-		return common.NewBasicError("Unknown FailAction", nil, "input", string(text))
+		return serrors.New("Unknown FailAction", "input", string(text))
 	}
 	return nil
 }

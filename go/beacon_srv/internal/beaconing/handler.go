@@ -167,7 +167,7 @@ func (h *handler) verifyBeacon(b beacon.Beacon) error {
 func (h *handler) validateASEntry(b beacon.Beacon) error {
 	intf := h.intfs.Get(b.InIfId)
 	if intf == nil {
-		return common.NewBasicError("Received beacon on non-existent ifid", nil, "ifid", b.InIfId)
+		return serrors.New("Received beacon on non-existent ifid", "ifid", b.InIfId)
 	}
 	topoInfo := intf.TopoInfo()
 	if topoInfo.LinkType != proto.LinkType_parent && topoInfo.LinkType != proto.LinkType_core {

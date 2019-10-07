@@ -63,7 +63,7 @@ func ISDFromString(s string) (ISD, error) {
 func ISDFromFileFmt(s string, prefix bool) (ISD, error) {
 	if prefix {
 		if !strings.HasPrefix(s, ISDFmtPrefix) {
-			return 0, common.NewBasicError("prefix missing", nil, "prefix", ISDFmtPrefix, "raw", s)
+			return 0, serrors.New("prefix missing", "prefix", ISDFmtPrefix, "raw", s)
 		}
 		s = s[len(ISDFmtPrefix):]
 	}
@@ -89,7 +89,7 @@ func ASFromString(s string) (AS, error) {
 func ASFromFileFmt(s string, prefix bool) (AS, error) {
 	if prefix {
 		if !strings.HasPrefix(s, ASFmtPrefix) {
-			return 0, common.NewBasicError("prefix missing", nil, "prefix", ASFmtPrefix, "raw", s)
+			return 0, serrors.New("prefix missing", "prefix", ASFmtPrefix, "raw", s)
 		}
 		s = s[len(ASFmtPrefix):]
 	}
@@ -161,7 +161,7 @@ func (as AS) inRange() bool {
 
 func (as AS) MarshalText() ([]byte, error) {
 	if !as.inRange() {
-		return nil, common.NewBasicError("invalid AS", nil, "max", MaxAS, "actual", as)
+		return nil, serrors.New("invalid AS", "max", MaxAS, "actual", as)
 	}
 	return []byte(as.String()), nil
 }
@@ -195,7 +195,7 @@ func IAFromRaw(b common.RawBytes) IA {
 func IAFromString(s string) (IA, error) {
 	parts := strings.Split(s, "-")
 	if len(parts) != 2 {
-		return IA{}, common.NewBasicError("Invalid ISD-AS", nil, "raw", s)
+		return IA{}, serrors.New("Invalid ISD-AS", "raw", s)
 	}
 	isd, err := ISDFromString(parts[0])
 	if err != nil {
@@ -212,7 +212,7 @@ func IAFromString(s string) (IA, error) {
 func IAFromFileFmt(s string, prefixes bool) (IA, error) {
 	parts := strings.Split(s, "-")
 	if len(parts) != 2 {
-		return IA{}, common.NewBasicError("Invalid ISD-AS", nil, "raw", s)
+		return IA{}, serrors.New("Invalid ISD-AS", "raw", s)
 	}
 	isd, err := ISDFromFileFmt(parts[0], prefixes)
 	if err != nil {

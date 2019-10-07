@@ -249,7 +249,7 @@ func (n *SCIONNetwork) ListenSCIONWithBindSVC(network string, laddr, baddr *Addr
 		l4Type = common.L4UDP
 		defL4 = addr.NewL4UDPInfo(0)
 	default:
-		return nil, common.NewBasicError("Network not implemented", nil, "net", network)
+		return nil, serrors.New("Network not implemented", "net", network)
 	}
 	if laddr == nil {
 		return nil, serrors.New("Nil laddr not supported")

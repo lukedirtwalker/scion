@@ -160,7 +160,7 @@ func (rp *RtrPkt) updateL4() error {
 			return err
 		}
 	default:
-		return common.NewBasicError("Updating l4 payload not supported", nil, "type", rp.L4Type)
+		return serrors.New("Updating l4 payload not supported", "type", rp.L4Type)
 	}
 	return nil
 }

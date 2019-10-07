@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/ifid"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 	sigmgmt "github.com/scionproto/scion/go/sig/mgmt"
 )
@@ -88,5 +89,5 @@ func (u *union) get() (proto.Cerealizable, error) {
 	case proto.CtrlPld_Which_ack:
 		return u.Ack, nil
 	}
-	return nil, common.NewBasicError("Unsupported ctrl union type (get)", nil, "type", u.Which)
+	return nil, serrors.New("Unsupported ctrl union type (get)", "type", u.Which)
 }

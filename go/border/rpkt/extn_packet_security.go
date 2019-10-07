@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spse"
 )
 
@@ -144,7 +145,7 @@ func (s *rSPSExtn) Validate() (HookResult, error) {
 	case spse.GcmAes128 == s.SecMode:
 		expectedLen = spse.GcmAes128TotalLength
 	default:
-		return HookError, common.NewBasicError("SecMode not supported", nil, "mode", s.SecMode)
+		return HookError, serrors.New("SecMode not supported", "mode", s.SecMode)
 	}
 
 	if len(s.raw) != expectedLen {

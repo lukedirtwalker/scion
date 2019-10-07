@@ -140,7 +140,7 @@ func FetchTopoRaw(ctx context.Context, params FetchParams, ds *addr.AppAddr,
 	}
 	defer rep.Body.Close()
 	if rep.StatusCode != http.StatusOK {
-		return nil, nil, common.NewBasicError("Status not OK", nil, "status", rep.Status)
+		return nil, nil, serrors.New("Status not OK", "status", rep.Status)
 	}
 	raw, err := ioutil.ReadAll(rep.Body)
 	if err != nil {

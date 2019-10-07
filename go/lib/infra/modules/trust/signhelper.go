@@ -53,13 +53,13 @@ type BasicSigner struct {
 // messages.
 func NewBasicSigner(key common.RawBytes, meta infra.SignerMeta) (*BasicSigner, error) {
 	if meta.Src.IA.IsWildcard() {
-		return nil, common.NewBasicError("IA must not contain wildcard", nil, "ia", meta.Src.IA)
+		return nil, serrors.New("IA must not contain wildcard", "ia", meta.Src.IA)
 	}
 	if meta.Src.ChainVer.IsLatest() {
-		return nil, common.NewBasicError("ChainVer must be valid", nil, "ver", meta.Src.ChainVer)
+		return nil, serrors.New("ChainVer must be valid", "ver", meta.Src.ChainVer)
 	}
 	if meta.Src.TRCVer.IsLatest() {
-		return nil, common.NewBasicError("TRCVer must be valid", nil, "ver", meta.Src.TRCVer)
+		return nil, serrors.New("TRCVer must be valid", "ver", meta.Src.TRCVer)
 	}
 	signer := &BasicSigner{
 		meta:      meta,
@@ -70,7 +70,7 @@ func NewBasicSigner(key common.RawBytes, meta infra.SignerMeta) (*BasicSigner, e
 	case scrypto.Ed25519:
 		signer.signType = proto.SignType_ed25519
 	default:
-		return nil, common.NewBasicError("Unsupported signing algorithm", nil, "algo", meta.Algo)
+		return nil, serrors.New("Unsupported signing algorithm", "algo", meta.Algo)
 	}
 	return signer, nil
 }
@@ -201,7 +201,7 @@ func (v *BasicVerifier) sanityChecks(sign *proto.SignS, isPldSignature bool) err
 	}
 	if len(sign.Signature) == 0 {
 		metrics.Store.Verification(l).Inc()
-		return common.NewBasicError("SignedPld is missing signature", nil, "type", sign.Type)
+		return serrors.New("SignedPld is missing signature", "type", sign.Type)
 	}
 	now := time.Now()
 	ts := sign.Time()

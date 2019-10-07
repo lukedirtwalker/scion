@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/hostinfo"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/proto"
 )
@@ -119,7 +120,7 @@ func (p *Pld) union() (interface{}, error) {
 	case proto.SCIONDMsg_Which_serviceInfoReply:
 		return p.ServiceInfoReply, nil
 	}
-	return nil, common.NewBasicError("Unsupported SCIOND union type", nil, "type", p.Which)
+	return nil, serrors.New("Unsupported SCIOND union type", "type", p.Which)
 }
 
 type PathReq struct {
@@ -252,7 +253,7 @@ func NewPathInterface(str string) (PathInterface, error) {
 	tokens := strings.Split(str, "#")
 	if len(tokens) != 2 {
 		return PathInterface{},
-			common.NewBasicError("Failed to parse interface spec", nil, "value", str)
+			serrors.New("Failed to parse interface spec", "value", str)
 	}
 	var iface PathInterface
 	ia, err := addr.IAFromString(tokens[0])

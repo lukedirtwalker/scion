@@ -98,7 +98,7 @@ func (p *Policies) Filter(beacon Beacon) error {
 		errors = append(errors, err)
 	}
 	if len(errors) == 3 {
-		return common.NewBasicError("Filtered by all policies", nil, "errs", errors)
+		return serrors.New("Filtered by all policies", "errs", errors)
 	}
 	return nil
 }
@@ -157,7 +157,7 @@ func (p *CorePolicies) Filter(beacon Beacon) error {
 		errors = append(errors, err)
 	}
 	if len(errors) == 2 {
-		return common.NewBasicError("Filtered by all policies", nil, "errs", errors)
+		return serrors.New("Filtered by all policies", "errs", errors)
 	}
 	return nil
 }
@@ -274,12 +274,12 @@ func (f Filter) Apply(beacon Beacon) error {
 	for _, ia := range hops {
 		for _, as := range f.AsBlackList {
 			if ia.A == as {
-				return common.NewBasicError("Contains blacklisted AS", nil, "ia", ia)
+				return serrors.New("Contains blacklisted AS", "ia", ia)
 			}
 		}
 		for _, isd := range f.IsdBlackList {
 			if ia.I == isd {
-				return common.NewBasicError("Contains blacklisted ISD", nil, "isd", ia)
+				return serrors.New("Contains blacklisted ISD", "isd", ia)
 			}
 		}
 	}
@@ -306,13 +306,13 @@ func buildHops(beacon Beacon) []addr.IA {
 
 func filterLoops(hops []addr.IA, allowIsdLoop bool) error {
 	if ia := filterAsLoop(hops); !ia.IsZero() {
-		return common.NewBasicError("AS loop", nil, "ia", ia)
+		return serrors.New("AS loop", "ia", ia)
 	}
 	if allowIsdLoop {
 		return nil
 	}
 	if isd := filterIsdLoop(hops); isd != 0 {
-		return common.NewBasicError("ISD loop", nil, "isd", isd)
+		return serrors.New("ISD loop", "isd", isd)
 	}
 	return nil
 }

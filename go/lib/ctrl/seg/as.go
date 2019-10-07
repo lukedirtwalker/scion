@@ -22,6 +22,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -52,10 +53,10 @@ func (ase *ASEntry) IA() addr.IA {
 
 func (ase *ASEntry) Validate(prevIA addr.IA, nextIA addr.IA, ignoreNext bool) error {
 	if ase.IA().IsWildcard() {
-		return common.NewBasicError("ASEntry has wildcard IA", nil, "ia", ase.IA())
+		return serrors.New("ASEntry has wildcard IA", "ia", ase.IA())
 	}
 	if len(ase.HopEntries) == 0 {
-		return common.NewBasicError("ASEntry has no HopEntries", nil, "ia", ase.IA())
+		return serrors.New("ASEntry has no HopEntries", "ia", ase.IA())
 	}
 	for i := range ase.HopEntries {
 		h := ase.HopEntries[i]

@@ -18,7 +18,7 @@ package topology
 import (
 	"strings"
 
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -37,7 +37,7 @@ const (
 func LinkTypeFromString(s string) (proto.LinkType, error) {
 	linkType := proto.LinkTypeFromString(strings.ToLower(s))
 	if linkType == 0 || linkType == proto.LinkType_unset {
-		return proto.LinkType_unset, common.NewBasicError("Unknown link type", nil, "type", s)
+		return proto.LinkType_unset, serrors.New("Unknown link type", "type", s)
 	}
 	return linkType, nil
 }

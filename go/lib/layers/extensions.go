@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 func ExtensionFactory(class common.L4ProtocolType, extension *Extension) (common.Extension, error) {
@@ -39,7 +40,7 @@ func ExtensionFactory(class common.L4ProtocolType, extension *Extension) (common
 			return NewExtnUnknownFromLayer(common.End2EndClass, extension)
 		}
 	default:
-		return nil, common.NewBasicError("unknown extension class", nil, "class", class)
+		return nil, serrors.New("unknown extension class", "class", class)
 	}
 }
 

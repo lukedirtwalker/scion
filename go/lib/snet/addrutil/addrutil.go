@@ -49,7 +49,7 @@ func GetPath(svc addr.HostSVC, ps *seg.PathSegment, topoProv topology.Provider) 
 	ifId := hopF.ConsIngress
 	ifInfo, ok := topo.IFInfoMap[ifId]
 	if !ok {
-		return nil, common.NewBasicError("Unable to find first-hop BR for path", nil, "ifId", ifId)
+		return nil, serrors.New("Unable to find first-hop BR for path", "ifId", ifId)
 	}
 	return &snet.Addr{
 		IA:      ps.FirstIA(),

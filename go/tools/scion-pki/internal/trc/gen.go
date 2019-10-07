@@ -163,7 +163,7 @@ func getPubKey(privKey common.RawBytes, keyType string) (common.RawBytes, error)
 	case scrypto.Ed25519:
 		return common.RawBytes(ed25519.PrivateKey(privKey).Public().(ed25519.PublicKey)), nil
 	}
-	return nil, common.NewBasicError("Unsupported key type", nil, "type", keyType)
+	return nil, serrors.New("Unsupported key type", "type", keyType)
 }
 
 type coreAS struct {

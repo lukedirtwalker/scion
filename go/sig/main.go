@@ -27,7 +27,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/syndtr/gocapability/capability"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/fatal"
 	"github.com/scionproto/scion/go/lib/log"
@@ -185,7 +184,7 @@ func checkPerms() error {
 	}
 	log.Info("Startup capabilities", "caps", caps)
 	if !caps.Get(capability.EFFECTIVE, capability.CAP_NET_ADMIN) {
-		return common.NewBasicError("CAP_NET_ADMIN is required", nil, "caps", caps)
+		return serrors.New("CAP_NET_ADMIN is required", "caps", caps)
 	}
 	return nil
 }

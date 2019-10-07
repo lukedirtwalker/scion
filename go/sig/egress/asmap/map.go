@@ -20,8 +20,8 @@ import (
 	"sync"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/sig/config"
 )
 
@@ -107,7 +107,7 @@ func (am *ASMap) delOldIAs(cfg *config.Cfg) bool {
 // AddIA idempotently adds an entry for a remote IA.
 func (am *ASMap) AddIA(ia addr.IA) (*ASEntry, error) {
 	if ia.IsWildcard() {
-		return nil, common.NewBasicError("AddIA: Wildcard IA not allowed", nil, "ia", ia)
+		return nil, serrors.New("AddIA: Wildcard IA not allowed", "ia", ia)
 	}
 	key := ia.IAInt()
 	ae, ok := am.Load(key)
@@ -127,7 +127,7 @@ func (am *ASMap) DelIA(ia addr.IA) error {
 	key := ia.IAInt()
 	ae, ok := am.Load(key)
 	if !ok {
-		return common.NewBasicError("DelIA: No entry found", nil, "ia", ia)
+		return serrors.New("DelIA: No entry found", "ia", ia)
 	}
 	am.Delete(key)
 	return ae.Cleanup()

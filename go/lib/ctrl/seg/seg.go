@@ -415,7 +415,7 @@ func (ps *PathSegment) RawWriteTo(w io.Writer) (int64, error) {
 	}
 	for _, asEntry := range ps.ASEntries {
 		if len(asEntry.HopEntries) == 0 {
-			return total, common.NewBasicError("ASEntry has no HopEntry", nil, "asEntry", asEntry)
+			return total, serrors.New("ASEntry has no HopEntry", "asEntry", asEntry)
 		}
 		hf, err := asEntry.HopEntries[0].HopField()
 		if err != nil {

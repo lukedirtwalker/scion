@@ -66,7 +66,7 @@ func VerifyChain(ctx context.Context, subject addr.IA, chain *cert.Chain,
 
 	maxTrc, err := store.GetTRC(ctx, chain.Issuer.Issuer.I, scrypto.LatestVer, infra.TRCOpts{})
 	if err != nil {
-		return common.NewBasicError("Unable to find TRC", nil, "isd", chain.Issuer.Issuer.I)
+		return serrors.New("Unable to find TRC", "isd", chain.Issuer.Issuer.I)
 	}
 	if err := maxTrc.IsActive(maxTrc); err != nil {
 		return serrors.WrapStr("Newest TRC not active", err)

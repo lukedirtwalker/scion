@@ -11,6 +11,7 @@ go_library(
         "//go/lib/layers:go_default_library",
         "//go/lib/sciond:go_default_library",
         "//go/lib/scmp:go_default_library",
+        "//go/lib/serrors:go_default_library",
         "//go/lib/spkt:go_default_library",
         "//go/tools/scmp/cmn:go_default_library",
     ],

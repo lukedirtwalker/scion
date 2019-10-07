@@ -127,7 +127,7 @@ func openConn(network, address string, p SocketMetaHandler) (net.PacketConn, err
 	case "udp6":
 		hostIP = addr.HostIPv6(listeningAddress.IP)
 	default:
-		return nil, common.NewBasicError("unsupported network", nil, "network", network)
+		return nil, serrors.New("unsupported network", "network", network)
 	}
 
 	ov, err := overlay.NewOverlayAddr(
@@ -198,7 +198,7 @@ func (o *overlayConnWrapper) ReadFrom(p []byte) (int, net.Addr, error) {
 func (o *overlayConnWrapper) WriteTo(p []byte, a net.Addr) (int, error) {
 	udpAddr, ok := a.(*net.UDPAddr)
 	if !ok {
-		return 0, common.NewBasicError("address is not UDP", nil, "addr", a)
+		return 0, serrors.New("address is not UDP", "addr", a)
 	}
 	ov, err := overlay.NewOverlayAddr(
 		addr.HostFromIP(udpAddr.IP),

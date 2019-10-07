@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -152,7 +153,7 @@ func (rp *RtrPkt) processSCMPRecordPath() error {
 			nil, "err", err)
 	}
 	if err := rp.updateL4(); err != nil {
-		return common.NewBasicError("Failed to update L4 header", nil, "err", err)
+		return serrors.New("Failed to update L4 header", "err", err)
 	}
 	return nil
 }

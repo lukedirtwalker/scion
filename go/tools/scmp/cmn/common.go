@@ -187,12 +187,12 @@ func Validate(pkt *spkt.ScnPkt) (*scmp.Hdr, *scmp.Payload, error) {
 	scmpHdr, ok := pkt.L4.(*scmp.Hdr)
 	if !ok {
 		return nil, nil,
-			common.NewBasicError("Not an SCMP header", nil, "type", common.TypeOf(pkt.L4))
+			serrors.New("Not an SCMP header", "type", common.TypeOf(pkt.L4))
 	}
 	scmpPld, ok := pkt.Pld.(*scmp.Payload)
 	if !ok {
 		return scmpHdr, nil,
-			common.NewBasicError("Not an SCMP payload", nil, "type", common.TypeOf(pkt.Pld))
+			serrors.New("Not an SCMP payload", "type", common.TypeOf(pkt.Pld))
 	}
 	if scmpHdr.Class != scmp.C_Path || scmpHdr.Type != scmp.T_P_RevokedIF {
 		return scmpHdr, scmpPld, nil

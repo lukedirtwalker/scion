@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 )
 
@@ -147,7 +148,7 @@ func (bi *binaryIntegration) StartServer(ctx context.Context, dst snet.Addr) (Wa
 	case <-ready:
 		return r, err
 	case <-time.After(StartServerTimeout):
-		return nil, common.NewBasicError("Start server timed out", nil, "dst", dst.IA)
+		return nil, serrors.New("Start server timed out", "dst", dst.IA)
 	}
 }
 

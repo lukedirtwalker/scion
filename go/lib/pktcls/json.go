@@ -113,7 +113,7 @@ func unmarshalInterface(b []byte) (Typer, error) {
 			err := json.Unmarshal(*v, &p)
 			return &p, err
 		default:
-			return nil, common.NewBasicError("Unknown type", nil, "type", k)
+			return nil, serrors.New("Unknown type", "type", k)
 		}
 	}
 	return nil, nil
@@ -184,7 +184,7 @@ func unmarshalStringField(b []byte, name, field string) (string, error) {
 	}
 	v, ok := jc[field]
 	if !ok {
-		return "", common.NewBasicError("String field missing", nil, "name", name, "field", field)
+		return "", serrors.New("String field missing", "name", name, "field", field)
 	}
 	s, ok := v.(string)
 	if !ok {

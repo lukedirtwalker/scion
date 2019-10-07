@@ -30,6 +30,7 @@ import (
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
 	"github.com/scionproto/scion/go/lib/scrypto/trc"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/conf"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
@@ -107,7 +108,7 @@ func genCert(ia addr.IA, isIssuer bool) error {
 		}
 	}
 	if issuerCert == nil {
-		return common.NewBasicError("Issuer cert not found", nil, "issuer", a.AsCert.Issuer)
+		return serrors.New("Issuer cert not found", "issuer", a.AsCert.Issuer)
 	}
 	// Generate the AS certificate chain.
 	chain, err := genASCert(a.AsCert, ia, issuerCert)

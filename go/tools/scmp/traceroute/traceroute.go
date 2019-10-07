@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/layers"
 	"github.com/scionproto/scion/go/lib/sciond"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/spkt"
 	"github.com/scionproto/scion/go/tools/scmp/cmn"
@@ -186,11 +187,11 @@ func validate(pkt *spkt.ScnPkt, pathEntry *sciond.PathReplyEntry) (*scmp.Hdr,
 	info, ok := scmpPld.Info.(*scmp.InfoTraceRoute)
 	if !ok {
 		return nil, nil,
-			common.NewBasicError("Not an Info TraceRoute", nil, "type", common.TypeOf(scmpPld.Info))
+			serrors.New("Not an Info TraceRoute", "type", common.TypeOf(scmpPld.Info))
 	}
 	if info.Id != id {
 		return nil, nil,
-			common.NewBasicError("Wrong SCMP ID", nil, "expected", id, "actual", info.Id)
+			serrors.New("Wrong SCMP ID", "expected", id, "actual", info.Id)
 	}
 	if pathEntry == nil || info.HopOff == 0 {
 		return scmpHdr, info, nil
@@ -202,5 +203,5 @@ func validate(pkt *spkt.ScnPkt, pathEntry *sciond.PathReplyEntry) (*scmp.Hdr,
 		}
 	}
 	return nil, nil,
-		common.NewBasicError("Invalid TraceRoute Reply", nil, "IA", info.IA, "IfID", info.IfID)
+		serrors.New("Invalid TraceRoute Reply", "IA", info.IA, "IfID", info.IfID)
 }

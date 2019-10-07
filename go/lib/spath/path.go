@@ -219,7 +219,7 @@ func (path *Path) incOffsets(skip int) error {
 
 func (path *Path) GetInfoField(offset int) (*InfoField, error) {
 	if offset < 0 {
-		return nil, common.NewBasicError("Negative InfoF offset", nil, "offset", offset)
+		return nil, serrors.New("Negative InfoF offset", "offset", offset)
 	}
 	if path.IsEmpty() {
 		return nil, serrors.New("Unable to get infoField from empty path")
@@ -233,7 +233,7 @@ func (path *Path) GetInfoField(offset int) (*InfoField, error) {
 
 func (path *Path) GetHopField(offset int) (*HopField, error) {
 	if offset < 0 {
-		return nil, common.NewBasicError("Negative HopF offset", nil, "offset", offset)
+		return nil, serrors.New("Negative HopF offset", "offset", offset)
 	}
 	if path.IsEmpty() {
 		return nil, serrors.New("Unable to get hopField from empty path")

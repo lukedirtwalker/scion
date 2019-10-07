@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spkt"
 )
 
@@ -111,7 +112,7 @@ func ComputeSCMPDestination(packet *spkt.ScnPkt, header *scmp.Hdr) (Destination,
 func ComputeSCMPGeneralDestination(s *spkt.ScnPkt, header *scmp.Hdr) (Destination, error) {
 	id := getSCMPGeneralID(s)
 	if id == 0 {
-		return nil, common.NewBasicError("Invalid SCMP ID", nil, "id", id)
+		return nil, serrors.New("Invalid SCMP ID", "id", id)
 	}
 	switch {
 	case isSCMPGeneralRequest(header):
@@ -120,7 +121,7 @@ func ComputeSCMPGeneralDestination(s *spkt.ScnPkt, header *scmp.Hdr) (Destinatio
 	case isSCMPGeneralReply(header):
 		return &SCMPAppDestination{ID: id}, nil
 	default:
-		return nil, common.NewBasicError("Unsupported SCMP General type", nil, "type", header.Type)
+		return nil, serrors.New("Unsupported SCMP General type", "type", header.Type)
 	}
 }
 

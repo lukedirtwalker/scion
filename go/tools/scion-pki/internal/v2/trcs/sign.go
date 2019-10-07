@@ -94,7 +94,7 @@ func loadProtoTRC(isd addr.ISD, ver uint64) (*trc.TRC, trc.Encoded, error) {
 // sanityChecks does some small sanity checks to ensure the right TRC is signed.
 func sanityChecks(isd addr.ISD, isdCfg *conf.ISDCfg, t *trc.TRC) error {
 	if isd != t.ISD {
-		return common.NewBasicError("ISD does not match", nil, "proto", t.ISD, "cfg", isd)
+		return serrors.New("ISD does not match", "proto", t.ISD, "cfg", isd)
 	}
 	if isdCfg.Version != uint64(t.Version) {
 		return common.NewBasicError("version does not match", nil, "proto", t.Version,

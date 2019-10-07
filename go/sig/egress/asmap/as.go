@@ -22,9 +22,9 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/sig/base"
 	"github.com/scionproto/scion/go/sig/config"
 	"github.com/scionproto/scion/go/sig/egress/dispatcher"
@@ -141,7 +141,7 @@ func (ae *ASEntry) addNet(ipnet *net.IPNet) error {
 func (ae *ASEntry) delNet(ipnet *net.IPNet) error {
 	key := ipnet.String()
 	if _, ok := ae.Nets[key]; !ok {
-		return common.NewBasicError("DelNet: no network found", nil, "ia", ae.IA, "net", ipnet)
+		return serrors.New("DelNet: no network found", "ia", ae.IA, "net", ipnet)
 	}
 	if err := router.NetMap.Delete(ipnet); err != nil {
 		return err

@@ -189,7 +189,7 @@ func (t *TRC) parsePrimary(raw []string) ([]addr.AS, error) {
 			return nil, err
 		}
 		if as == 0 {
-			return nil, common.NewBasicError("invalid AS", nil, "as", as)
+			return nil, serrors.New("invalid AS", "as", as)
 		}
 		ases = append(ases, as)
 	}

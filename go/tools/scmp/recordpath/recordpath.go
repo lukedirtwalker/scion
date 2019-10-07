@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/layers"
 	"github.com/scionproto/scion/go/lib/sciond"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spkt"
 	"github.com/scionproto/scion/go/tools/scmp/cmn"
 )
@@ -112,11 +113,11 @@ func validate(pkt *spkt.ScnPkt, pathEntry *sciond.PathReplyEntry) (*scmp.Hdr,
 	info, ok := scmpPld.Info.(*scmp.InfoRecordPath)
 	if !ok {
 		return nil, nil,
-			common.NewBasicError("Not an Info RecordPath", nil, "type", common.TypeOf(scmpPld.Info))
+			serrors.New("Not an Info RecordPath", "type", common.TypeOf(scmpPld.Info))
 	}
 	if info.Id != id {
 		return nil, nil,
-			common.NewBasicError("Wrong SCMP ID", nil, "expected", id, "actual", info.Id)
+			serrors.New("Wrong SCMP ID", "expected", id, "actual", info.Id)
 	}
 	if pathEntry == nil {
 		return scmpHdr, info, nil

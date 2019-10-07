@@ -134,7 +134,7 @@ func (s *Self) getIssuerCert(ctx context.Context) (*cert.Certificate, error) {
 		return nil, err
 	}
 	if issCrt == nil {
-		return nil, common.NewBasicError("Issuer certificate not found", nil, "ia", s.IA)
+		return nil, serrors.New("Issuer certificate not found", "ia", s.IA)
 	}
 	return issCrt, nil
 }
@@ -183,7 +183,7 @@ func (s *Self) setIssuerCert(ctx context.Context, crt *cert.Certificate) error {
 		return err
 	}
 	if affected == 0 {
-		return common.NewBasicError("Issuer certificate already exists", nil, "cert", crt)
+		return serrors.New("Issuer certificate already exists", "cert", crt)
 	}
 	return nil
 }

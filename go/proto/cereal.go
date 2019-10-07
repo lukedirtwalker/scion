@@ -132,7 +132,7 @@ func readRootFromReader(r io.Reader) (capnp.Struct, error) {
 func SafeExtract(val interface{}, typeID uint64, s capnp.Struct) (err error) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			err = common.NewBasicError("pogs panic", nil, "panic", rec)
+			err = serrors.New("pogs panic", "panic", rec)
 		}
 	}()
 	return pogsExtractF(val, typeID, s)
@@ -146,7 +146,7 @@ func SafeDecode(decoder *capnp.Decoder) (msg *capnp.Message, err error) {
 	// FIXME(scrye): Add unit tests for this function.
 	defer func() {
 		if rec := recover(); rec != nil {
-			msg, err = nil, common.NewBasicError("decode panic", nil, "panic", rec)
+			msg, err = nil, serrors.New("decode panic", "panic", rec)
 		}
 	}()
 	return decoder.Decode()

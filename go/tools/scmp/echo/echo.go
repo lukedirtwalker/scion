@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/hpkt"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spkt"
 	"github.com/scionproto/scion/go/tools/scmp/cmn"
 )
@@ -173,11 +174,11 @@ func validate(pkt *spkt.ScnPkt) (*scmp.Hdr, *scmp.InfoEcho, error) {
 	info, ok := scmpPld.Info.(*scmp.InfoEcho)
 	if !ok {
 		return nil, nil,
-			common.NewBasicError("Not an Info Echo", nil, "type", common.TypeOf(scmpPld.Info))
+			serrors.New("Not an Info Echo", "type", common.TypeOf(scmpPld.Info))
 	}
 	if info.Id != id {
 		return nil, nil,
-			common.NewBasicError("Wrong SCMP ID", nil, "expected", id, "actual", info.Id)
+			serrors.New("Wrong SCMP ID", "expected", id, "actual", info.Id)
 	}
 	return scmpHdr, info, nil
 }

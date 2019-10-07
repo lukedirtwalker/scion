@@ -18,7 +18,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/svc/internal/proto"
 )
@@ -96,7 +96,7 @@ func (r *Reply) fromProtoFormat(protoReply *proto.SVCResolutionReply) error {
 	}
 	for _, transport := range protoReply.Transports {
 		if _, ok := r.Transports[Transport(transport.Key)]; ok {
-			return common.NewBasicError("duplicate key not allowed", nil, "key", transport.Key)
+			return serrors.New("duplicate key not allowed", "key", transport.Key)
 		}
 		r.Transports[Transport(transport.Key)] = transport.Value
 	}

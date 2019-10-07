@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/infra/modules/db"
 	"github.com/scionproto/scion/go/lib/log"
@@ -105,7 +104,7 @@ func (cfg *PathDBConf) validateBackend() error {
 	case BackendNone:
 		return serrors.New("No backend set")
 	}
-	return common.NewBasicError("Unsupported backend", nil, "backend", cfg.Backend())
+	return serrors.New("Unsupported backend", "backend", cfg.Backend())
 }
 
 func (cfg *PathDBConf) validateConnection() error {
@@ -177,7 +176,7 @@ func (cfg *RevCacheConf) validateBackend() error {
 	case BackendNone:
 		return serrors.New("No backend set")
 	}
-	return common.NewBasicError("Unsupported backend", nil, "backend", cfg.Backend())
+	return serrors.New("Unsupported backend", "backend", cfg.Backend())
 }
 
 func (cfg *RevCacheConf) validateConnection() error {
@@ -234,7 +233,7 @@ func newPathDB(conf PathDBConf) (pathdb.PathDB, error) {
 	case BackendNone:
 		return nil, nil
 	default:
-		return nil, common.NewBasicError("Unsupported backend", nil, "backend", conf.Backend())
+		return nil, serrors.New("Unsupported backend", "backend", conf.Backend())
 	}
 
 	if err != nil {
@@ -252,6 +251,6 @@ func newRevCache(conf RevCacheConf) (revcache.RevCache, error) {
 	case BackendNone:
 		return nil, nil
 	default:
-		return nil, common.NewBasicError("Unsupported backend", nil, "backend", conf.Backend())
+		return nil, serrors.New("Unsupported backend", "backend", conf.Backend())
 	}
 }

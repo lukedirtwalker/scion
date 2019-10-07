@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/l4"
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/pathmgr"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet/internal/ctxmonitor"
 	"github.com/scionproto/scion/go/lib/snet/internal/pathsource"
 )
@@ -77,7 +78,7 @@ func (c *scionConnWriter) WriteToSCION(b []byte, raddr *Addr) (int, error) {
 func (c *scionConnWriter) WriteTo(b []byte, raddr net.Addr) (int, error) {
 	sraddr, ok := raddr.(*Addr)
 	if !ok {
-		return 0, common.NewBasicError("Unable to write to non-SCION address", nil, "addr", raddr)
+		return 0, serrors.New("Unable to write to non-SCION address", "addr", raddr)
 	}
 	return c.WriteToSCION(b, sraddr)
 }

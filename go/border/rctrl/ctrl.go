@@ -102,12 +102,12 @@ func processCtrlFromRaw(b common.RawBytes) error {
 	scPld, err := ctrl.NewSignedPldFromRaw(b)
 	if err != nil {
 		metrics.Control.ProcessErrors(cl).Inc()
-		return common.NewBasicError("Parsing signed ctrl pld", nil, "err", err)
+		return serrors.New("Parsing signed ctrl pld", "err", err)
 	}
 	cPld, err := scPld.UnsafePld()
 	if err != nil {
 		metrics.Control.ProcessErrors(cl).Inc()
-		return common.NewBasicError("Getting ctrl pld", nil, "err", err)
+		return serrors.New("Getting ctrl pld", "err", err)
 	}
 	// Determine the type of SCION control payload.
 	u, err := cPld.Union()
@@ -121,7 +121,7 @@ func processCtrlFromRaw(b common.RawBytes) error {
 	default:
 		cl.Result = metrics.ErrInvalidReq
 		metrics.Control.ProcessErrors(cl).Inc()
-		err = common.NewBasicError("Unsupported control payload", nil, "type", common.TypeOf(pld))
+		err = serrors.New("Unsupported control payload", "type", common.TypeOf(pld))
 	}
 	return err
 }
@@ -140,7 +140,7 @@ func processPathMgmtSelf(p *path_mgmt.Pld) error {
 	default:
 		cl.Result = metrics.ErrInvalidReq
 		metrics.Control.ProcessErrors(cl).Inc()
-		err = common.NewBasicError("Unsupported PathMgmt payload", nil, "type", common.TypeOf(pld))
+		err = serrors.New("Unsupported PathMgmt payload", "type", common.TypeOf(pld))
 	}
 	return err
 }

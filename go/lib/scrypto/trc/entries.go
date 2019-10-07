@@ -22,6 +22,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // CoreAS is the core AS entry.
@@ -135,7 +136,7 @@ func (a *Addr) String() string {
 func (a *Addr) ParseString(addr_ string) error {
 	l := strings.Split(addr_, ",")
 	if len(l) != 2 {
-		return common.NewBasicError("Invalid address", nil, "raw", addr_, "err", "wrong format")
+		return serrors.New("Invalid address", "raw", addr_, "err", "wrong format")
 	}
 	ia, err := addr.IAFromString(l[0])
 	if err != nil {
@@ -143,7 +144,7 @@ func (a *Addr) ParseString(addr_ string) error {
 	}
 	ip := net.ParseIP(l[1])
 	if ip == nil {
-		return common.NewBasicError("Invalid address", nil, "raw", addr_, "err", "Invalid IP")
+		return serrors.New("Invalid address", "raw", addr_, "err", "Invalid IP")
 	}
 	a.IA = ia
 	a.IP = ip

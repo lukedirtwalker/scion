@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/overlay"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spath"
 )
 
@@ -140,7 +141,7 @@ func AddrFromString(s string) (*Addr, error) {
 	} else {
 		l3 = addr.HostFromIPStr(parts["host"])
 		if l3 == nil {
-			return nil, common.NewBasicError("Invalid IP address string", nil, "ip", parts["host"])
+			return nil, serrors.New("Invalid IP address string", "ip", parts["host"])
 		}
 	}
 	var l4 addr.L4Info
@@ -160,7 +161,7 @@ func parseAddr(s string) (map[string]string, error) {
 	result := make(map[string]string)
 	match := addrRegexp.FindStringSubmatch(s)
 	if len(match) == 0 {
-		return nil, common.NewBasicError("Invalid address: regex match failed", nil, "addr", s)
+		return nil, serrors.New("Invalid address: regex match failed", "addr", s)
 	}
 	for i, name := range addrRegexp.SubexpNames() {
 		if i == 0 {

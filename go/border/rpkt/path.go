@@ -452,7 +452,7 @@ func (rp *RtrPkt) checkSetCurrIF(ifid *common.IFIDType) (*common.IFIDType, error
 		return nil, serrors.New("No interface found")
 	}
 	if _, ok := rp.Ctx.Conf.BR.IFs[*ifid]; !ok {
-		return nil, common.NewBasicError("Unknown interface", nil, "ifid", *ifid)
+		return nil, serrors.New("Unknown interface", "ifid", *ifid)
 	}
 	rp.ifCurr = ifid
 	return rp.ifCurr, nil

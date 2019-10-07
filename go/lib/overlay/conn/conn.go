@@ -102,7 +102,7 @@ func New(listen, remote *overlay.OverlayAddr, cfg *Config) (Conn, error) {
 	case overlay.UDPIPv4:
 		return newConnUDPIPv4(listen, remote, cfg)
 	}
-	return nil, common.NewBasicError("Unsupported overlay type", nil, "overlay", a.Type())
+	return nil, serrors.New("Unsupported overlay type", "overlay", a.Type())
 }
 
 type connUDPIPv4 struct {
@@ -231,7 +231,7 @@ func (cc *connUDPBase) initConnUDP(network string, listen, remote *overlay.Overl
 	}
 	laddr = listen.ToUDPAddr()
 	if laddr == nil {
-		return common.NewBasicError("Invalid listen address", nil, "addr", listen)
+		return serrors.New("Invalid listen address", "addr", listen)
 	}
 	if remote == nil {
 		if c, err = net.ListenUDP(network, laddr); err != nil {
@@ -241,7 +241,7 @@ func (cc *connUDPBase) initConnUDP(network string, listen, remote *overlay.Overl
 	} else {
 		raddr = remote.ToUDPAddr()
 		if raddr == nil {
-			return common.NewBasicError("Invalid remote address", nil, "addr", remote)
+			return serrors.New("Invalid remote address", "addr", remote)
 		}
 		if c, err = net.DialUDP(network, laddr, raddr); err != nil {
 			return common.NewBasicError("Error setting up connection", err,

@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/infra/modules/db"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust/trustdb"
@@ -101,7 +100,7 @@ func (cfg *TrustDBConf) validateBackend() error {
 	case BackendNone:
 		return serrors.New("No backend set")
 	}
-	return common.NewBasicError("Unsupported backend", nil, "backend", cfg.Backend())
+	return serrors.New("Unsupported backend", "backend", cfg.Backend())
 }
 
 // New creates a TrustDB from the config.
@@ -114,7 +113,7 @@ func (cfg *TrustDBConf) New() (trustdb.TrustDB, error) {
 	case BackendSqlite:
 		tdb, err = trustdbsqlite.New(cfg.Connection())
 	default:
-		return nil, common.NewBasicError("Unsupported backend", nil, "backend", cfg.Backend())
+		return nil, serrors.New("Unsupported backend", "backend", cfg.Backend())
 	}
 
 	if err != nil {

@@ -362,7 +362,7 @@ func validateCtx(ctx, oldCtx *rctx.Ctx, sockConf brconf.SockConf) error {
 	sockType := sockConf.Loc()
 	// Validate socket type is registered.
 	if _, ok := registeredLocSockOps[sockType]; !ok {
-		return common.NewBasicError("No LocSockOps found", nil, "sockType", sockType)
+		return serrors.New("No LocSockOps found", "sockType", sockType)
 	}
 	// Validate local sock of same type.
 	if oldCtx.LocSockIn.Type != sockType {

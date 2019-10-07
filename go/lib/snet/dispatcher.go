@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/pathmgr"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 )
 
@@ -98,7 +99,7 @@ type scmpHandler struct {
 func (h *scmpHandler) Handle(pkt *SCIONPacket) error {
 	hdr, ok := pkt.L4Header.(*scmp.Hdr)
 	if !ok {
-		return common.NewBasicError("scmp handler invoked with non-scmp packet", nil, "pkt", pkt)
+		return serrors.New("scmp handler invoked with non-scmp packet", "pkt", pkt)
 	}
 
 	// Only handle revocations for now

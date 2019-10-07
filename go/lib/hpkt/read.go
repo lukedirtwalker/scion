@@ -33,7 +33,7 @@ func ParseScnPkt(s *spkt.ScnPkt, b common.RawBytes) (err error) {
 	pCtx := newParseCtx(s, b)
 	defer func() {
 		if rec := recover(); rec != nil {
-			err = common.NewBasicError("decode panic", nil, "panic", rec)
+			err = serrors.New("decode panic", "panic", rec)
 		}
 	}()
 

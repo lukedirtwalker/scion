@@ -35,7 +35,6 @@ import (
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/fatal"
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
@@ -112,7 +111,7 @@ func (cfg *General) checkDir() error {
 			return err
 		}
 		if !info.IsDir() {
-			return common.NewBasicError("Not a directory", nil, "dir", cfg.ConfigDir)
+			return serrors.New("Not a directory", "dir", cfg.ConfigDir)
 		}
 	}
 	return nil

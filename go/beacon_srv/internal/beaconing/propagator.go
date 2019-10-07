@@ -238,7 +238,7 @@ func (p *beaconPropagator) propagate(ctx context.Context) error {
 		return nil
 	}
 	if p.success.c <= 0 {
-		return common.NewBasicError("None propagated", nil, "expected", expected)
+		return serrors.New("None propagated", "expected", expected)
 	}
 	p.summary.AddSrc(p.beacon.Segment.FirstIA())
 	p.summary.Inc()

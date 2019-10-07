@@ -123,7 +123,7 @@ func (c *scionConnReader) read(b []byte) (int, *Addr, error) {
 		remote.Host = &addr.AppAddr{L3: pkt.Source.Host.Copy(), L4: l4i}
 		return n, remote, err
 	}
-	return 0, nil, common.NewBasicError("Unknown network", nil, "net", c.base.net)
+	return 0, nil, serrors.New("Unknown network", "net", c.base.net)
 }
 
 func (c *scionConnReader) SetReadDeadline(t time.Time) error {
