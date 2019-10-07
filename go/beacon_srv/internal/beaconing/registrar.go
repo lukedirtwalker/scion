@@ -30,6 +30,7 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/messenger"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/periodic"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/snet/addrutil"
 	"github.com/scionproto/scion/go/lib/topology"
@@ -214,7 +215,7 @@ func (r *segmentRegistrar) setSegToRegister() error {
 	r.addr, err = r.chooseServer(r.beacon.Segment)
 	if err != nil {
 		r.metrics.IncInternalErr(r.segType)
-		return common.NewBasicError("Unable to choose server", err)
+		return serrors.WrapStr("Unable to choose server", err)
 	}
 	return nil
 }

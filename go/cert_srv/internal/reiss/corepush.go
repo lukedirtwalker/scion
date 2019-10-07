@@ -28,6 +28,7 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/periodic"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 )
 
@@ -92,7 +93,7 @@ func (p *CorePusher) Run(ctx context.Context) {
 func (p *CorePusher) coreASes(ctx context.Context) (*iaMap, error) {
 	trc, err := p.TrustDB.GetTRCMaxVersion(ctx, p.LocalIA.I)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to get TRC for local ISD", err)
+		return nil, serrors.WrapStr("Unable to get TRC for local ISD", err)
 	}
 	cores := make(map[addr.IA]struct{})
 	for _, ia := range trc.CoreASes.ASList() {
@@ -154,7 +155,7 @@ func (p *CorePusher) hasChain(ctx context.Context, coreAS addr.IA,
 	coreAddr := &snet.Addr{IA: coreAS, Host: addr.NewSVCUDPAppAddr(addr.SvcCS)}
 	reply, err := p.Msger.GetCertChain(ctx, req, coreAddr, messenger.NextId())
 	if err != nil {
-		return false, common.NewBasicError("Error during fetch", err)
+		return false, serrors.WrapStr("Error during fetch", err)
 	}
 	chain, err := reply.Chain()
 	return chain != nil, err
@@ -163,7 +164,7 @@ func (p *CorePusher) hasChain(ctx context.Context, coreAS addr.IA,
 func (p *CorePusher) sendChain(ctx context.Context, coreAS addr.IA, chain *cert.Chain) error {
 	rawChain, err := chain.Compress()
 	if err != nil {
-		return common.NewBasicError("Failed to compress chain", err)
+		return serrors.WrapStr("Failed to compress chain", err)
 	}
 	msg := &cert_mgmt.Chain{
 		RawChain: rawChain,

@@ -7,13 +7,14 @@ package mock_trustdb
 import (
 	context "context"
 	sql "database/sql"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	addr "github.com/scionproto/scion/go/lib/addr"
 	trustdb "github.com/scionproto/scion/go/lib/infra/modules/trust/trustdb"
 	scrypto "github.com/scionproto/scion/go/lib/scrypto"
 	cert "github.com/scionproto/scion/go/lib/scrypto/cert"
 	trc "github.com/scionproto/scion/go/lib/scrypto/trc"
-	reflect "reflect"
 )
 
 // MockTrustDB is a mock of TrustDB interface

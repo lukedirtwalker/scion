@@ -312,7 +312,7 @@ func NewFetcher(handler TopoHandler, params discovery.FetchParams,
 		client,
 	)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to initialize fetcher", err)
+		return nil, serrors.WrapStr("Unable to initialize fetcher", err)
 	}
 	return t, nil
 }

@@ -30,6 +30,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -205,7 +206,7 @@ func TRCFromDir(dir string, isd addr.ISD, f func(err error)) (*TRC, error) {
 	for _, file := range files {
 		trcObj, err := TRCFromFile(file, false)
 		if err != nil {
-			f(common.NewBasicError("Unable to read TRC file", err))
+			f(serrors.WrapStr("Unable to read TRC file", err))
 			continue
 		}
 		fileISD, version := trcObj.IsdVer()
@@ -262,11 +263,11 @@ func (t *TRC) IsActive(maxTRC *TRC) error {
 func (t *TRC) Sign(name string, signKey common.RawBytes, signAlgo string) error {
 	sigInput, err := t.sigPack()
 	if err != nil {
-		return common.NewBasicError("Unable to pack TRC for signing", err)
+		return serrors.WrapStr("Unable to pack TRC for signing", err)
 	}
 	sig, err := scrypto.Sign(sigInput, signKey, signAlgo)
 	if err != nil {
-		return common.NewBasicError("Unable to create signature", err)
+		return serrors.WrapStr("Unable to create signature", err)
 	}
 	t.Signatures[name] = sig
 	return nil
@@ -393,11 +394,11 @@ func (t *TRC) JSON(indent bool) ([]byte, error) {
 func (t *TRC) JSONEquals(other *TRC) (bool, error) {
 	tj, err := t.JSON(false)
 	if err != nil {
-		return false, common.NewBasicError("Unable to build JSON", err)
+		return false, serrors.WrapStr("Unable to build JSON", err)
 	}
 	oj, err := other.JSON(false)
 	if err != nil {
-		return false, common.NewBasicError("Unable to build JSON", err)
+		return false, serrors.WrapStr("Unable to build JSON", err)
 	}
 	return bytes.Compare(tj, oj) == 0, nil
 }

@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -52,7 +53,7 @@ func ISDFromString(s string) (ISD, error) {
 	isd, err := strconv.ParseUint(s, 10, ISDBits)
 	if err != nil {
 		// err.Error() will contain the original value
-		return 0, common.NewBasicError("Unable to parse ISD", err)
+		return 0, serrors.WrapStr("Unable to parse ISD", err)
 	}
 	return ISD(isd), nil
 }
@@ -101,7 +102,7 @@ func asParse(s string, sep string) (AS, error) {
 		as, err := strconv.ParseUint(s, 10, BGPASBits)
 		if err != nil {
 			// err.Error() will contain the original value
-			return 0, common.NewBasicError("Unable to parse AS", err)
+			return 0, serrors.WrapStr("Unable to parse AS", err)
 		}
 		return AS(as), nil
 	}

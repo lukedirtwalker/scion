@@ -267,7 +267,7 @@ func (conn *Conn) ReadFrom(buf []byte) (int, net.Addr, error) {
 			addr.NewL4UDPInfo(uint16(p.Address.Port)),
 		)
 		if err != nil {
-			return 0, nil, common.NewBasicError("overlay error", err)
+			return 0, nil, serrors.WrapStr("overlay error", err)
 		}
 	}
 	if len(buf) < len(p.Payload) {

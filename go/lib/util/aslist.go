@@ -21,6 +21,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 type asData struct {
@@ -44,7 +45,7 @@ func LoadASList(fileName string) (*ASList, error) {
 	var locations asData
 	err = yaml.Unmarshal(buffer, &locations)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse YAML data", err)
+		return nil, serrors.WrapStr("Unable to parse YAML data", err)
 	}
 	asList.Core, err = parse(locations.Core)
 	if err != nil {

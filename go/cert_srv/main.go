@@ -36,6 +36,7 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/trust/trustdb"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/periodic"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var (
@@ -158,7 +159,7 @@ func startDiscovery() {
 	discRunners, err = idiscovery.StartRunners(cfg.Discovery, discovery.Full,
 		idiscovery.TopoHandlers{}, nil)
 	if err != nil {
-		fatal.Fatal(common.NewBasicError("Unable to start dynamic topology fetcher", err))
+		fatal.Fatal(serrors.WrapStr("Unable to start dynamic topology fetcher", err))
 	}
 }
 

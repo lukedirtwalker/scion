@@ -85,7 +85,7 @@ func (r AddressRewriter) RedirectToQUIC(ctx context.Context, a net.Addr) (net.Ad
 	}
 	path, err := fullAddress.GetPath()
 	if err != nil {
-		return nil, false, common.NewBasicError("bad path", err)
+		return nil, false, serrors.WrapStr("bad path", err)
 	}
 	var quicRedirect bool
 	var p snet.Path
@@ -132,7 +132,7 @@ func (r AddressRewriter) buildFullAddress(ctx context.Context, a net.Addr) (*sne
 		if svc, ok := newAddr.Host.L3.(addr.HostSVC); ok && r.Router.LocalIA() == newAddr.IA {
 			ov, err := r.SVCRouter.GetOverlay(svc)
 			if err != nil {
-				return nil, common.NewBasicError("Unable to resolve overlay", err)
+				return nil, serrors.WrapStr("Unable to resolve overlay", err)
 			}
 			newAddr.NextHop = ov
 			return newAddr, nil
@@ -223,7 +223,7 @@ func parseReply(reply *svc.Reply) (*addr.AppAddr, error) {
 	}
 	udpAddr, err := net.ResolveUDPAddr("udp", addressStr)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse address", err)
+		return nil, serrors.WrapStr("Unable to parse address", err)
 	}
 	return &addr.AppAddr{
 		L3: addr.HostFromIP(udpAddr.IP),

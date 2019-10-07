@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/v2/conf"
@@ -45,16 +46,16 @@ func runProto(selector string) error {
 func genAndWriteProto(isd addr.ISD) error {
 	isdCfg, err := conf.LoadISDCfg(pkicmn.GetIsdPath(pkicmn.RootDir, isd))
 	if err != nil {
-		return common.NewBasicError("error loading ISD config", err)
+		return serrors.WrapStr("error loading ISD config", err)
 	}
 	t, encoded, err := genProto(isd, isdCfg)
 	if err != nil {
-		return common.NewBasicError("unable to generate TRC", err)
+		return serrors.WrapStr("unable to generate TRC", err)
 	}
 	signed := &trc.Signed{EncodedTRC: encoded}
 	raw, err := json.Marshal(signed)
 	if err != nil {
-		return common.NewBasicError("unable to marshal", err)
+		return serrors.WrapStr("unable to marshal", err)
 	}
 	if err := os.MkdirAll(PartsDir(isd, uint64(t.Version)), 0755); err != nil {
 		return err
@@ -66,7 +67,7 @@ func genProto(isd addr.ISD, isdCfg *conf.ISDCfg) (*trc.TRC, trc.Encoded, error) 
 	pkicmn.QuietPrint("Generating prototype TRC for ISD %d\n", isd)
 	primaryASes, err := loadPrimaryASes(isd, isdCfg, nil)
 	if err != nil {
-		return nil, nil, common.NewBasicError("error loading primary ASes configs", err)
+		return nil, nil, serrors.WrapStr("error loading primary ASes configs", err)
 	}
 	t, err := newTRC(isd, isdCfg, primaryASes)
 	if err != nil {
@@ -74,7 +75,7 @@ func genProto(isd addr.ISD, isdCfg *conf.ISDCfg) (*trc.TRC, trc.Encoded, error) 
 	}
 	encoded, err := trc.Encode(t)
 	if err != nil {
-		return nil, nil, common.NewBasicError("unable to encode TRC", err)
+		return nil, nil, serrors.WrapStr("unable to encode TRC", err)
 	}
 	return t, encoded, nil
 }
@@ -108,7 +109,7 @@ func newTRC(isd addr.ISD, isdCfg *conf.ISDCfg, primaryASes map[addr.AS]*asCfg) (
 		t.ProofOfPossession[as] = getKeyTypes(cfg)
 	}
 	if err := t.ValidateInvariant(); err != nil {
-		return nil, common.NewBasicError("invariant violated", err)
+		return nil, serrors.WrapStr("invariant violated", err)
 	}
 	return t, nil
 }

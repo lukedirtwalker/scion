@@ -23,6 +23,7 @@ import (
 	"zombiezen.com/go/capnproto2/pogs"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -118,11 +119,11 @@ func readRootFromReader(r io.Reader) (capnp.Struct, error) {
 	var blank capnp.Struct
 	msg, err := SafeDecode(capnp.NewPackedDecoder(r))
 	if err != nil {
-		return blank, common.NewBasicError("Failed to decode capnp message", err)
+		return blank, serrors.WrapStr("Failed to decode capnp message", err)
 	}
 	rootPtr, err := msg.RootPtr()
 	if err != nil {
-		return blank, common.NewBasicError("Failed to get root pointer from capnp message", err)
+		return blank, serrors.WrapStr("Failed to get root pointer from capnp message", err)
 	}
 	return rootPtr.Struct(), nil
 }

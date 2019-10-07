@@ -30,6 +30,7 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 func init() {
@@ -58,7 +59,7 @@ func SetupLogFile(name string, logDir string, logLevel string, logSize int, logA
 
 	logLvl, err := log15.LvlFromString(changeTraceToDebug(logLevel))
 	if err != nil {
-		return common.NewBasicError("Unable to parse log.level flag:", err)
+		return serrors.WrapStr("Unable to parse log.level flag:", err)
 	}
 
 	// Strip .log extension s.t. config files can contain the exact filename
@@ -103,7 +104,7 @@ func SetupLogFile(name string, logDir string, logLevel string, logSize int, logA
 func SetupLogConsole(logLevel string) error {
 	lvl, err := log15.LvlFromString(changeTraceToDebug(logLevel))
 	if err != nil {
-		return common.NewBasicError("Unable to parse log.console flag:", err)
+		return serrors.WrapStr("Unable to parse log.console flag:", err)
 	}
 	var cMap map[log15.Lvl]int
 	if isatty.IsTerminal(os.Stderr.Fd()) {

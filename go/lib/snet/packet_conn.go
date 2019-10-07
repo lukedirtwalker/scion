@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/l4"
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/spkt"
 )
@@ -144,7 +145,7 @@ func (c *SCIONPacketConn) WriteTo(pkt *SCIONPacket, ov *overlay.OverlayAddr) err
 	StableSortExtensions(pkt.Extensions)
 	hbh, e2e, err := hpkt.ValidateExtensions(pkt.Extensions)
 	if err != nil {
-		return common.NewBasicError("Bad extension list", err)
+		return serrors.WrapStr("Bad extension list", err)
 	}
 	// TODO(scrye): scnPkt is a temporary solution. Its functionality will be
 	// absorbed by the easier to use SCIONPacket structure in this package.
@@ -162,13 +163,13 @@ func (c *SCIONPacketConn) WriteTo(pkt *SCIONPacket, ov *overlay.OverlayAddr) err
 	pkt.Prepare()
 	n, err := hpkt.WriteScnPkt(scnPkt, common.RawBytes(pkt.Bytes))
 	if err != nil {
-		return common.NewBasicError("Unable to serialize SCION packet", err)
+		return serrors.WrapStr("Unable to serialize SCION packet", err)
 	}
 	pkt.Bytes = pkt.Bytes[:n]
 	// Send message
 	_, err = c.conn.WriteTo(pkt.Bytes, ov)
 	if err != nil {
-		return common.NewBasicError("Reliable socket write error", err)
+		return serrors.WrapStr("Reliable socket write error", err)
 	}
 	return nil
 }
@@ -205,7 +206,7 @@ func (c *SCIONPacketConn) readFrom(pkt *SCIONPacket, ov *overlay.OverlayAddr) er
 	pkt.Prepare()
 	n, lastHopNetAddr, err := c.conn.ReadFrom(pkt.Bytes)
 	if err != nil {
-		return common.NewBasicError("Reliable socket read error", err)
+		return serrors.WrapStr("Reliable socket read error", err)
 	}
 	pkt.Bytes = pkt.Bytes[:n]
 	var lastHop *overlay.OverlayAddr
@@ -225,7 +226,7 @@ func (c *SCIONPacketConn) readFrom(pkt *SCIONPacket, ov *overlay.OverlayAddr) er
 	}
 	err = hpkt.ParseScnPkt(scnPkt, common.RawBytes(pkt.Bytes))
 	if err != nil {
-		return common.NewBasicError("SCION packet parse error", err)
+		return serrors.WrapStr("SCION packet parse error", err)
 	}
 
 	pkt.Destination = SCIONAddress{IA: scnPkt.DstIA, Host: scnPkt.DstHost}

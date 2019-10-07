@@ -19,7 +19,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var Cmd = &cobra.Command{
@@ -45,7 +45,7 @@ var genCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runGenKey(args[0]); err != nil {
-			return common.NewBasicError("unable to generate keys", err)
+			return serrors.WrapStr("unable to generate keys", err)
 		}
 		return nil
 	},

@@ -168,7 +168,7 @@ func getResolver(sciondPath string) (pathmgr.Resolver, error) {
 	if sciondPath != "" {
 		sciondConn, err := sciond.NewService(sciondPath, true).Connect()
 		if err != nil {
-			return nil, common.NewBasicError("Unable to initialize SCIOND service", err)
+			return nil, serrors.WrapStr("Unable to initialize SCIOND service", err)
 		}
 		pathResolver = pathmgr.New(
 			sciondConn,
@@ -295,7 +295,7 @@ func (n *SCIONNetwork) ListenSCIONWithBindSVC(network string, laddr, baddr *Addr
 		conn.baddr = baddr.Copy()
 		bindAddr, err = overlay.NewOverlayAddr(baddr.Host.L3, baddr.Host.L4)
 		if err != nil {
-			return nil, common.NewBasicError("Unable to construct overlay bind address", err)
+			return nil, serrors.WrapStr("Unable to construct overlay bind address", err)
 		}
 		if !conn.baddr.IA.Equal(conn.scionNet.localIA) {
 			return nil, common.NewBasicError("Unable to listen on non-local IA", nil,

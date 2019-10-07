@@ -76,18 +76,18 @@ func (h *Handler) handle(r *infra.Request, addr *snet.Addr, req *cert_mgmt.Chain
 	// Validate the request was correctly signed by the requester
 	verChain, err := h.validateSign(ctx, addr, signed)
 	if err != nil {
-		return common.NewBasicError("Unable to validate chain", err)
+		return serrors.WrapStr("Unable to validate chain", err)
 	}
 	// Parse the requested certificate
 	crt, err := req.Cert()
 	if err != nil {
-		return common.NewBasicError("Unable to parse requested certificate", err)
+		return serrors.WrapStr("Unable to parse requested certificate", err)
 	}
 	// Respond with max chain for outdated requests.
 	opts := infra.ChainOpts{TrustStoreOpts: infra.TrustStoreOpts{LocalOnly: true}}
 	maxChain, err := h.State.Store.GetChain(ctx, verChain.Leaf.Subject, scrypto.LatestVer, opts)
 	if err != nil {
-		return common.NewBasicError("Unable to fetch max chain", err)
+		return serrors.WrapStr("Unable to fetch max chain", err)
 	}
 	if maxChain != nil && crt.Version <= maxChain.Leaf.Version {
 		logger.Info("[reiss.Handler] Resending certificate chain", "addr", addr, "req", req)
@@ -96,20 +96,20 @@ func (h *Handler) handle(r *infra.Request, addr *snet.Addr, req *cert_mgmt.Chain
 	// Get the verifying key from the customer mapping
 	verKey, verVersion, err := h.getVerifyingKey(ctx, addr.IA)
 	if err != nil {
-		return common.NewBasicError("Unable to get verifying key", err)
+		return serrors.WrapStr("Unable to get verifying key", err)
 	}
 	// Verify request and check the verifying key matches
 	if err = h.validateReq(crt, verKey, verChain, maxChain); err != nil {
-		return common.NewBasicError("Unable to verify request", err)
+		return serrors.WrapStr("Unable to verify request", err)
 	}
 	// Issue certificate chain
 	newChain, err := h.issueChain(ctx, crt, verKey, verVersion)
 	if err != nil {
-		return common.NewBasicError("Unable to reissue certificate chain", err)
+		return serrors.WrapStr("Unable to reissue certificate chain", err)
 	}
 	// Send issued certificate chain
 	if err := h.sendRep(ctx, addr, newChain); err != nil {
-		return common.NewBasicError("Unable to send reissued certificate chain", err)
+		return serrors.WrapStr("Unable to send reissued certificate chain", err)
 	}
 	return nil
 }
@@ -196,7 +196,7 @@ func (h *Handler) issueChain(ctx context.Context, c *cert.Certificate,
 	}
 	tx, err := h.State.TrustDB.BeginTransaction(ctx, nil)
 	if err != nil {
-		return nil, common.NewBasicError("Failed to create transaction", err)
+		return nil, serrors.WrapStr("Failed to create transaction", err)
 	}
 	// Set verifying key.
 	newCustKey := &trustdb.CustKey{IA: c.Subject, Key: c.SubjectSignKey, Version: c.Version}
@@ -217,7 +217,7 @@ func (h *Handler) issueChain(ctx context.Context, c *cert.Certificate,
 		return nil, common.NewBasicError("Chain already in DB", nil, "chain", chain)
 	}
 	if err = tx.Commit(); err != nil {
-		return nil, common.NewBasicError("Failed to commit transaction", err)
+		return nil, serrors.WrapStr("Failed to commit transaction", err)
 	}
 	return chain, nil
 }

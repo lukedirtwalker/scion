@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/v2/conf"
 )
@@ -44,15 +45,15 @@ func runCombine(selector string) error {
 func combineAndWrite(isd addr.ISD) error {
 	isdCfg, err := conf.LoadISDCfg(pkicmn.GetIsdPath(pkicmn.RootDir, isd))
 	if err != nil {
-		return common.NewBasicError("error loading ISD config", err)
+		return serrors.WrapStr("error loading ISD config", err)
 	}
 	t, encoded, err := loadProtoTRC(isd, isdCfg.Version)
 	if err != nil {
-		return common.NewBasicError("unable to load prototype TRC", err)
+		return serrors.WrapStr("unable to load prototype TRC", err)
 	}
 	signatures, err := loadUniqueSignatures(isd, t.Version, encoded)
 	if err != nil {
-		return common.NewBasicError("unable to load signatures", err)
+		return serrors.WrapStr("unable to load signatures", err)
 	}
 	signed := &trc.Signed{
 		EncodedTRC: encoded,
@@ -69,7 +70,7 @@ func loadUniqueSignatures(isd addr.ISD, ver scrypto.Version,
 
 	fnames, err := filepath.Glob(PartsFile(isd, uint64(ver), "*"))
 	if err != nil {
-		return nil, common.NewBasicError("unable to list all signatures", err)
+		return nil, serrors.WrapStr("unable to list all signatures", err)
 	}
 	signatures := make(map[trc.Protected]trc.Signature)
 	for _, fname := range fnames {

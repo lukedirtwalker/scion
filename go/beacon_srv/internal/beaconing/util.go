@@ -26,6 +26,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/infra"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/proto"
 )
@@ -36,15 +37,15 @@ func packBeaconMsg(bseg *seg.Beacon, ia addr.IA, egIfid common.IFIDType,
 
 	pld, err := ctrl.NewPld(bseg, nil)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create payload", err)
+		return nil, serrors.WrapStr("Unable to create payload", err)
 	}
 	spld, err := pld.SignedPld(signer)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to sign payload", err)
+		return nil, serrors.WrapStr("Unable to sign payload", err)
 	}
 	packed, err := spld.PackPld()
 	if err != nil {
-		return nil, common.NewBasicError("Unable to pack payload", err)
+		return nil, serrors.WrapStr("Unable to pack payload", err)
 	}
 	msg := &onehop.Msg{
 		Dst: snet.SCIONAddress{

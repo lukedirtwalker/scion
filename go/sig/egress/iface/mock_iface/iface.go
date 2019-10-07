@@ -5,6 +5,8 @@
 package mock_iface
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	addr "github.com/scionproto/scion/go/lib/addr"
 	log "github.com/scionproto/scion/go/lib/log"
@@ -12,7 +14,6 @@ import (
 	snet "github.com/scionproto/scion/go/lib/snet"
 	iface "github.com/scionproto/scion/go/sig/egress/iface"
 	mgmt "github.com/scionproto/scion/go/sig/mgmt"
-	reflect "reflect"
 )
 
 // MockSession is a mock of Session interface

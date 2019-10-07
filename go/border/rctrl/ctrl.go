@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/fatal"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 	"github.com/scionproto/scion/go/lib/sock/reliable/reconnect"
@@ -86,7 +87,7 @@ func processCtrl() {
 		if err != nil {
 			cl.Result = metrics.ErrRead
 			metrics.Control.Reads(cl).Inc()
-			fatal.Fatal(common.NewBasicError("Reading packet", err))
+			fatal.Fatal(serrors.WrapStr("Reading packet", err))
 		}
 		cl.Result = metrics.Success
 		metrics.Control.Reads(cl).Inc()

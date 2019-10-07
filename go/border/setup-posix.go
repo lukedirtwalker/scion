@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/overlay/conn"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 )
 
@@ -156,7 +157,7 @@ func (p posixExt) addIntf(r *Router, ctx *rctx.Ctx, intf *topology.IFInfo) error
 	bind := intf.Local.BindOrPublicOverlay(intf.Local.Overlay)
 	c, err := conn.New(bind, intf.Remote, nil)
 	if err != nil {
-		return common.NewBasicError("Unable to listen on external socket", err)
+		return serrors.WrapStr("Unable to listen on external socket", err)
 	}
 	// Setup input goroutine.
 	ctx.ExtSockIn[intf.Id] = rctx.NewSock(

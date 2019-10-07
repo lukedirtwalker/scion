@@ -42,6 +42,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/infra/disp"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 	"github.com/scionproto/scion/go/proto"
 )
@@ -189,7 +190,7 @@ func (c *connector) Paths(ctx context.Context, dst, src addr.IA, max uint16,
 		nil,
 	)
 	if err != nil {
-		return nil, common.NewBasicError("[sciond-API] Failed to get Paths", err)
+		return nil, serrors.WrapStr("[sciond-API] Failed to get Paths", err)
 	}
 	return reply.(*Pld).PathReply, nil
 }
@@ -215,7 +216,7 @@ func (c *connector) ASInfo(ctx context.Context, ia addr.IA) (*ASInfoReply, error
 		nil,
 	)
 	if err != nil {
-		return nil, common.NewBasicError("[sciond-API] Failed to get ASInfo", err)
+		return nil, serrors.WrapStr("[sciond-API] Failed to get ASInfo", err)
 	}
 	asInfoReply := pld.(*Pld).AsInfoReply
 	c.asInfos.SetDefault(key, asInfoReply)
@@ -243,7 +244,7 @@ func (c *connector) IFInfo(ctx context.Context, ifs []common.IFIDType) (*IFInfoR
 		nil,
 	)
 	if err != nil {
-		return nil, common.NewBasicError("[sciond-API] Failed to get IFInfo", err)
+		return nil, serrors.WrapStr("[sciond-API] Failed to get IFInfo", err)
 	}
 	ifInfoReply := pld.(*Pld).IfInfoReply
 	// Add new information to cache
@@ -294,7 +295,7 @@ func (c *connector) SVCInfo(ctx context.Context,
 		nil,
 	)
 	if err != nil {
-		return nil, common.NewBasicError("[sciond-API] Failed to get SVCInfo", err)
+		return nil, serrors.WrapStr("[sciond-API] Failed to get SVCInfo", err)
 	}
 	serviceInfoReply := pld.(*Pld).ServiceInfoReply
 	// Add new information to cache
@@ -349,7 +350,7 @@ func (c *connector) RevNotification(ctx context.Context,
 		nil,
 	)
 	if err != nil {
-		return nil, common.NewBasicError("[sciond-API] Failed to send RevNotification", err)
+		return nil, serrors.WrapStr("[sciond-API] Failed to send RevNotification", err)
 	}
 	return reply.(*Pld).RevReply, nil
 }

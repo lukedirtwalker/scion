@@ -112,7 +112,7 @@ func setupBasic() error {
 
 func setup() error {
 	if err := cfg.Validate(); err != nil {
-		return common.NewBasicError("Unable to validate config", err)
+		return serrors.WrapStr("Unable to validate config", err)
 	}
 	env.SetupEnv(func() {
 		if r == nil {
@@ -131,7 +131,7 @@ func setup() error {
 func checkPerms() error {
 	u, err := user.Current()
 	if err != nil {
-		return common.NewBasicError("Error retrieving user", err)
+		return serrors.WrapStr("Error retrieving user", err)
 	}
 	if u.Uid == "0" {
 		return serrors.New("Running as root is not allowed for security reasons")

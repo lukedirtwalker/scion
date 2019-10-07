@@ -28,6 +28,7 @@ import (
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
 	"github.com/scionproto/scion/go/lib/scrypto/trc"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -60,12 +61,12 @@ func (s *Self) Run(ctx context.Context) {
 func (s *Self) run(ctx context.Context) error {
 	issCrt, err := s.getIssuerCert(ctx)
 	if err != nil {
-		return common.NewBasicError("Unable to get issuer certificate", err)
+		return serrors.WrapStr("Unable to get issuer certificate", err)
 	}
 	opts := infra.ChainOpts{TrustStoreOpts: infra.TrustStoreOpts{LocalOnly: true}}
 	chain, err := s.State.Store.GetChain(ctx, s.IA, scrypto.LatestVer, opts)
 	if err != nil {
-		return common.NewBasicError("Unable to get certificate chain", err)
+		return serrors.WrapStr("Unable to get certificate chain", err)
 	}
 	now := time.Now()
 	iSleep := time.Unix(int64(issCrt.ExpirationTime), 0).Sub(now) - s.IssTime
@@ -76,12 +77,12 @@ func (s *Self) run(ctx context.Context) error {
 	if iSleep <= 0 {
 		// The issuer certificated needs to be updated.
 		if err = s.createIssuerCert(ctx, issCrt); err != nil {
-			return common.NewBasicError("Unable to create issuer certificate", err)
+			return serrors.WrapStr("Unable to create issuer certificate", err)
 		}
 	}
 	if lSleep <= 0 {
 		if err = s.createLeafCert(ctx, chain.Leaf); err != nil {
-			return common.NewBasicError("Unable to issue certificate chain", err)
+			return serrors.WrapStr("Unable to issue certificate chain", err)
 		}
 	}
 	if s.CorePusher != nil {
@@ -94,7 +95,7 @@ func (s *Self) run(ctx context.Context) error {
 func (s *Self) createLeafCert(ctx context.Context, leaf *cert.Certificate) error {
 	issCrt, err := s.getIssuerCert(ctx)
 	if err != nil {
-		return common.NewBasicError("Unable to get issuer certificate", err)
+		return serrors.WrapStr("Unable to get issuer certificate", err)
 	}
 	chain := &cert.Chain{Leaf: leaf.Copy(), Issuer: issCrt}
 	chain.Leaf.Version++
@@ -116,11 +117,11 @@ func (s *Self) createLeafCert(ctx context.Context, leaf *cert.Certificate) error
 	log.FromCtx(ctx).Info("[reiss.Self] Created certificate chain", "chain", chain)
 	meta, err := trust.CreateSignMeta(ctx, s.IA, s.State.TrustDB)
 	if err != nil {
-		return common.NewBasicError("Unable to create sign meta", err)
+		return serrors.WrapStr("Unable to create sign meta", err)
 	}
 	signer, err := trust.NewBasicSigner(s.State.GetSigningKey(), meta)
 	if err != nil {
-		return common.NewBasicError("Unable to create new signer", err)
+		return serrors.WrapStr("Unable to create new signer", err)
 	}
 	s.State.SetSigner(signer)
 	s.Msgr.UpdateSigner(signer, []infra.MessageType{infra.ChainIssueReply})
@@ -166,7 +167,7 @@ func (s *Self) getCoreASEntry(ctx context.Context) (*trc.CoreAS, error) {
 	opts := infra.TRCOpts{TrustStoreOpts: infra.TrustStoreOpts{LocalOnly: true}}
 	maxTrc, err := s.State.Store.GetTRC(ctx, s.IA.I, scrypto.LatestVer, opts)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to find local TRC", err)
+		return nil, serrors.WrapStr("Unable to find local TRC", err)
 	}
 	coreAS := maxTrc.CoreASes[s.IA]
 	if coreAS == nil {

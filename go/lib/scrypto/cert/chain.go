@@ -130,7 +130,7 @@ func ChainFromDir(dir string, ia addr.IA, f func(err error)) (*Chain, error) {
 	for _, file := range files {
 		chain, err := ChainFromFile(file, false)
 		if err != nil {
-			f(common.NewBasicError("Unable to read Chain file", err))
+			f(serrors.WrapStr("Unable to read Chain file", err))
 			continue
 		}
 		if !chain.Leaf.Subject.Equal(ia) {

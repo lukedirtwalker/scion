@@ -151,7 +151,7 @@ func setupTun() (io.ReadWriteCloser, error) {
 	}
 	if err = xnet.AddRoute(cfg.Sig.TunRTableId, tunLink, sigcmn.DefV4Net, src); err != nil {
 		return nil,
-			common.NewBasicError("Unable to add default IPv4 route to SIG routing table", err)
+			serrors.WrapStr("Unable to add default IPv4 route to SIG routing table", err)
 	}
 	src = cfg.Sig.SrcIP6
 	if len(src) == 0 && cfg.Sig.IP.To16() != nil && cfg.Sig.IP.To4() == nil {
@@ -159,12 +159,12 @@ func setupTun() (io.ReadWriteCloser, error) {
 	}
 	if err = xnet.AddRoute(cfg.Sig.TunRTableId, tunLink, sigcmn.DefV6Net, src); err != nil {
 		return nil,
-			common.NewBasicError("Unable to add default IPv6 route to SIG routing table", err)
+			serrors.WrapStr("Unable to add default IPv6 route to SIG routing table", err)
 	}
 	// Now that everything is set up, drop CAP_NET_ADMIN
 	caps, err := capability.NewPid(0)
 	if err != nil {
-		return nil, common.NewBasicError("Error retrieving capabilities", err)
+		return nil, serrors.WrapStr("Error retrieving capabilities", err)
 	}
 	caps.Clear(capability.CAPS)
 	caps.Apply(capability.CAPS)
@@ -174,14 +174,14 @@ func setupTun() (io.ReadWriteCloser, error) {
 func checkPerms() error {
 	u, err := user.Current()
 	if err != nil {
-		return common.NewBasicError("Error retrieving user", err)
+		return serrors.WrapStr("Error retrieving user", err)
 	}
 	if u.Uid == "0" {
 		return serrors.New("Running as root is not allowed for security reasons")
 	}
 	caps, err := capability.NewPid(0)
 	if err != nil {
-		return common.NewBasicError("Error retrieving capabilities", err)
+		return serrors.WrapStr("Error retrieving capabilities", err)
 	}
 	log.Info("Startup capabilities", "caps", caps)
 	if !caps.Get(capability.EFFECTIVE, capability.CAP_NET_ADMIN) {

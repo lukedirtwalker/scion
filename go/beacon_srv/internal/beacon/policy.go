@@ -21,6 +21,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spath"
 )
 
@@ -219,7 +220,7 @@ func (p *Policy) initDefaults(t PolicyType) error {
 func ParsePolicyYaml(b common.RawBytes, t PolicyType) (*Policy, error) {
 	p := &Policy{}
 	if err := yaml.Unmarshal(b, p); err != nil {
-		return nil, common.NewBasicError("Unable to parse policy", err)
+		return nil, serrors.WrapStr("Unable to parse policy", err)
 	}
 	if err := p.initDefaults(t); err != nil {
 		return nil, err

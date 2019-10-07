@@ -27,7 +27,7 @@ do
 	case ${roottype}_TypeID:
 		v, err := NewRoot$roottype(seg)
 		if err != nil {
-			return blank, common.NewBasicError("Error creating new $roottype capnp struct", err)
+			return blank, serrors.WrapStr("Error creating new $roottype capnp struct", err)
 		}
 		return v.Struct, nil
 EOF

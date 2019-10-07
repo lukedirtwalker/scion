@@ -48,6 +48,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -248,7 +249,7 @@ func (d *Dispatcher) Close(ctx context.Context) error {
 	}
 	err := d.conn.Close()
 	if err != nil {
-		return common.NewBasicError("Unable to close transport", err)
+		return serrors.WrapStr("Unable to close transport", err)
 	}
 	// Wait for background goroutine to finish
 	select {

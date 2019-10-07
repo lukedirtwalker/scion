@@ -94,11 +94,11 @@ func (r *BaseRouter) appPathToPath(ap *spathmeta.AppPath) (Path, error) {
 	p := spath.New(ap.Entry.Path.FwdPath)
 	// Preinitialize offsets, we don't want to propagate unusable paths
 	if err := p.InitOffsets(); err != nil {
-		return nil, common.NewBasicError("path error", err)
+		return nil, serrors.WrapStr("path error", err)
 	}
 	overlayAddr, err := ap.Entry.HostInfo.Overlay()
 	if err != nil {
-		return nil, common.NewBasicError("path error", err)
+		return nil, serrors.WrapStr("path error", err)
 	}
 	return &path{
 		sciondPath: ap.Entry,

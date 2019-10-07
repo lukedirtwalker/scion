@@ -22,8 +22,8 @@ import (
 	"sort"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 )
 
@@ -56,13 +56,13 @@ func SignedFile(isd addr.ISD, ver uint64) string {
 func validateAndWrite(t *trc.TRC, signed *trc.Signed) error {
 	raw, err := json.Marshal(signed)
 	if err != nil {
-		return common.NewBasicError("unable to marshal signed TRC", err)
+		return serrors.WrapStr("unable to marshal signed TRC", err)
 	}
 	if err := validateResult(raw); err != nil {
-		return common.NewBasicError("unable to validate signed TRC", err)
+		return serrors.WrapStr("unable to validate signed TRC", err)
 	}
 	if err := os.MkdirAll(Dir(t.ISD), 0755); err != nil {
-		return common.NewBasicError("unable to create TRC dir", err)
+		return serrors.WrapStr("unable to create TRC dir", err)
 	}
 	return pkicmn.WriteToFile(raw, SignedFile(t.ISD, uint64(t.Version)), 0644)
 }
@@ -70,14 +70,14 @@ func validateAndWrite(t *trc.TRC, signed *trc.Signed) error {
 func validateResult(raw []byte) error {
 	var signed trc.Signed
 	if err := json.Unmarshal(raw, &signed); err != nil {
-		return common.NewBasicError("invalid signed TRC", err)
+		return serrors.WrapStr("invalid signed TRC", err)
 	}
 	t, err := signed.EncodedTRC.Decode()
 	if err != nil {
-		return common.NewBasicError("invalid TRC payload", err)
+		return serrors.WrapStr("invalid TRC payload", err)
 	}
 	if err := t.ValidateInvariant(); err != nil {
-		return common.NewBasicError("violated TRC invariant", err)
+		return serrors.WrapStr("violated TRC invariant", err)
 	}
 	// FIXME(roosd): Should also verify votes when supported.
 	v := trc.POPVerifier{
@@ -86,7 +86,7 @@ func validateResult(raw []byte) error {
 		Signatures: signed.Signatures,
 	}
 	if err := v.Verify(); err != nil {
-		return common.NewBasicError("proof of possesions fail to verify", err)
+		return serrors.WrapStr("proof of possesions fail to verify", err)
 	}
 	return nil
 }

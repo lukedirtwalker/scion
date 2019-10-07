@@ -111,7 +111,7 @@ func (h *handler) handle(logger log.Logger) (*infra.HandlerResult, error) {
 	if err != nil {
 		metrics.Beaconing.Received(labels.WithResult(metrics.ErrDB)).Inc()
 		sendAck(proto.Ack_ErrCode_reject, messenger.AckRetryDBError)
-		return infra.MetricsErrInternal, common.NewBasicError("Unable to insert beacon", err)
+		return infra.MetricsErrInternal, serrors.WrapStr("Unable to insert beacon", err)
 	}
 	logger.Trace("[BeaconHandler] Successfully inserted", "beacon", b)
 	metrics.Beaconing.Received(labels.WithResult(
@@ -143,7 +143,7 @@ func (h *handler) getIFID() (common.IFIDType, addr.IA, error) {
 	}
 	hopF, err := peer.Path.GetHopField(peer.Path.HopOff)
 	if err != nil {
-		return 0, ia, common.NewBasicError("Unable to extract hop field", err)
+		return 0, ia, serrors.WrapStr("Unable to extract hop field", err)
 	}
 	intf := h.intfs.Get(hopF.ConsIngress)
 	if intf == nil {
@@ -159,7 +159,7 @@ func (h *handler) verifyBeacon(b beacon.Beacon) error {
 			"entry", b.Segment.ASEntries[b.Segment.MaxAEIdx()])
 	}
 	if err := h.verifySegment(b.Segment); err != nil {
-		return common.NewBasicError("Verification of beacon failed", err)
+		return serrors.WrapStr("Verification of beacon failed", err)
 	}
 	return nil
 }
@@ -196,7 +196,7 @@ func (h *handler) verifySegment(segment *seg.PathSegment) error {
 	snetPeer := h.request.Peer.(*snet.Addr)
 	peerPath, err := snetPeer.GetPath()
 	if err != nil {
-		return common.NewBasicError("path error", err)
+		return serrors.WrapStr("path error", err)
 	}
 	svcToQuery := &snet.Addr{
 		IA:      snetPeer.IA,

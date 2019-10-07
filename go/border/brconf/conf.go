@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/keyconf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 )
 
@@ -64,7 +65,7 @@ func WithNewTopo(id string, topo *topology.Topo, oldConf *BRConf) (*BRConf, erro
 		MasterKeys: oldConf.MasterKeys,
 	}
 	if err := conf.initTopo(id, topo); err != nil {
-		return nil, common.NewBasicError("Unable to initialize topo", err)
+		return nil, serrors.WrapStr("Unable to initialize topo", err)
 	}
 	return conf, nil
 }
@@ -102,7 +103,7 @@ func (cfg *BRConf) loadMasterKeys() error {
 	var err error
 	cfg.MasterKeys, err = keyconf.LoadMaster(filepath.Join(cfg.Dir, "keys"))
 	if err != nil {
-		return common.NewBasicError("Unable to load master keys", err)
+		return serrors.WrapStr("Unable to load master keys", err)
 	}
 	return nil
 }

@@ -83,7 +83,7 @@ func (c *scionConnReader) read(b []byte) (int, *Addr, error) {
 	// Copy data, extract address
 	n, err := pkt.Payload.WritePld(b)
 	if err != nil {
-		return 0, nil, common.NewBasicError("Unable to copy payload", err)
+		return 0, nil, serrors.WrapStr("Unable to copy payload", err)
 	}
 
 	var remote *Addr
@@ -99,7 +99,7 @@ func (c *scionConnReader) read(b []byte) (int, *Addr, error) {
 			remote.Path = pkt.Path.Copy()
 			if err = remote.Path.Reverse(); err != nil {
 				return 0, nil,
-					common.NewBasicError("Unable to reverse path on received packet", err)
+					serrors.WrapStr("Unable to reverse path on received packet", err)
 			}
 		}
 

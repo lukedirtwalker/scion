@@ -195,7 +195,7 @@ func (c client) ping(ctx context.Context, n int) error {
 			addr.NewL4UDPInfo(overlay.EndhostPort),
 		)
 		if err != nil {
-			return common.NewBasicError("Error building overlay", err)
+			return serrors.WrapStr("Error building overlay", err)
 		}
 	}
 	var debugID [common.ExtnFirstLineLen]byte
@@ -239,7 +239,7 @@ func (c client) getRemote(ctx context.Context, n int) error {
 	paths, err := c.sdConn.Paths(ctx, remote.IA, integration.Local.IA, 1,
 		sciond.PathReqFlags{Refresh: n != 0})
 	if err != nil {
-		return common.NewBasicError("Error requesting paths", err)
+		return serrors.WrapStr("Error requesting paths", err)
 	}
 	if len(paths.Entries) == 0 {
 		return serrors.New("No path entries found")
@@ -247,13 +247,13 @@ func (c client) getRemote(ctx context.Context, n int) error {
 	pathEntry := paths.Entries[0]
 	path := spath.New(pathEntry.Path.FwdPath)
 	if err = path.InitOffsets(); err != nil {
-		return common.NewBasicError("Unable to initialize path", err)
+		return serrors.WrapStr("Unable to initialize path", err)
 	}
 	// Extract forwarding path from sciond response
 	remote.Path = path
 	remote.NextHop, err = pathEntry.HostInfo.Overlay()
 	if err != nil {
-		return common.NewBasicError("Error getting overlay", err)
+		return serrors.WrapStr("Error getting overlay", err)
 	}
 	return nil
 }
@@ -263,7 +263,7 @@ func (c client) pong(ctx context.Context) error {
 	var p snet.SCIONPacket
 	var ov overlay.OverlayAddr
 	if err := c.conn.ReadFrom(&p, &ov); err != nil {
-		return common.NewBasicError("Error reading packet", err)
+		return serrors.WrapStr("Error reading packet", err)
 	}
 	expected := pong + remote.IA.String() + integration.Local.IA.String()
 	if string(p.Payload.(common.RawBytes)) != expected {

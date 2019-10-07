@@ -105,7 +105,7 @@ func (p Prober) GetStatuses(ctx context.Context,
 	)
 	snetConn, err := network.ListenSCION("udp4", &p.Local, deadline.Sub(time.Now()))
 	if err != nil {
-		return nil, common.NewBasicError("listening failed", err)
+		return nil, serrors.WrapStr("listening failed", err)
 	}
 	defer snetConn.Close()
 	var sendErrors common.MultiError
@@ -133,11 +133,11 @@ func (p Prober) GetStatuses(ctx context.Context,
 func (p Prober) send(scionConn snet.Conn, path sciond.PathReplyEntry) error {
 	sPath := spath.New(path.Path.FwdPath)
 	if err := sPath.InitOffsets(); err != nil {
-		return common.NewBasicError("unable to initialize path", err)
+		return serrors.WrapStr("unable to initialize path", err)
 	}
 	nextHop, err := path.HostInfo.Overlay()
 	if err != nil {
-		return common.NewBasicError("unable to get overlay info", err)
+		return serrors.WrapStr("unable to get overlay info", err)
 	}
 	addr := &snet.Addr{
 		IA: p.DstIA,
@@ -151,7 +151,7 @@ func (p Prober) send(scionConn snet.Conn, path sciond.PathReplyEntry) error {
 	log.Debug("Sending test packet.", "path", path.Path.String())
 	_, err = scionConn.WriteTo([]byte{}, addr)
 	if err != nil {
-		return common.NewBasicError("cannot send packet", err)
+		return serrors.WrapStr("cannot send packet", err)
 	}
 	return nil
 }
@@ -170,7 +170,7 @@ func (p Prober) receive(scionConn snet.Conn) error {
 		// Timeout expired before all replies were received.
 		return nil
 	}
-	return common.NewBasicError("failed to read packet", err)
+	return serrors.WrapStr("failed to read packet", err)
 }
 
 var errBadHost = errors.New("scmp: bad host")
@@ -201,7 +201,7 @@ func (h *scmpHandler) Handle(pkt *snet.SCIONPacket) error {
 func (h *scmpHandler) path(pkt *snet.SCIONPacket) (string, error) {
 	path := pkt.Path.Copy()
 	if err := path.Reverse(); err != nil {
-		return "", common.NewBasicError("unable to reverse path on received packet", err)
+		return "", serrors.WrapStr("unable to reverse path on received packet", err)
 	}
 	return string(path.Raw), nil
 }

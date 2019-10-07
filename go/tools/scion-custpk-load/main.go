@@ -22,10 +22,10 @@ import (
 
 	"github.com/BurntSushi/toml"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust/trustdb"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/truststorage"
 )
 
@@ -99,15 +99,15 @@ func checkFlags() (int, bool) {
 
 func loadConfig() error {
 	if _, err := toml.DecodeFile(env.ConfigFile(), &cfg); err != nil {
-		return common.NewBasicError("Failed to load config", err)
+		return serrors.WrapStr("Failed to load config", err)
 	}
 	cfg.InitDefaults()
 	err := cfg.Validate()
 	if err != nil {
-		return common.NewBasicError("Unable to validate config", err)
+		return serrors.WrapStr("Unable to validate config", err)
 	}
 	if trustDB, err = cfg.TrustDB.New(); err != nil {
-		return common.NewBasicError("Failed to init the database", err)
+		return serrors.WrapStr("Failed to init the database", err)
 	}
 	return nil
 }

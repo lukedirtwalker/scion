@@ -28,6 +28,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -88,7 +89,7 @@ type Certificate struct {
 func CertificateFromRaw(raw common.RawBytes) (*Certificate, error) {
 	cert := &Certificate{}
 	if err := json.Unmarshal(raw, cert); err != nil {
-		return nil, common.NewBasicError("Unable to parse Certificate", err)
+		return nil, serrors.WrapStr("Unable to parse Certificate", err)
 	}
 	if cert.Version.IsLatest() {
 		return nil, common.NewBasicError(ReservedVersion, nil)

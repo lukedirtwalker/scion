@@ -160,7 +160,7 @@ func (v *BasicVerifier) Verify(ctx context.Context, msg common.RawBytes, sign *p
 func (v *BasicVerifier) VerifyPld(ctx context.Context, spld *ctrl.SignedPld) (*ctrl.Pld, error) {
 	cpld, err := ctrl.NewPldFromRaw(spld.Blob)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse payload", err)
+		return nil, serrors.WrapStr("Unable to parse payload", err)
 	}
 	if v.ignoreSign(cpld, spld.Sign) {
 		// Do not increase metric because we skip verification.
@@ -250,7 +250,7 @@ func (v *BasicVerifier) verify(ctx context.Context, msg common.RawBytes,
 		chain.Leaf.SignAlgorithm)
 	if err != nil {
 		metrics.Store.Verification(l.WithResult(metrics.ErrVerify)).Inc()
-		return common.NewBasicError("Verification failed", err)
+		return serrors.WrapStr("Verification failed", err)
 	}
 	metrics.Store.Verification(l.WithResult(metrics.Success)).Inc()
 	return nil

@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/conf"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 )
@@ -89,7 +90,7 @@ func copyCustomers(ia addr.IA, cfgs map[addr.IA]*conf.As) error {
 func loadASConfigs(selector string) (map[addr.ISD]map[addr.IA]*conf.As, error) {
 	isd, _, err := pkicmn.ParseSelector(selector)
 	if err != nil {
-		return nil, common.NewBasicError("unable to parse selector", err)
+		return nil, serrors.WrapStr("unable to parse selector", err)
 	}
 	asMap, err := pkicmn.ProcessSelector(isd)
 	if err != nil {

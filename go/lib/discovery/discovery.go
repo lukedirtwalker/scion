@@ -132,11 +132,11 @@ func FetchTopoRaw(ctx context.Context, params FetchParams, ds *addr.AppAddr,
 
 	url, err := createURL(params, ds)
 	if err != nil {
-		return nil, nil, common.NewBasicError("Unable to create URL", err)
+		return nil, nil, serrors.WrapStr("Unable to create URL", err)
 	}
 	rep, err := ctxhttp.Get(ctx, client, url)
 	if err != nil {
-		return nil, nil, common.NewBasicError("HTTP request failed", err)
+		return nil, nil, serrors.WrapStr("HTTP request failed", err)
 	}
 	defer rep.Body.Close()
 	if rep.StatusCode != http.StatusOK {
@@ -144,11 +144,11 @@ func FetchTopoRaw(ctx context.Context, params FetchParams, ds *addr.AppAddr,
 	}
 	raw, err := ioutil.ReadAll(rep.Body)
 	if err != nil {
-		return nil, nil, common.NewBasicError("Unable to read body", err)
+		return nil, nil, serrors.WrapStr("Unable to read body", err)
 	}
 	topo, err := topology.Load(raw)
 	if err != nil {
-		return nil, nil, common.NewBasicError("Unable to parse topo", err)
+		return nil, nil, serrors.WrapStr("Unable to parse topo", err)
 	}
 	return topo, raw, nil
 }

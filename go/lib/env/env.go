@@ -255,7 +255,7 @@ func (cfg *Metrics) StartPrometheus() {
 		go func() {
 			defer log.LogPanicAndExit()
 			if err := http.ListenAndServe(cfg.Prometheus, nil); err != nil {
-				fatal.Fatal(common.NewBasicError("HTTP ListenAndServe error", err))
+				fatal.Fatal(serrors.WrapStr("HTTP ListenAndServe error", err))
 			}
 		}()
 	}

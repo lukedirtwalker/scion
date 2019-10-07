@@ -228,7 +228,7 @@ func (db *Backend) BeginTransaction(ctx context.Context,
 	defer db.Unlock()
 	tx, err := db.db.BeginTx(ctx, opts)
 	if err != nil {
-		return nil, common.NewBasicError("Failed to create transaction", err)
+		return nil, serrors.WrapStr("Failed to create transaction", err)
 	}
 	return &transaction{
 		executor: &executor{
@@ -373,7 +373,7 @@ func (db *executor) GetAllChains(ctx context.Context) (<-chan trustdb.ChainOrErr
 	defer db.RUnlock()
 	rows, err := db.db.QueryContext(ctx, getAllChainsStr)
 	if err != nil {
-		return nil, common.NewBasicError("Database access error", err)
+		return nil, serrors.WrapStr("Database access error", err)
 	}
 	chainChan := make(chan trustdb.ChainOrErr)
 	go func() {
@@ -471,7 +471,7 @@ func (db *executor) GetTRCVersion(ctx context.Context,
 		return nil, nil
 	}
 	if err != nil {
-		return nil, common.NewBasicError("Database access error", err)
+		return nil, serrors.WrapStr("Database access error", err)
 	}
 	trcobj, err := trc.TRCFromRaw(raw, false)
 	if err != nil {
@@ -490,7 +490,7 @@ func (db *executor) GetTRCMaxVersion(ctx context.Context, isd addr.ISD) (*trc.TR
 		return nil, nil
 	}
 	if err != nil {
-		return nil, common.NewBasicError("Database access error", err)
+		return nil, serrors.WrapStr("Database access error", err)
 	}
 	trcobj, err := trc.TRCFromRaw(raw, false)
 	if err != nil {
@@ -504,7 +504,7 @@ func (db *executor) GetTRCMaxVersion(ctx context.Context, isd addr.ISD) (*trc.TR
 func (db *executor) InsertTRC(ctx context.Context, trcobj *trc.TRC) (int64, error) {
 	raw, err := trcobj.JSON(false)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to convert to JSON", err)
+		return 0, serrors.WrapStr("Unable to convert to JSON", err)
 	}
 	db.Lock()
 	defer db.Unlock()
@@ -521,7 +521,7 @@ func (db *executor) GetAllTRCs(ctx context.Context) (<-chan trustdb.TrcOrErr, er
 	defer db.RUnlock()
 	rows, err := db.db.QueryContext(ctx, getAllTRCsStr)
 	if err != nil {
-		return nil, common.NewBasicError("Database access error", err)
+		return nil, serrors.WrapStr("Database access error", err)
 	}
 	trcChan := make(chan trustdb.TrcOrErr)
 	go func() {
@@ -532,12 +532,12 @@ func (db *executor) GetAllTRCs(ctx context.Context) (<-chan trustdb.TrcOrErr, er
 		for rows.Next() {
 			err = rows.Scan(&rawTRC)
 			if err != nil {
-				trcChan <- trustdb.TrcOrErr{Err: common.NewBasicError("Failed to scan rows", err)}
+				trcChan <- trustdb.TrcOrErr{Err: serrors.WrapStr("Failed to scan rows", err)}
 				return
 			}
 			trcobj, err := trc.TRCFromRaw(rawTRC, false)
 			if err != nil {
-				trcChan <- trustdb.TrcOrErr{Err: common.NewBasicError("TRC parse error", err)}
+				trcChan <- trustdb.TrcOrErr{Err: serrors.WrapStr("TRC parse error", err)}
 				return
 			}
 			trcChan <- trustdb.TrcOrErr{TRC: trcobj}
@@ -557,7 +557,7 @@ func (db *executor) GetCustKey(ctx context.Context, ia addr.IA) (*trustdb.CustKe
 		return nil, nil
 	}
 	if err != nil {
-		return nil, common.NewBasicError("Failed to look up cust key", err)
+		return nil, serrors.WrapStr("Failed to look up cust key", err)
 	}
 	return &trustdb.CustKey{IA: ia, Key: key, Version: version}, nil
 }
@@ -616,7 +616,7 @@ func (db *executor) InsertCustKey(ctx context.Context,
 		}
 		n, err := res.RowsAffected()
 		if err != nil {
-			return common.NewBasicError("Unable to determine affected rows", err)
+			return serrors.WrapStr("Unable to determine affected rows", err)
 		}
 		if n == 0 {
 			return common.NewBasicError("Cust keys has been modified", nil, "ia", key.IA,
@@ -641,7 +641,7 @@ func (db *transaction) Commit() error {
 	}
 	err := db.tx.Commit()
 	if err != nil {
-		return common.NewBasicError("Failed to commit transaction", err)
+		return serrors.WrapStr("Failed to commit transaction", err)
 	}
 	db.tx = nil
 	return nil
@@ -656,7 +656,7 @@ func (db *transaction) Rollback() error {
 	err := db.tx.Rollback()
 	db.tx = nil
 	if err != nil {
-		return common.NewBasicError("Failed to rollback transaction", err)
+		return serrors.WrapStr("Failed to rollback transaction", err)
 	}
 	return nil
 }
@@ -664,7 +664,7 @@ func (db *transaction) Rollback() error {
 func insertIssCert(ctx context.Context, db db.Sqler, crt *cert.Certificate) (int64, error) {
 	raw, err := crt.JSON(false)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to convert to JSON", err)
+		return 0, serrors.WrapStr("Unable to convert to JSON", err)
 	}
 	res, err := db.ExecContext(ctx, insertIssCertStr,
 		crt.Subject.I, crt.Subject.A, crt.Version, raw)
@@ -681,7 +681,7 @@ func parseCert(raw common.RawBytes, ia addr.IA, version scrypto.Version,
 		return nil, nil
 	}
 	if err != nil {
-		return nil, common.NewBasicError("Database access error", err)
+		return nil, serrors.WrapStr("Database access error", err)
 	}
 	crt, err := cert.CertificateFromRaw(raw)
 	if err != nil {
@@ -696,7 +696,7 @@ func parseCert(raw common.RawBytes, ia addr.IA, version scrypto.Version,
 func insertLeafCert(ctx context.Context, db db.Sqler, crt *cert.Certificate) (int64, error) {
 	raw, err := crt.JSON(false)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to convert to JSON", err)
+		return 0, serrors.WrapStr("Unable to convert to JSON", err)
 	}
 	res, err := db.ExecContext(ctx, insertLeafCertStr,
 		crt.Subject.I, crt.Subject.A, crt.Version, raw)
@@ -708,7 +708,7 @@ func insertLeafCert(ctx context.Context, db db.Sqler, crt *cert.Certificate) (in
 
 func parseChain(rows *sql.Rows, err error) (*cert.Chain, error) {
 	if err != nil {
-		return nil, common.NewBasicError("Database access error", err)
+		return nil, serrors.WrapStr("Database access error", err)
 	}
 	certs := make([]*cert.Certificate, 0, 2)
 	var raw common.RawBytes
@@ -742,7 +742,7 @@ func getIssCertRowIDCtx(ctx context.Context, db db.Sqler,
 			"ia", ia, "ver", ver)
 	}
 	if err != nil {
-		return 0, common.NewBasicError("Database access error", err)
+		return 0, serrors.WrapStr("Database access error", err)
 	}
 	return rowId, nil
 }

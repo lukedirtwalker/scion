@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/keyconf"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/conf"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
@@ -54,7 +55,7 @@ func genTrc(isd addr.ISD) error {
 	}
 	iconf, err := conf.LoadIsdConf(confDir)
 	if err != nil {
-		return common.NewBasicError("Error loading TRC conf", err)
+		return serrors.WrapStr("Error loading TRC conf", err)
 	}
 	pkicmn.QuietPrint("Generating TRC for ISD %d\n", isd)
 	outDir := pkicmn.GetIsdPath(pkicmn.OutDir, isd)
@@ -64,7 +65,7 @@ func genTrc(isd addr.ISD) error {
 	}
 	raw, err := t.JSON(true)
 	if err != nil {
-		return common.NewBasicError("Error json-encoding TRC", err)
+		return serrors.WrapStr("Error json-encoding TRC", err)
 	}
 	// Check if output directory exists.
 	outDir = filepath.Join(outDir, pkicmn.TRCsDir)
@@ -123,12 +124,12 @@ func newTrc(isd addr.ISD, iconf *conf.Isd, path string) (*trc.TRC, error) {
 		as.OnlineKey, err = keyconf.LoadKey(filepath.Join(keysPath, keyconf.OnKeyFile),
 			as.OnlineKeyAlg)
 		if err != nil {
-			return nil, common.NewBasicError("Error loading online key", err)
+			return nil, serrors.WrapStr("Error loading online key", err)
 		}
 		as.OfflineKey, err = keyconf.LoadKey(
 			filepath.Join(keysPath, keyconf.OffKeyFile), as.OfflineKeyAlg)
 		if err != nil {
-			return nil, common.NewBasicError("Error loading offline key", err)
+			return nil, serrors.WrapStr("Error loading offline key", err)
 		}
 		ases = append(ases, as)
 	}

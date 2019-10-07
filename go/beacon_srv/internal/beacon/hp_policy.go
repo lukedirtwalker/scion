@@ -22,6 +22,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/hiddenpath"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -82,7 +83,7 @@ func (hp *HPRegistration) Validate() error {
 func ParseHPRegYaml(b common.RawBytes) (*HPRegistration, error) {
 	r := &HPRegistration{}
 	if err := yaml.Unmarshal(b, r); err != nil {
-		return nil, common.NewBasicError("Unable to parse policy", err)
+		return nil, serrors.WrapStr("Unable to parse policy", err)
 	}
 	if err := r.init(); err != nil {
 		return nil, err

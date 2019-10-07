@@ -48,26 +48,26 @@ func runSign(selector string) error {
 func genAndWriteSignatures(isd addr.ISD, ases []addr.IA, selector string) error {
 	isdCfg, err := conf.LoadISDCfg(pkicmn.GetIsdPath(pkicmn.RootDir, isd))
 	if err != nil {
-		return common.NewBasicError("error loading ISD config", err)
+		return serrors.WrapStr("error loading ISD config", err)
 	}
 	primaryASes, err := loadPrimaryASes(isd, isdCfg, ases)
 	if err != nil {
-		return common.NewBasicError("error loading AS configs", err)
+		return serrors.WrapStr("error loading AS configs", err)
 	}
 	t, encoded, err := loadProtoTRC(isd, isdCfg.Version)
 	if err != nil {
-		return common.NewBasicError("unable to load prototype TRC", err)
+		return serrors.WrapStr("unable to load prototype TRC", err)
 	}
 	if err := sanityChecks(isd, isdCfg, t); err != nil {
-		return common.NewBasicError("invalid prototype TRC", err)
+		return serrors.WrapStr("invalid prototype TRC", err)
 	}
 	signed, err := signTRC(t, encoded, primaryASes)
 	if err != nil {
-		return common.NewBasicError("unable to partially sign TRC", err)
+		return serrors.WrapStr("unable to partially sign TRC", err)
 	}
 	raw, err := json.Marshal(signed)
 	if err != nil {
-		return common.NewBasicError("error json-encoding partially signed TRC", err)
+		return serrors.WrapStr("error json-encoding partially signed TRC", err)
 	}
 	if err := os.MkdirAll(PartsDir(isd, uint64(t.Version)), 0755); err != nil {
 		return err

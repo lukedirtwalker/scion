@@ -5,9 +5,10 @@
 package mock_worker
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	snet "github.com/scionproto/scion/go/lib/snet"
-	reflect "reflect"
 )
 
 // MockSCIONWriter is a mock of SCIONWriter interface

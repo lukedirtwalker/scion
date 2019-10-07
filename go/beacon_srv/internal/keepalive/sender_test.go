@@ -29,6 +29,7 @@ import (
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/snet/mock_snet"
 	"github.com/scionproto/scion/go/lib/xtest"
@@ -97,17 +98,17 @@ type testVerifier common.RawBytes
 func (t testVerifier) VerifyPld(_ context.Context, spld *ctrl.SignedPld) (*ctrl.Pld, error) {
 	src, err := ctrl.NewSignSrcDefFromRaw(spld.Sign.Src)
 	if err != nil {
-		return nil, common.NewBasicError("Cannot parse payload", err)
+		return nil, serrors.WrapStr("Cannot parse payload", err)
 	}
 	if src.IA != xtest.MustParseIA("1-ff00:0:84") {
-		return nil, common.NewBasicError("Wrong src.IA", err)
+		return nil, serrors.WrapStr("Wrong src.IA", err)
 	}
 	if src.TRCVer != 21 {
-		return nil, common.NewBasicError("Wrong src.TRCVer", err)
+		return nil, serrors.WrapStr("Wrong src.TRCVer", err)
 	}
 	pld, err := ctrl.NewPldFromRaw(spld.Blob)
 	if err != nil {
-		return nil, common.NewBasicError("Cannot parse payload", err)
+		return nil, serrors.WrapStr("Cannot parse payload", err)
 	}
 	return pld, scrypto.Verify(spld.Sign.SigInput(spld.Blob, false), spld.Sign.Signature,
 		common.RawBytes(t), scrypto.Ed25519)

@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/periodic"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -228,7 +229,7 @@ func (p *beaconPropagator) propagate(ctx context.Context) error {
 		bseg := p.beacon
 		if bseg.Segment, err = seg.NewBeaconFromRaw(raw); err != nil {
 			p.metrics.IncInternalErr()
-			return common.NewBasicError("Unable to unpack beacon", err)
+			return serrors.WrapStr("Unable to unpack beacon", err)
 		}
 		p.extendAndSend(ctx, bseg, egIfid)
 	}

@@ -5,10 +5,11 @@
 package mock_seg
 
 import (
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	common "github.com/scionproto/scion/go/lib/common"
 	proto "github.com/scionproto/scion/go/proto"
-	reflect "reflect"
 )
 
 // MockSigner is a mock of Signer interface

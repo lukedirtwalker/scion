@@ -185,7 +185,7 @@ func (o *beaconOriginator) originateBeacon(ctx context.Context) error {
 	)
 	if err != nil {
 		o.metrics.IncTotalBeacons(o.ifId, metrics.SendErr)
-		return common.NewBasicError("Unable to send packet", err)
+		return serrors.WrapStr("Unable to send packet", err)
 	}
 	o.onSuccess(intf)
 	return nil
@@ -194,10 +194,10 @@ func (o *beaconOriginator) originateBeacon(ctx context.Context) error {
 func (o *beaconOriginator) createBeacon() (*seg.Beacon, error) {
 	bseg, err := seg.NewSeg(&o.infoF)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create segment", err)
+		return nil, serrors.WrapStr("Unable to create segment", err)
 	}
 	if err := o.extend(bseg, 0, o.ifId, nil); err != nil {
-		return nil, common.NewBasicError("Unable to extend segment", err)
+		return nil, serrors.WrapStr("Unable to extend segment", err)
 	}
 	return &seg.Beacon{Segment: bseg}, nil
 }

@@ -44,6 +44,7 @@ import (
 	"github.com/scionproto/scion/go/lib/periodic"
 	"github.com/scionproto/scion/go/lib/prom"
 	"github.com/scionproto/scion/go/lib/revcache"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 	"github.com/scionproto/scion/go/path_srv/internal/config"
 	"github.com/scionproto/scion/go/path_srv/internal/cryptosyncer"
@@ -224,7 +225,7 @@ func (t *periodicTasks) Start() error {
 	if cfg.PS.SegSync && itopo.Get().Core {
 		t.segSyncers, err = segsyncer.StartAll(t.args, t.msger)
 		if err != nil {
-			return common.NewBasicError("Unable to start seg syncer", err)
+			return serrors.WrapStr("Unable to start seg syncer", err)
 		}
 	}
 	t.pathDBCleaner = periodic.StartPeriodicTask(pathdb.NewCleaner(t.args.PathDB),
@@ -270,15 +271,15 @@ func setupBasic() error {
 
 func setup() error {
 	if err := cfg.Validate(); err != nil {
-		return common.NewBasicError("Unable to validate config", err)
+		return serrors.WrapStr("Unable to validate config", err)
 	}
 	itopo.Init(cfg.General.ID, proto.ServiceType_ps, itopo.Callbacks{})
 	topo, err := topology.LoadFromFile(cfg.General.Topology)
 	if err != nil {
-		return common.NewBasicError("Unable to load topology", err)
+		return serrors.WrapStr("Unable to load topology", err)
 	}
 	if _, _, err := itopo.SetStatic(topo, false); err != nil {
-		return common.NewBasicError("Unable to set initial static topology", err)
+		return serrors.WrapStr("Unable to set initial static topology", err)
 	}
 	infraenv.InitInfraEnvironment(cfg.General.Topology)
 	return nil

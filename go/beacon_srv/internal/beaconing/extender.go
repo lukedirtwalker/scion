@@ -54,7 +54,7 @@ func (s *segExtender) extend(pseg *seg.PathSegment, inIfid, egIfid common.IFIDTy
 	}
 	infoF, err := pseg.InfoF()
 	if err != nil {
-		return common.NewBasicError("Unable to extract info field", err)
+		return serrors.WrapStr("Unable to extract info field", err)
 	}
 	var prev common.RawBytes
 	if pseg.MaxAEIdx() >= 0 {
@@ -88,7 +88,7 @@ func (s *segExtender) createHopEntries(inIfid, egIfid common.IFIDType, peers []c
 
 	hopEntry, err := s.createHopEntry(inIfid, egIfid, prev, ts)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create first hop entry", err)
+		return nil, serrors.WrapStr("Unable to create first hop entry", err)
 	}
 	hopEntries := []*seg.HopEntry{hopEntry}
 	for _, ifid := range peers {

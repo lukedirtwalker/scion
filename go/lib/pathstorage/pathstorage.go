@@ -197,10 +197,10 @@ func NewPathStorage(pdbConf PathDBConf,
 		return newCombinedBackend(pdbConf, rcConf)
 	}
 	if err := pdbConf.Validate(); err != nil {
-		return nil, nil, common.NewBasicError("Invalid pathdb config", err)
+		return nil, nil, serrors.WrapStr("Invalid pathdb config", err)
 	}
 	if err := rcConf.Validate(); err != nil {
-		return nil, nil, common.NewBasicError("Invalid revcache config", err)
+		return nil, nil, serrors.WrapStr("Invalid revcache config", err)
 	}
 	pdb, err := newPathDB(pdbConf)
 	if err != nil {

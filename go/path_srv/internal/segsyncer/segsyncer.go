@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/infra"
@@ -60,7 +59,7 @@ func StartAll(args handlers.HandlerArgs, msger infra.Messenger) ([]*periodic.Run
 	}
 	coreASes, err := args.ASInspector.ByAttributes(ctx, args.IA.I, primaryArgs)
 	if err != nil {
-		return nil, common.NewBasicError("Failed to get local core ASes", err)
+		return nil, serrors.WrapStr("Failed to get local core ASes", err)
 	}
 
 	segSyncers := make([]*periodic.Runner, 0, len(coreASes)-1)
@@ -115,7 +114,7 @@ func (s *SegSyncer) Run(ctx context.Context) {
 func (s *SegSyncer) getDstAddr(ctx context.Context) (net.Addr, error) {
 	coreSegs, err := s.fetchCoreSegsFromDB(ctx)
 	if err != nil {
-		return nil, common.NewBasicError("Failed to get core segs", err)
+		return nil, serrors.WrapStr("Failed to get core segs", err)
 	}
 	if len(coreSegs) < 1 {
 		return nil, serrors.New("No core segments found!")
@@ -146,7 +145,7 @@ func (s *SegSyncer) fetchCoreSegsFromDB(ctx context.Context) ([]*seg.PathSegment
 		return revcache.NoRevokedHopIntf(ctx, s.revCache, ps)
 	})
 	if err != nil {
-		return nil, common.NewBasicError("Failed to filter segments", err)
+		return nil, serrors.WrapStr("Failed to filter segments", err)
 	}
 	// Sort by number of hops, i.e. AS entries.
 	sort.Slice(segs, func(i, j int) bool {

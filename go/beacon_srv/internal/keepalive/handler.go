@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/ifid"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 )
 
@@ -110,7 +111,7 @@ func (h *handler) handle(logger log.Logger) (*infra.HandlerResult, error) {
 		h.startPush(ifid)
 		if err := h.dropRevs(ifid, keepalive.OrigIfID, info.TopoInfo().ISD_AS); err != nil {
 			metrics.Keepalive.Receives(labels).Inc()
-			return infra.MetricsErrInternal, common.NewBasicError("Unable to drop revocations", err)
+			return infra.MetricsErrInternal, serrors.WrapStr("Unable to drop revocations", err)
 		}
 	}
 	logger.Trace("[KeepaliveHandler] Successfully handled", "keepalive", keepalive)
@@ -127,7 +128,7 @@ func (h *handler) getIntfInfo() (common.IFIDType, *ifstate.Interface, error) {
 	}
 	hopF, err := peer.Path.GetHopField(peer.Path.HopOff)
 	if err != nil {
-		return 0, nil, common.NewBasicError("Unable to extract hop field", err)
+		return 0, nil, serrors.WrapStr("Unable to extract hop field", err)
 	}
 	info := h.intfs.Get(hopF.ConsIngress)
 	if info == nil {

@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/pathmgr"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 	"github.com/scionproto/scion/go/sig/internal/sigconfig"
@@ -58,14 +59,14 @@ func Init(cfg sigconfig.SigConf, sdCfg env.SciondClient) error {
 	// Initialize SCION local networking module
 	err = initSNET(cfg, sdCfg)
 	if err != nil {
-		return common.NewBasicError("Error creating local SCION Network context", err)
+		return serrors.WrapStr("Error creating local SCION Network context", err)
 	}
 	PathMgr = snet.DefNetwork.PathResolver()
 	l4 := addr.NewL4UDPInfo(cfg.CtrlPort)
 	CtrlConn, err = snet.ListenSCIONWithBindSVC("udp4",
 		&snet.Addr{IA: IA, Host: &addr.AppAddr{L3: Host, L4: l4}}, nil, addr.SvcSIG)
 	if err != nil {
-		return common.NewBasicError("Error creating ctrl socket", err)
+		return serrors.WrapStr("Error creating ctrl socket", err)
 	}
 	return nil
 }

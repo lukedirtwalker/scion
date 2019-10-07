@@ -20,6 +20,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/hiddenpath"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -58,7 +59,7 @@ func (v *DefaultValidator) Validate(hpSegReg *path_mgmt.HPSegReg, peer addr.IA) 
 		return common.NewBasicError("Group configuration error", err, "group", id)
 	}
 	if err := v.checkSegments(hpSegReg.Recs); err != nil {
-		return common.NewBasicError("Invalid hidden segment", err)
+		return serrors.WrapStr("Invalid hidden segment", err)
 	}
 	return nil
 }

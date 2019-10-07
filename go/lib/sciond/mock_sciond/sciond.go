@@ -6,14 +6,15 @@ package mock_sciond
 
 import (
 	context "context"
+	reflect "reflect"
+	time "time"
+
 	gomock "github.com/golang/mock/gomock"
 	addr "github.com/scionproto/scion/go/lib/addr"
 	common "github.com/scionproto/scion/go/lib/common"
 	path_mgmt "github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	sciond "github.com/scionproto/scion/go/lib/sciond"
 	proto "github.com/scionproto/scion/go/proto"
-	reflect "reflect"
-	time "time"
 )
 
 // MockService is a mock of Service interface

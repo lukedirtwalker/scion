@@ -70,7 +70,7 @@ func InfoEchoFromRaw(b common.RawBytes) (*InfoEcho, error) {
 			nil, "expected", e.Len(), "actual", len(b))
 	}
 	if err := restruct.Unpack(b, common.Order, e); err != nil {
-		return nil, common.NewBasicError("Failed to unpack SCMP ECHO info", err)
+		return nil, serrors.WrapStr("Failed to unpack SCMP ECHO info", err)
 	}
 	return e, nil
 }
@@ -104,7 +104,7 @@ type InfoPktSize struct {
 func InfoPktSizeFromRaw(b common.RawBytes) (*InfoPktSize, error) {
 	p := &InfoPktSize{}
 	if err := restruct.Unpack(b, common.Order, p); err != nil {
-		return nil, common.NewBasicError("Failed to unpack SCMP Pkt Size info", err)
+		return nil, serrors.WrapStr("Failed to unpack SCMP Pkt Size info", err)
 	}
 	return p, nil
 }
@@ -207,7 +207,7 @@ func InfoRevocationFromRaw(b common.RawBytes) (*InfoRevocation, error) {
 	p := &InfoRevocation{}
 	p.InfoPathOffsets, err = InfoPathOffsetsFromRaw(b)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse path offsets", err)
+		return nil, serrors.WrapStr("Unable to parse path offsets", err)
 	}
 	p.RawSRev = b[p.InfoPathOffsets.Len():]
 	return p, nil

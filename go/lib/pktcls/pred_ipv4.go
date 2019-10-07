@@ -20,8 +20,7 @@ import (
 	"net"
 
 	"github.com/google/gopacket/layers"
-
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // IPv4Predicate describes a single test on various IPv4 packet fields.
@@ -62,7 +61,7 @@ func (m *IPv4MatchSource) UnmarshalJSON(b []byte) error {
 	}
 	_, network, err := net.ParseCIDR(s)
 	if err != nil {
-		return common.NewBasicError("Unable to parse MatchSource operand", err)
+		return serrors.WrapStr("Unable to parse MatchSource operand", err)
 	}
 	m.Net = network
 	return nil
@@ -99,7 +98,7 @@ func (m *IPv4MatchDestination) UnmarshalJSON(b []byte) error {
 	}
 	_, network, err := net.ParseCIDR(s)
 	if err != nil {
-		return common.NewBasicError("Unable to parse MatchDestination operand", err)
+		return serrors.WrapStr("Unable to parse MatchDestination operand", err)
 	}
 	m.Net = network
 	return nil

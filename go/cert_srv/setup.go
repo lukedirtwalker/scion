@@ -65,15 +65,15 @@ func setupBasic() error {
 // setup initializes the config and sets the messenger.
 func setup() error {
 	if err := cfg.Validate(); err != nil {
-		return common.NewBasicError("Unable to validate config", err)
+		return serrors.WrapStr("Unable to validate config", err)
 	}
 	itopo.Init(cfg.General.ID, proto.ServiceType_cs, itopo.Callbacks{})
 	topo, err := topology.LoadFromFile(cfg.General.Topology)
 	if err != nil {
-		return common.NewBasicError("Unable to load topology", err)
+		return serrors.WrapStr("Unable to load topology", err)
 	}
 	if _, _, err := itopo.SetStatic(topo, false); err != nil {
-		return common.NewBasicError("Unable to set initial static topology", err)
+		return serrors.WrapStr("Unable to set initial static topology", err)
 	}
 	// Set environment to listen for signals.
 	infraenv.InitInfraEnvironmentFunc(cfg.General.Topology, func() {
@@ -83,14 +83,14 @@ func setup() error {
 	})
 	router, err := infraenv.NewRouter(topo.ISD_AS, cfg.Sciond)
 	if err != nil {
-		return common.NewBasicError("Unable to initialize path router", err)
+		return serrors.WrapStr("Unable to initialize path router", err)
 	}
 	// Load CS state.
 	if err := initState(&cfg, router); err != nil {
-		return common.NewBasicError("Unable to initialize CS state", err)
+		return serrors.WrapStr("Unable to initialize CS state", err)
 	}
 	if err := setMessenger(&cfg, router); err != nil {
-		return common.NewBasicError("Unable to set messenger", err)
+		return serrors.WrapStr("Unable to set messenger", err)
 	}
 	return nil
 }
@@ -106,7 +106,7 @@ func reload() error {
 	}
 	newConf.InitDefaults()
 	if err := newConf.Validate(); err != nil {
-		return common.NewBasicError("Unable to validate new config", err)
+		return serrors.WrapStr("Unable to validate new config", err)
 	}
 	cfg.CS = newConf.CS
 	// Restart the periodic reissue task to respect the fresh parameters.
@@ -120,7 +120,7 @@ func initState(cfg *config.Config, router snet.Router) error {
 	topo := itopo.Get()
 	var err error
 	if trustDB, err = cfg.TrustDB.New(); err != nil {
-		return common.NewBasicError("Unable to initialize trustDB", err)
+		return serrors.WrapStr("Unable to initialize trustDB", err)
 	}
 	trustDB = trustdb.WithMetrics(string(cfg.TrustDB.Backend()), trustDB)
 	trustConf := trust.Config{
@@ -132,14 +132,14 @@ func initState(cfg *config.Config, router snet.Router) error {
 	trustStore := trust.NewStore(trustDB, topo.ISD_AS, trustConf, log.Root())
 	err = trustStore.LoadAuthoritativeCrypto(filepath.Join(cfg.General.ConfigDir, "certs"))
 	if err != nil {
-		return common.NewBasicError("Unable to load local crypto", err)
+		return serrors.WrapStr("Unable to load local crypto", err)
 	}
 	state, err = config.LoadState(cfg.General.ConfigDir, topo.Core, trustDB, trustStore)
 	if err != nil {
-		return common.NewBasicError("Unable to load CS state", err)
+		return serrors.WrapStr("Unable to load CS state", err)
 	}
 	if err = setDefaultSignerVerifier(state, topo.ISD_AS); err != nil {
-		return common.NewBasicError("Unable to set default signer and verifier", err)
+		return serrors.WrapStr("Unable to set default signer and verifier", err)
 	}
 	return nil
 }
@@ -189,7 +189,7 @@ func setMessenger(cfg *config.Config, router snet.Router) error {
 	var err error
 	msgr, err = nc.Messenger()
 	if err != nil {
-		return common.NewBasicError("Unable to initialize SCION Messenger", err)
+		return serrors.WrapStr("Unable to initialize SCION Messenger", err)
 	}
 	msgr.AddHandler(infra.ChainRequest, state.Store.NewChainReqHandler(true))
 	msgr.AddHandler(infra.TRCRequest, state.Store.NewTRCReqHandler(true))

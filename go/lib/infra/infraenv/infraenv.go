@@ -32,6 +32,7 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathmgr"
 	"github.com/scionproto/scion/go/lib/sciond"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 	"github.com/scionproto/scion/go/lib/sock/reliable/reconnect"
@@ -177,7 +178,7 @@ func (nc *NetworkConfig) initUDPSocket(quicAddress string) (net.PacketConn, erro
 
 	udpAddressStr := &bytes.Buffer{}
 	if err := reply.SerializeTo(udpAddressStr); err != nil {
-		return nil, common.NewBasicError("Unable to build SVC resolution reply", err)
+		return nil, serrors.WrapStr("Unable to build SVC resolution reply", err)
 	}
 
 	dispatcherService := reliable.NewDispatcherService("")
@@ -197,11 +198,11 @@ func (nc *NetworkConfig) initUDPSocket(quicAddress string) (net.PacketConn, erro
 	)
 	network, err := snet.NewCustomNetwork(nc.IA, "", packetDispatcher)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create network", err)
+		return nil, serrors.WrapStr("Unable to create network", err)
 	}
 	conn, err := network.ListenSCIONWithBindSVC("udp4", nc.Public, nc.Bind, nc.SVC, 0)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to listen on SCION", err)
+		return nil, serrors.WrapStr("Unable to listen on SCION", err)
 	}
 	return conn, nil
 }
@@ -219,12 +220,12 @@ func (nc *NetworkConfig) initQUICSocket() (net.PacketConn, error) {
 		},
 	)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create network", err)
+		return nil, serrors.WrapStr("Unable to create network", err)
 	}
 	// FIXME(scrye): Add support for bind addresses.
 	udpAddr, err := net.ResolveUDPAddr("udp", nc.QUIC.Address)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse address", err)
+		return nil, serrors.WrapStr("Unable to parse address", err)
 	}
 	public := &snet.Addr{
 		IA: nc.IA,
@@ -235,7 +236,7 @@ func (nc *NetworkConfig) initQUICSocket() (net.PacketConn, error) {
 	}
 	conn, err := network.ListenSCIONWithBindSVC("udp4", public, nil, addr.SvcNone, 0)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to listen on SCION", err)
+		return nil, serrors.WrapStr("Unable to listen on SCION", err)
 	}
 	return conn, nil
 }
@@ -321,7 +322,7 @@ func NewRouter(localIA addr.IA, sd env.SciondClient) (snet.Router, error) {
 		select {
 		case <-ticker.C:
 		case <-timer.C:
-			return nil, common.NewBasicError("Timed out during initial sciond connect", err)
+			return nil, serrors.WrapStr("Timed out during initial sciond connect", err)
 		}
 	}
 	return router, nil

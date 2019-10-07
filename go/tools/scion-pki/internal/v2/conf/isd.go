@@ -164,16 +164,16 @@ func (t *TRC) Validate() error {
 func (t *TRC) parsePrimaries() error {
 	var err error
 	if t.AuthoritativeASes, err = t.parsePrimary(t.RawAuthoritativeASes); err != nil {
-		return common.NewBasicError("invalid AuthoritativeASes", err)
+		return serrors.WrapStr("invalid AuthoritativeASes", err)
 	}
 	if t.CoreASes, err = t.parsePrimary(t.RawCoreASes); err != nil {
-		return common.NewBasicError("invalid CoreASes", err)
+		return serrors.WrapStr("invalid CoreASes", err)
 	}
 	if t.IssuingASes, err = t.parsePrimary(t.RawIssuingASes); err != nil {
-		return common.NewBasicError("invalid IssuingASes", err)
+		return serrors.WrapStr("invalid IssuingASes", err)
 	}
 	if t.VotingASes, err = t.parsePrimary(t.RawVotingASes); err != nil {
-		return common.NewBasicError("invalid VotingASes", err)
+		return serrors.WrapStr("invalid VotingASes", err)
 	}
 	return nil
 }

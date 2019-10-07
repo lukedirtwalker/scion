@@ -43,6 +43,7 @@ import (
 	"github.com/scionproto/scion/go/lib/periodic"
 	"github.com/scionproto/scion/go/lib/prom"
 	"github.com/scionproto/scion/go/lib/revcache"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 	"github.com/scionproto/scion/go/proto"
 	"github.com/scionproto/scion/go/sciond/internal/config"
@@ -198,15 +199,15 @@ func setupBasic() error {
 
 func setup() error {
 	if err := cfg.Validate(); err != nil {
-		return common.NewBasicError("Unable to validate config", err)
+		return serrors.WrapStr("Unable to validate config", err)
 	}
 	itopo.Init("", proto.ServiceType_unset, itopo.Callbacks{})
 	topo, err := topology.LoadFromFile(cfg.General.Topology)
 	if err != nil {
-		return common.NewBasicError("Unable to load topology", err)
+		return serrors.WrapStr("Unable to load topology", err)
 	}
 	if _, _, err := itopo.SetStatic(topo, false); err != nil {
-		return common.NewBasicError("Unable to set initial static topology", err)
+		return serrors.WrapStr("Unable to set initial static topology", err)
 	}
 	infraenv.InitInfraEnvironment(cfg.General.Topology)
 	return cfg.SD.CreateSocketDirs()

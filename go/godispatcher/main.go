@@ -27,7 +27,6 @@ import (
 
 	"github.com/scionproto/scion/go/godispatcher/internal/config"
 	"github.com/scionproto/scion/go/godispatcher/network"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/fatal"
 	"github.com/scionproto/scion/go/lib/log"
@@ -170,7 +169,7 @@ func waitForTeardown() int {
 func checkPerms() error {
 	u, err := user.Current()
 	if err != nil {
-		return common.NewBasicError("Error retrieving user", err)
+		return serrors.WrapStr("Error retrieving user", err)
 	}
 	if u.Uid == "0" {
 		return serrors.New("Running as root is not allowed for security reasons")

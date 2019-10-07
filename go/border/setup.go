@@ -37,6 +37,7 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 	"github.com/scionproto/scion/go/proto"
 )
@@ -96,7 +97,7 @@ func (r *Router) setup() error {
 func (r *Router) clearCapabilities() error {
 	caps, err := capability.NewPid(0)
 	if err != nil {
-		return common.NewBasicError("Error retrieving capabilities", err)
+		return serrors.WrapStr("Error retrieving capabilities", err)
 	}
 	log.Debug("Startup capabilities", "caps", caps)
 	caps.Clear(capability.CAPS)
@@ -262,7 +263,7 @@ func (r *Router) rollbackNet(ctx, oldCtx *rctx.Ctx,
 	// Rollback of local interface.
 	err := registeredLocSockOps[sockConf.Loc()].Rollback(r, ctx, oldCtx)
 	if err != nil {
-		handleErr(common.NewBasicError("Unable to rollback local interface", err))
+		handleErr(serrors.WrapStr("Unable to rollback local interface", err))
 	}
 	if oldCtx != nil {
 		// Start sockets that are possibly created by rollback.
@@ -287,7 +288,7 @@ func (r *Router) startDiscovery() error {
 	var client *http.Client
 	if cfg.Discovery.Dynamic.Enable {
 		if client, err = r.discoveryClient(); err != nil {
-			return common.NewBasicError("Unable to create discovery client", err)
+			return serrors.WrapStr("Unable to create discovery client", err)
 		}
 	}
 	handlers := idiscovery.TopoHandlers{
@@ -296,7 +297,7 @@ func (r *Router) startDiscovery() error {
 	}
 	_, err = idiscovery.StartRunners(cfg.Discovery.Config, discovery.Full, handlers, client)
 	if err != nil {
-		return common.NewBasicError("Unable to start discovery runners", err)
+		return serrors.WrapStr("Unable to start discovery runners", err)
 	}
 	return nil
 }

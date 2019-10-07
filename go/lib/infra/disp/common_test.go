@@ -45,7 +45,7 @@ func (t testAdapterT) RawToMsg(b common.RawBytes) (proto.Cerealizable, error) {
 	}
 	id, err := strconv.Atoi(items[0])
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse ID", err)
+		return nil, serrors.WrapStr("Unable to parse ID", err)
 	}
 	msg := &customObject{
 		id:  id,

@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 )
@@ -187,7 +188,7 @@ func (c *AS) validate() error {
 		return err
 	}
 	if err := defaultAndValidateSignAlgorithm(&c.SignAlgorithm); err != nil {
-		return common.NewBasicError("invalid SignAlgorithm", err)
+		return serrors.WrapStr("invalid SignAlgorithm", err)
 	}
 	if c.RawIssuerIA == "" {
 		return common.NewBasicError(ErrIssuerMissing, nil)
@@ -223,7 +224,7 @@ func (c *Issuer) validate() error {
 		return nil
 	}
 	if err := defaultAndValidateSignAlgorithm(&c.IssuingAlgorithm); err != nil {
-		return common.NewBasicError("invalid IssuingAlgorithm", err)
+		return serrors.WrapStr("invalid IssuingAlgorithm", err)
 	}
 	if c.TRCVersion == 0 {
 		return common.NewBasicError(ErrInvalidIssuerTRCVersion, nil)
@@ -267,7 +268,7 @@ func (c *BaseCert) validate() error {
 	}
 	if c.RevAlgorithm != "" {
 		if err := defaultAndValidateSignAlgorithm(&c.RevAlgorithm); err != nil {
-			return common.NewBasicError("invalid RevAlgorithm", err)
+			return serrors.WrapStr("invalid RevAlgorithm", err)
 		}
 	}
 	return nil

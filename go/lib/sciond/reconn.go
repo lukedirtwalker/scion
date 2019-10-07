@@ -22,6 +22,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -57,10 +58,10 @@ func newReconnector(path string, initialCheckTimeout time.Duration) (*reconnecto
 func (c *reconnector) checkForSciond(initialCheckTimeout time.Duration) error {
 	sciondConn, err := connectTimeout(c.path, initialCheckTimeout)
 	if err != nil {
-		return common.NewBasicError("Unable to connect to SCIOND", err)
+		return serrors.WrapStr("Unable to connect to SCIOND", err)
 	}
 	if err := sciondConn.Close(context.Background()); err != nil {
-		return common.NewBasicError("Error when closing test SCIOND conn", err)
+		return serrors.WrapStr("Error when closing test SCIOND conn", err)
 	}
 	return nil
 }

@@ -5,10 +5,11 @@
 package mock_reconnect
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	net "net"
 	reflect "reflect"
 	time "time"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockIOOperation is a mock of IOOperation interface

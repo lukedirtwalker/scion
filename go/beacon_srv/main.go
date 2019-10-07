@@ -389,7 +389,7 @@ func (t *periodicTasks) startOriginator(a *topology.TopoAddr) (*periodic.Runner,
 		Period: cfg.BS.OriginationInterval.Duration,
 	}.New()
 	if err != nil {
-		return nil, common.NewBasicError("Unable to start originator", err)
+		return nil, serrors.WrapStr("Unable to start originator", err)
 	}
 	return periodic.StartPeriodicTask(s, periodic.NewTicker(500*time.Millisecond),
 		cfg.BS.OriginationInterval.Duration), nil
@@ -426,7 +426,7 @@ func (t *periodicTasks) startPropagator(a *topology.TopoAddr) (*periodic.Runner,
 		Period: cfg.BS.PropagationInterval.Duration,
 	}.New()
 	if err != nil {
-		return nil, common.NewBasicError("Unable to start propagator", err)
+		return nil, serrors.WrapStr("Unable to start propagator", err)
 	}
 	return periodic.StartPeriodicTask(p, periodic.NewTicker(500*time.Millisecond),
 		cfg.BS.PropagationInterval.Duration), nil
@@ -439,16 +439,16 @@ func (t *periodicTasks) startSegRegRunners() (segRegRunners, error) {
 	if s.core {
 		s.coreRegistrar, err = t.startRegistrar(topo, proto.PathSegType_core, beacon.CoreRegPolicy)
 		if err != nil {
-			return s, common.NewBasicError("Unable to create core segment registrar", err)
+			return s, serrors.WrapStr("Unable to create core segment registrar", err)
 		}
 	} else {
 		s.downRegistrar, err = t.startRegistrar(topo, proto.PathSegType_down, beacon.DownRegPolicy)
 		if err != nil {
-			return s, common.NewBasicError("Unable to create down segment registrar", err)
+			return s, serrors.WrapStr("Unable to create down segment registrar", err)
 		}
 		s.upRegistrar, err = t.startRegistrar(topo, proto.PathSegType_up, beacon.UpRegPolicy)
 		if err != nil {
-			return s, common.NewBasicError("Unable to create up segment registrar", err)
+			return s, serrors.WrapStr("Unable to create up segment registrar", err)
 		}
 	}
 	return s, nil
@@ -487,17 +487,17 @@ func (t *periodicTasks) createSigner(topo *topology.Topo) (infra.Signer, error) 
 	dir := filepath.Join(cfg.General.ConfigDir, "keys")
 	cfg, err := keyconf.Load(dir, false, false, false, false)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to load key config", err)
+		return nil, serrors.WrapStr("Unable to load key config", err)
 	}
 	ctx, cancelF := context.WithTimeout(context.Background(), time.Second)
 	defer cancelF()
 	meta, err := trust.CreateSignMeta(ctx, topo.ISD_AS, t.trustDB)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create sign meta", err)
+		return nil, serrors.WrapStr("Unable to create sign meta", err)
 	}
 	signer, err := trust.NewBasicSigner(cfg.SignKey, meta)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create signer", err)
+		return nil, serrors.WrapStr("Unable to create signer", err)
 	}
 	return signer, nil
 }
@@ -551,16 +551,16 @@ func setupBasic() error {
 
 func setup() error {
 	if err := cfg.Validate(); err != nil {
-		return common.NewBasicError("Unable to validate config", err)
+		return serrors.WrapStr("Unable to validate config", err)
 	}
 	clbks := itopo.Callbacks{UpdateStatic: handleTopoUpdate}
 	itopo.Init(cfg.General.ID, proto.ServiceType_bs, clbks)
 	topo, err := topology.LoadFromFile(cfg.General.Topology)
 	if err != nil {
-		return common.NewBasicError("Unable to load topology", err)
+		return serrors.WrapStr("Unable to load topology", err)
 	}
 	if _, _, err := itopo.SetStatic(topo, false); err != nil {
-		return common.NewBasicError("Unable to set initial static topology", err)
+		return serrors.WrapStr("Unable to set initial static topology", err)
 	}
 	infraenv.InitInfraEnvironment(cfg.General.Topology)
 	return nil

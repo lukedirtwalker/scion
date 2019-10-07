@@ -22,6 +22,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -62,14 +63,14 @@ func NewSignSrcDefFromRaw(b common.RawBytes) (SignSrcDef, error) {
 	}
 	ia, err := addr.IAFromString(string(match[1]))
 	if err != nil {
-		return SignSrcDef{}, common.NewBasicError("Unable to parse default src IA", err)
+		return SignSrcDef{}, serrors.WrapStr("Unable to parse default src IA", err)
 	}
 	var chainVer, trcVer scrypto.Version
 	if err := chainVer.UnmarshalJSON(match[2]); err != nil {
-		return SignSrcDef{}, common.NewBasicError("Unable to parse default src ChainVer", err)
+		return SignSrcDef{}, serrors.WrapStr("Unable to parse default src ChainVer", err)
 	}
 	if err := trcVer.UnmarshalJSON(match[3]); err != nil {
-		return SignSrcDef{}, common.NewBasicError("Unable to parse default src TRCVer", err)
+		return SignSrcDef{}, serrors.WrapStr("Unable to parse default src TRCVer", err)
 	}
 	return SignSrcDef{IA: ia, ChainVer: chainVer, TRCVer: trcVer}, nil
 }

@@ -21,7 +21,7 @@ import (
 	"io/ioutil"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // Cfg is a direct Go representation of the JSON file format.
@@ -34,11 +34,11 @@ type Cfg struct {
 func LoadFromFile(path string) (*Cfg, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to open SIG config", err)
+		return nil, serrors.WrapStr("Unable to open SIG config", err)
 	}
 	cfg := &Cfg{}
 	if err := json.Unmarshal(b, cfg); err != nil {
-		return nil, common.NewBasicError("Unable to parse SIG config", err)
+		return nil, serrors.WrapStr("Unable to parse SIG config", err)
 	}
 	return cfg, nil
 }

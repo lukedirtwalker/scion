@@ -21,6 +21,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/topology"
@@ -31,14 +32,14 @@ func GetPath(svc addr.HostSVC, ps *seg.PathSegment, topoProv topology.Provider) 
 
 	x := &bytes.Buffer{}
 	if _, err := ps.RawWriteTo(x); err != nil {
-		return nil, common.NewBasicError("Failed to write segment to buffer", err)
+		return nil, serrors.WrapStr("Failed to write segment to buffer", err)
 	}
 	p := spath.New(x.Bytes())
 	if err := p.Reverse(); err != nil {
-		return nil, common.NewBasicError("Failed to reverse path", err)
+		return nil, serrors.WrapStr("Failed to reverse path", err)
 	}
 	if err := p.InitOffsets(); err != nil {
-		return nil, common.NewBasicError("Failed to init offsets", err)
+		return nil, serrors.WrapStr("Failed to init offsets", err)
 	}
 	hopF, err := p.GetHopField(p.HopOff)
 	if err != nil {

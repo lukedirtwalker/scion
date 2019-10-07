@@ -5,12 +5,13 @@
 package mock_reliable
 
 import (
-	gomock "github.com/golang/mock/gomock"
-	addr "github.com/scionproto/scion/go/lib/addr"
-	overlay "github.com/scionproto/scion/go/lib/overlay"
 	net "net"
 	reflect "reflect"
 	time "time"
+
+	gomock "github.com/golang/mock/gomock"
+	addr "github.com/scionproto/scion/go/lib/addr"
+	overlay "github.com/scionproto/scion/go/lib/overlay"
 )
 
 // MockDispatcherService is a mock of DispatcherService interface

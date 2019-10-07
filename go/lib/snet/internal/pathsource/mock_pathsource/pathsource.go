@@ -6,11 +6,12 @@ package mock_pathsource
 
 import (
 	context "context"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	addr "github.com/scionproto/scion/go/lib/addr"
 	overlay "github.com/scionproto/scion/go/lib/overlay"
 	spath "github.com/scionproto/scion/go/lib/spath"
-	reflect "reflect"
 )
 
 // MockPathSource is a mock of PathSource interface
