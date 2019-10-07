@@ -116,7 +116,7 @@ func asParse(s string, sep string) (AS, error) {
 		as <<= asPartBits
 		v, err := strconv.ParseUint(parts[i], asPartBase, asPartBits)
 		if err != nil {
-			return 0, common.NewBasicError("Unable to parse AS part", err, "raw", s)
+			return 0, serrors.WrapStr("Unable to parse AS part", err, "raw", s)
 		}
 		as |= AS(v)
 	}

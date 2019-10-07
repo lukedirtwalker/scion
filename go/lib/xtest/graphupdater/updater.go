@@ -22,7 +22,6 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/xtest/graph"
 )
@@ -40,7 +39,7 @@ type topo struct {
 func loadTopo(topoFile string) (*topo, error) {
 	buffer, err := ioutil.ReadFile(topoFile)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to read from file", err, "name", topoFile)
+		return nil, serrors.WrapStr("Unable to read from file", err, "name", topoFile)
 	}
 	var t topo
 	err = yaml.Unmarshal(buffer, &t)

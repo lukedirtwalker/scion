@@ -112,7 +112,7 @@ func (r *Router) loadNewConfig() (*brconf.BRConf, error) {
 	var config *brconf.BRConf
 	var err error
 	if config, err = brconf.Load(r.Id, r.confDir); err != nil {
-		return nil, common.NewBasicError("Failed to load topology config", err, "dir", r.confDir)
+		return nil, serrors.WrapStr("Failed to load topology config", err, "dir", r.confDir)
 	}
 	log.Debug("Topology and AS config loaded", "IA", config.IA, "IfIDs", config.BR,
 		"dir", r.confDir)

@@ -71,7 +71,7 @@ func genTrc(isd addr.ISD) error {
 	outDir = filepath.Join(outDir, pkicmn.TRCsDir)
 	if _, err = os.Stat(outDir); os.IsNotExist(err) {
 		if err = os.MkdirAll(outDir, 0755); err != nil {
-			return common.NewBasicError("Cannot create output dir", err, "path", outDir)
+			return serrors.WrapStr("Cannot create output dir", err, "path", outDir)
 		}
 	}
 	fname := fmt.Sprintf(pkicmn.TrcNameFmt, isd, iconf.Trc.Version)
@@ -106,7 +106,7 @@ func newTrc(isd addr.ISD, iconf *conf.Isd, path string) (*trc.TRC, error) {
 		cpath := filepath.Join(pkicmn.GetAsPath(pkicmn.RootDir, cia), conf.AsConfFileName)
 		a, err := conf.LoadAsConf(filepath.Dir(cpath))
 		if err != nil {
-			return nil, common.NewBasicError("Error loading as.ini", err, "path", cpath)
+			return nil, serrors.WrapStr("Error loading as.ini", err, "path", cpath)
 		}
 		if a.KeyAlgorithms == nil {
 			return nil, common.NewBasicError("Section missing from as.ini",
@@ -152,7 +152,7 @@ func newTrc(isd addr.ISD, iconf *conf.Isd, path string) (*trc.TRC, error) {
 	// Sign the TRC.
 	for _, as := range ases {
 		if err := t.Sign(as.IA.String(), as.OnlineKey, as.OnlineKeyAlg); err != nil {
-			return nil, common.NewBasicError("Error signing TRC", err, "signer", as.IA)
+			return nil, serrors.WrapStr("Error signing TRC", err, "signer", as.IA)
 		}
 	}
 	return t, nil

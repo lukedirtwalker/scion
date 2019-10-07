@@ -79,7 +79,7 @@ func (cfg *BRConf) loadTopo(id string) error {
 		return err
 	}
 	if err := cfg.initTopo(id, topo); err != nil {
-		return common.NewBasicError("Unable to initialize topo", err, "path", topoPath)
+		return serrors.WrapStr("Unable to initialize topo", err, "path", topoPath)
 	}
 	return nil
 }

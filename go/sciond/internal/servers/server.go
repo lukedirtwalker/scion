@@ -124,7 +124,7 @@ func (srv *Server) listen() (net.Listener, error) {
 		return nil, err
 	}
 	if err := os.Chmod(srv.address, srv.filemode); err != nil {
-		return nil, common.NewBasicError("chmod failed", err, "address", srv.address)
+		return nil, serrors.WrapStr("chmod failed", err, "address", srv.address)
 	}
 	return listener, nil
 }

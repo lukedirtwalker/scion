@@ -106,13 +106,13 @@ func (s *Self) createLeafCert(ctx context.Context, leaf *cert.Certificate) error
 		chain.Leaf.ExpirationTime = chain.Issuer.ExpirationTime
 	}
 	if err := chain.Leaf.Sign(s.State.GetIssSigningKey(), issCrt.SignAlgorithm); err != nil {
-		return common.NewBasicError("Unable to sign leaf certificate", err, "chain", chain)
+		return serrors.WrapStr("Unable to sign leaf certificate", err, "chain", chain)
 	}
 	if err := trust.VerifyChain(ctx, s.IA, chain, s.State.Store); err != nil {
-		return common.NewBasicError("Unable to verify chain", err, "chain", chain)
+		return serrors.WrapStr("Unable to verify chain", err, "chain", chain)
 	}
 	if _, err := s.State.TrustDB.InsertChain(ctx, chain); err != nil {
-		return common.NewBasicError("Unable to write certificate chain", err, "chain", chain)
+		return serrors.WrapStr("Unable to write certificate chain", err, "chain", chain)
 	}
 	log.FromCtx(ctx).Info("[reiss.Self] Created certificate chain", "chain", chain)
 	meta, err := trust.CreateSignMeta(ctx, s.IA, s.State.TrustDB)
@@ -148,16 +148,16 @@ func (s *Self) createIssuerCert(ctx context.Context, crt *cert.Certificate) erro
 	crt.ExpirationTime = crt.IssuingTime + cert.DefaultIssuerCertValidity
 	coreAS, err := s.getCoreASEntry(ctx)
 	if err != nil {
-		return common.NewBasicError("Unable to get core AS entry", err, "cert", crt)
+		return serrors.WrapStr("Unable to get core AS entry", err, "cert", crt)
 	}
 	if err = crt.Sign(s.State.GetOnRootKey(), coreAS.OnlineKeyAlg); err != nil {
-		return common.NewBasicError("Unable to sign issuer certificate", err, "cert", crt)
+		return serrors.WrapStr("Unable to sign issuer certificate", err, "cert", crt)
 	}
 	if err = crt.Verify(crt.Issuer, coreAS.OnlineKey, coreAS.OnlineKeyAlg); err != nil {
-		return common.NewBasicError("Invalid issuer certificate signature", err, "cert", crt)
+		return serrors.WrapStr("Invalid issuer certificate signature", err, "cert", crt)
 	}
 	if err = s.setIssuerCert(ctx, crt); err != nil {
-		return common.NewBasicError("Unable to store issuer certificate", err, "cert", crt)
+		return serrors.WrapStr("Unable to store issuer certificate", err, "cert", crt)
 	}
 	log.FromCtx(ctx).Info("[reiss.Self] Created issuer certificate", "cert", crt)
 	return nil

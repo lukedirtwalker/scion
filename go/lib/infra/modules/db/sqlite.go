@@ -70,7 +70,7 @@ func open(path string) (*sql.DB, error) {
 	uri := fmt.Sprintf("%s?_foreign_keys=1", path)
 	db, err := sql.Open("sqlite3", uri)
 	if err != nil {
-		return nil, common.NewBasicError("Couldn't open SQLite database", err, "path", path)
+		return nil, serrors.WrapStr("Couldn't open SQLite database", err, "path", path)
 	}
 	// On future errors, close the sql database before exiting
 	defer func() {
@@ -105,12 +105,12 @@ func open(path string) (*sql.DB, error) {
 func setup(db *sql.DB, schema string, schemaVersion int, path string) error {
 	_, err := db.Exec(schema)
 	if err != nil {
-		return common.NewBasicError("Failed to set up SQLite database", err, "path", path)
+		return serrors.WrapStr("Failed to set up SQLite database", err, "path", path)
 	}
 	// Write schema version to database.
 	_, err = db.Exec(fmt.Sprintf("PRAGMA user_version = %d", schemaVersion))
 	if err != nil {
-		return common.NewBasicError("Failed to write schema version", err, "path", path)
+		return serrors.WrapStr("Failed to write schema version", err, "path", path)
 	}
 	return nil
 }

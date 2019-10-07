@@ -405,7 +405,7 @@ func (e *executor) Get(ctx context.Context, params *query.Params) (query.Results
 	stmt, args := e.buildQuery(params)
 	rows, err := e.db.QueryContext(ctx, stmt, args...)
 	if err != nil {
-		return nil, common.NewBasicError("Error looking up path segment", err, "q", stmt)
+		return nil, serrors.WrapStr("Error looking up path segment", err, "q", stmt)
 	}
 	defer rows.Close()
 	var res query.Results
@@ -543,7 +543,7 @@ func (e *executor) GetAll(ctx context.Context) (<-chan query.ResultOrErr, error)
 	stmt, args := e.buildQuery(nil)
 	rows, err := e.db.QueryContext(ctx, stmt, args...)
 	if err != nil {
-		return nil, common.NewBasicError("Error looking up path segment", err, "q", stmt)
+		return nil, serrors.WrapStr("Error looking up path segment", err, "q", stmt)
 	}
 	resCh := make(chan query.ResultOrErr)
 	go func() {

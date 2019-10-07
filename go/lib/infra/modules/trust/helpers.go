@@ -21,7 +21,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust/trustdb"
@@ -87,7 +86,7 @@ func VerifyChain(ctx context.Context, subject addr.IA, chain *cert.Chain,
 			xerrors.Is(err, cert.ErrIssCertInvalid) {
 
 			if errG := chain.Verify(subject, graceTrc); errG != nil {
-				return common.NewBasicError("Unable to verify chain", err, "errGraceTRC", errG)
+				return serrors.WrapStr("Unable to verify chain", err, "errGraceTRC", errG)
 			}
 		} else {
 			return serrors.WrapStr("Unable to verify chain", err)

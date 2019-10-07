@@ -20,6 +20,7 @@ import (
 	"net"
 
 	"github.com/google/gopacket/layers"
+
 	"github.com/scionproto/scion/go/lib/serrors"
 )
 

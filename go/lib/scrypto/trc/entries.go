@@ -140,7 +140,7 @@ func (a *Addr) ParseString(addr_ string) error {
 	}
 	ia, err := addr.IAFromString(l[0])
 	if err != nil {
-		return common.NewBasicError("Invalid address", err, "raw", addr_)
+		return serrors.WrapStr("Invalid address", err, "raw", addr_)
 	}
 	ip := net.ParseIP(l[1])
 	if ip == nil {

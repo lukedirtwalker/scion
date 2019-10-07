@@ -477,7 +477,7 @@ func (t *periodicTasks) startRegistrar(topo *topology.Topo, segType proto.PathSe
 		},
 	}.New()
 	if err != nil {
-		return nil, common.NewBasicError("Unable to start registrar", err, "type", segType)
+		return nil, serrors.WrapStr("Unable to start registrar", err, "type", segType)
 	}
 	return periodic.StartPeriodicTask(r, periodic.NewTicker(500*time.Millisecond),
 		cfg.BS.RegistrationInterval.Duration), nil
@@ -620,7 +620,7 @@ func loadPolicy(fn string, t beacon.PolicyType) (beacon.Policy, error) {
 	if fn != "" {
 		p, err := beacon.LoadPolicyFromYaml(fn, t)
 		if err != nil {
-			return policy, common.NewBasicError("Unable to load policy", err, "fn", fn, "type", t)
+			return policy, serrors.WrapStr("Unable to load policy", err, "fn", fn, "type", t)
 		}
 		policy = *p
 	}

@@ -24,7 +24,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/conf"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
@@ -38,7 +38,7 @@ var (
 func runGenTopoTmpl(args []string) error {
 	raw, err := ioutil.ReadFile(args[0])
 	if err != nil {
-		return common.NewBasicError("unable to read file", err, "file", args[0])
+		return serrors.WrapStr("unable to read file", err, "file", args[0])
 	}
 	val, err := validityFromFlags()
 	if err != nil {
@@ -46,7 +46,7 @@ func runGenTopoTmpl(args []string) error {
 	}
 	var topo topoFile
 	if err := yaml.Unmarshal(raw, &topo); err != nil {
-		return common.NewBasicError("unable to parse topo", err, "file", args[0])
+		return serrors.WrapStr("unable to parse topo", err, "file", args[0])
 	}
 	isdCfgs := make(map[addr.ISD]*conf.Isd)
 	for isd := range topo.ISDs() {
@@ -54,20 +54,20 @@ func runGenTopoTmpl(args []string) error {
 		isdCfgs[isd] = isdCfg
 		dir := pkicmn.GetIsdPath(pkicmn.RootDir, isd)
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return common.NewBasicError("unable to make ISD directory", err, "isd", isd)
+			return serrors.WrapStr("unable to make ISD directory", err, "isd", isd)
 		}
 		if err := isdCfg.Write(filepath.Join(dir, conf.IsdConfFileName), pkicmn.Force); err != nil {
-			return common.NewBasicError("unable to write ISD config", err, "isd", isd)
+			return serrors.WrapStr("unable to write ISD config", err, "isd", isd)
 		}
 	}
 	for ia, entry := range topo.ASes {
 		asCfg := genASCfg(ia, entry, val, isdCfgs[ia.I])
 		dir := pkicmn.GetAsPath(pkicmn.RootDir, ia)
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return common.NewBasicError("unable to make AS directory", err, "ia", ia)
+			return serrors.WrapStr("unable to make AS directory", err, "ia", ia)
 		}
 		if err := asCfg.Write(filepath.Join(dir, conf.AsConfFileName), pkicmn.Force); err != nil {
-			return common.NewBasicError("unable to write AS config", err, "ia", ia)
+			return serrors.WrapStr("unable to write AS config", err, "ia", ia)
 		}
 	}
 
@@ -121,7 +121,7 @@ type validity struct {
 func validityFromFlags() (validity, error) {
 	p, err := util.ParseDuration(rawValidity)
 	if err != nil {
-		return validity{}, common.NewBasicError("invalid validity", err, "input", rawValidity)
+		return validity{}, serrors.WrapStr("invalid validity", err, "input", rawValidity)
 	}
 	return validity{NotBefore: notBefore, Validity: p}, nil
 }

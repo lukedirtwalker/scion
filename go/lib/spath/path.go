@@ -177,7 +177,7 @@ func (path *Path) IncOffsets() error {
 		return path.InitOffsets()
 	}
 	if _, err = path.GetHopField(path.HopOff); err != nil {
-		return common.NewBasicError("Hop Field parse error", err, "offset", path.HopOff)
+		return serrors.WrapStr("Hop Field parse error", err, "offset", path.HopOff)
 	}
 	return path.incOffsets(HopFieldLength)
 }
@@ -193,7 +193,7 @@ func (path *Path) incOffsets(skip int) error {
 	var hopF *HopField
 	infoF, err := path.GetInfoField(path.InfOff)
 	if err != nil {
-		return common.NewBasicError("Info Field parse error", err, "offset", path.InfOff)
+		return serrors.WrapStr("Info Field parse error", err, "offset", path.InfOff)
 	}
 	path.HopOff += skip
 	for {
@@ -202,12 +202,12 @@ func (path *Path) incOffsets(skip int) error {
 			path.InfOff = path.HopOff
 			infoF, err = path.GetInfoField(path.InfOff)
 			if err != nil {
-				return common.NewBasicError("Info Field parse error", err, "offset", path.InfOff)
+				return serrors.WrapStr("Info Field parse error", err, "offset", path.InfOff)
 			}
 			path.HopOff += common.LineLen
 		}
 		if hopF, err = path.GetHopField(path.HopOff); err != nil {
-			return common.NewBasicError("Hop Field parse error", err, "offset", path.HopOff)
+			return serrors.WrapStr("Hop Field parse error", err, "offset", path.HopOff)
 		}
 		if !hopF.VerifyOnly {
 			break
@@ -226,7 +226,7 @@ func (path *Path) GetInfoField(offset int) (*InfoField, error) {
 	}
 	infoF, err := InfoFFromRaw(path.Raw[offset:])
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse Info Field", err, "offset", offset)
+		return nil, serrors.WrapStr("Unable to parse Info Field", err, "offset", offset)
 	}
 	return infoF, nil
 }
@@ -240,7 +240,7 @@ func (path *Path) GetHopField(offset int) (*HopField, error) {
 	}
 	hopF, err := HopFFromRaw(path.Raw[offset:])
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse Hop Field", err, "offset", offset)
+		return nil, serrors.WrapStr("Unable to parse Hop Field", err, "offset", offset)
 	}
 	return hopF, nil
 }

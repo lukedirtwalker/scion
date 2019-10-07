@@ -283,7 +283,7 @@ func (r *baseSVCRouter) GetOverlay(svc addr.HostSVC) (*overlay.OverlayAddr, erro
 	topo := r.topology.Get()
 	topoAddr, err := topo.GetAnyTopoAddr(toProtoServiceType(svc))
 	if err != nil {
-		return nil, common.NewBasicError("Failed to look up SVC in topology", err, "svc", svc)
+		return nil, serrors.WrapStr("Failed to look up SVC in topology", err, "svc", svc)
 	}
 	return topoAddr.OverlayAddr(topo.Overlay), nil
 }

@@ -463,7 +463,7 @@ func (store *Store) newChainValidatorForwarding(validator *trc.TRC) ValidateChai
 		}, addr, messenger.NextId())
 		if err != nil {
 			metrics.Store.Sent(l.WithResult(metrics.ErrTransmit)).Inc()
-			return common.NewBasicError("Failed to forward cert chain", err, "chain", chain)
+			return serrors.WrapStr("Failed to forward cert chain", err, "chain", chain)
 		}
 		metrics.Store.Sent(l).Inc()
 		return nil

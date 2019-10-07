@@ -81,7 +81,7 @@ Selector:
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runGenASTmpl(args[0]); err != nil {
-			return common.NewBasicError("unable to generate AS templates", err, "selector", args[0])
+			return serrors.WrapStr("unable to generate AS templates", err, "selector", args[0])
 		}
 		return nil
 	},

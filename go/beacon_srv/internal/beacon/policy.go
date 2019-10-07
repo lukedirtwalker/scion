@@ -233,7 +233,7 @@ func ParsePolicyYaml(b common.RawBytes, t PolicyType) (*Policy, error) {
 func LoadPolicyFromYaml(path string, t PolicyType) (*Policy, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to read policy file", err, "path", path)
+		return nil, serrors.WrapStr("Unable to read policy file", err, "path", path)
 	}
 	return ParsePolicyYaml(b, t)
 }

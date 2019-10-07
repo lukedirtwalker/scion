@@ -19,7 +19,6 @@ import (
 	"net"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
@@ -43,7 +42,7 @@ func GetPath(svc addr.HostSVC, ps *seg.PathSegment, topoProv topology.Provider) 
 	}
 	hopF, err := p.GetHopField(p.HopOff)
 	if err != nil {
-		return nil, common.NewBasicError("Failed to extract first HopField", err, "p", p)
+		return nil, serrors.WrapStr("Failed to extract first HopField", err, "p", p)
 	}
 	topo := topoProv.Get()
 	ifId := hopF.ConsIngress

@@ -39,7 +39,7 @@ func runSign(selector string) error {
 	}
 	for isd, ases := range asMap {
 		if err = genAndWriteSignatures(isd, ases, asSelector); err != nil {
-			return common.NewBasicError("unable to sign TRC", err, "isd", isd)
+			return serrors.WrapStr("unable to sign TRC", err, "isd", isd)
 		}
 	}
 	return nil

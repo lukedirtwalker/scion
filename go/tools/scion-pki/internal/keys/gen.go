@@ -24,7 +24,6 @@ import (
 
 	"golang.org/x/crypto/ed25519"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/keyconf"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -90,27 +89,27 @@ func genKey(fname, outDir string, keyGenF keyGenFunc) error {
 	_, err := os.Stat(outDir)
 	if os.IsNotExist(err) {
 		if err = os.MkdirAll(outDir, 0700); err != nil {
-			return common.NewBasicError("Cannot create output dir", err, "key", fname)
+			return serrors.WrapStr("Cannot create output dir", err, "key", fname)
 		}
 	} else if err != nil {
-		return common.NewBasicError("Error checking output dir", err, "key", fname)
+		return serrors.WrapStr("Error checking output dir", err, "key", fname)
 	}
 	// Generate the seed for the public/private key pair.
 	seed := make([]byte, 32)
 	_, err = rand.Read(seed)
 	if err != nil {
-		return common.NewBasicError("Error generating key seed", err, "key", fname)
+		return serrors.WrapStr("Error generating key seed", err, "key", fname)
 	}
 	// Generate a fresh public/private key pair based on seed.
 	privKey, err := keyGenF(bytes.NewReader(seed))
 	if err != nil {
-		return common.NewBasicError("Error generating keys", err, "key", fname)
+		return serrors.WrapStr("Error generating keys", err, "key", fname)
 	}
 	// Write private key to file.
 	privKeyPath := filepath.Join(outDir, fname)
 	privKeyEnc := base64.StdEncoding.EncodeToString(privKey)
 	if err = pkicmn.WriteToFile([]byte(privKeyEnc), privKeyPath, 0600); err != nil {
-		return common.NewBasicError("Cannot write key file", err, "key", fname)
+		return serrors.WrapStr("Cannot write key file", err, "key", fname)
 	}
 	return nil
 }

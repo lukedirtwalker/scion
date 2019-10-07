@@ -25,6 +25,7 @@ import (
 	"github.com/vishvananda/netlink"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -44,11 +45,11 @@ func ConnectTun(name string) (netlink.Link, io.ReadWriteCloser, error) {
 	if err != nil {
 		tun.Close()
 		// Should clean up the tun device, but if we can't find it...
-		return nil, nil, common.NewBasicError("Unable to find new TUN device", err, "name", name)
+		return nil, nil, serrors.WrapStr("Unable to find new TUN device", err, "name", name)
 	}
 	err = netlink.LinkSetUp(link)
 	if err != nil {
-		err = common.NewBasicError("Unable to set new TUN device Up", err, "name", name)
+		err = serrors.WrapStr("Unable to set new TUN device Up", err, "name", name)
 		goto Cleanup
 	}
 	err = netlink.LinkSetTxQLen(link, SIGTxQlen)

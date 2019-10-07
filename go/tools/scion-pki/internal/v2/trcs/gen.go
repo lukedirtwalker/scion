@@ -17,7 +17,6 @@ package trcs
 
 import (
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/v2/conf"
@@ -30,7 +29,7 @@ func runGenTrc(selector string) error {
 	}
 	for isd := range asMap {
 		if err = genAndWriteSignedTRC(isd); err != nil {
-			return common.NewBasicError("unable to generate TRC", err, "isd", isd)
+			return serrors.WrapStr("unable to generate TRC", err, "isd", isd)
 		}
 	}
 	return nil

@@ -325,7 +325,7 @@ type Listener struct {
 func Listen(laddr string) (*Listener, error) {
 	l, err := net.Listen("unix", laddr)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to listen on address", err, "addr", laddr)
+		return nil, serrors.WrapStr("Unable to listen on address", err, "addr", laddr)
 	}
 	return &Listener{l.(*net.UnixListener)}, nil
 }

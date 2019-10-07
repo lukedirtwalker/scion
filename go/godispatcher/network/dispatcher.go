@@ -66,7 +66,7 @@ func (d *Dispatcher) ListenAndServe() error {
 	}
 	defer appServerConn.Close()
 	if err := os.Chmod(d.ApplicationSocket, d.SocketFileMode); err != nil {
-		return common.NewBasicError("chmod failed", err, "socket file", d.ApplicationSocket)
+		return serrors.WrapStr("chmod failed", err, "socket file", d.ApplicationSocket)
 	}
 
 	errChan := make(chan error)

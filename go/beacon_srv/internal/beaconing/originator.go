@@ -172,7 +172,7 @@ func (o *beaconOriginator) originateBeacon(ctx context.Context) error {
 
 	bseg, err := o.createBeacon()
 	if err != nil {
-		return common.NewBasicError("Unable to create beacon", err, "ifid", o.ifId)
+		return serrors.WrapStr("Unable to create beacon", err, "ifid", o.ifId)
 	}
 
 	err = o.beaconSender.Send(

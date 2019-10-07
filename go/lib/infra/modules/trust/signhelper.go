@@ -167,10 +167,10 @@ func (v *BasicVerifier) VerifyPld(ctx context.Context, spld *ctrl.SignedPld) (*c
 		return cpld, nil
 	}
 	if err := v.sanityChecks(spld.Sign, true); err != nil {
-		return nil, common.NewBasicError("Sanity check failed", err, "pld", cpld)
+		return nil, serrors.WrapStr("Sanity check failed", err, "pld", cpld)
 	}
 	if err := v.verify(ctx, spld.Blob, spld.Sign); err != nil {
-		return nil, common.NewBasicError("Unable to verify", err, "pld", cpld)
+		return nil, serrors.WrapStr("Unable to verify", err, "pld", cpld)
 	}
 	return cpld, nil
 }

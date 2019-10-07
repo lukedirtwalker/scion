@@ -66,7 +66,7 @@ func Control(sRevInfoQ chan rpkt.RawSRevCallbackArgs, dispatcherReconnect bool) 
 	}
 	snetConn, err = scionNetwork.ListenSCIONWithBindSVC("udp4", pub, bind, addr.SvcNone, 0)
 	if err != nil {
-		fatal.Fatal(common.NewBasicError("Listening on address", err, "addr", ctrlAddr))
+		fatal.Fatal(serrors.WrapStr("Listening on address", err, "addr", ctrlAddr))
 	}
 	go func() {
 		defer log.LogPanicAndExit()

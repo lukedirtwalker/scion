@@ -18,9 +18,9 @@ import (
 	"path/filepath"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/keyconf"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/v2/conf"
 )
@@ -106,7 +106,7 @@ func loadKey(ia addr.IA, keyType trc.KeyType, cfg *asCfg) ([]byte, error) {
 	path := filepath.Join(pkicmn.GetAsPath(pkicmn.OutDir, ia), pkicmn.KeysDir, file)
 	key, err := keyconf.LoadKey(path, cfg.KeyTypeToAlgo(keyType))
 	if err != nil {
-		return nil, common.NewBasicError("unable to load key", err, "type", keyType, "file", path)
+		return nil, serrors.WrapStr("unable to load key", err, "type", keyType, "file", path)
 	}
 	return key, nil
 }

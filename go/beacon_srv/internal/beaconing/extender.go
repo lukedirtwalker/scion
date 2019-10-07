@@ -107,11 +107,11 @@ func (s *segExtender) createHopEntry(inIfid, egIfid common.IFIDType, prev common
 
 	remoteInIA, remoteInIfid, remoteInMtu, err := s.remoteInfo(inIfid)
 	if err != nil {
-		return nil, common.NewBasicError("Invalid remote ingress interface", err, "ifid", inIfid)
+		return nil, serrors.WrapStr("Invalid remote ingress interface", err, "ifid", inIfid)
 	}
 	remoteOutIA, remoteOutIfid, _, err := s.remoteInfo(egIfid)
 	if err != nil {
-		return nil, common.NewBasicError("Invalid remote egress interface", err, "ifid", egIfid)
+		return nil, serrors.WrapStr("Invalid remote egress interface", err, "ifid", egIfid)
 	}
 	hopF, err := s.createHopF(inIfid, egIfid, prev, ts)
 	if err != nil {

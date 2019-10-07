@@ -37,7 +37,7 @@ func runProto(selector string) error {
 	}
 	for isd := range asMap {
 		if err = genAndWriteProto(isd); err != nil {
-			return common.NewBasicError("unable to generating prototype TRC", err, "isd", isd)
+			return serrors.WrapStr("unable to generating prototype TRC", err, "isd", isd)
 		}
 	}
 	return nil

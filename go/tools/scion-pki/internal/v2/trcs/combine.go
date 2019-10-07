@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -36,7 +35,7 @@ func runCombine(selector string) error {
 	}
 	for isd := range asMap {
 		if err = combineAndWrite(isd); err != nil {
-			return common.NewBasicError("unable to combine TRC", err, "isd", isd)
+			return serrors.WrapStr("unable to combine TRC", err, "isd", isd)
 		}
 	}
 	return nil
@@ -76,11 +75,11 @@ func loadUniqueSignatures(isd addr.ISD, ver scrypto.Version,
 	for _, fname := range fnames {
 		raw, err := ioutil.ReadFile(fname)
 		if err != nil {
-			return nil, common.NewBasicError("unable to read file", err, "file", fname)
+			return nil, serrors.WrapStr("unable to read file", err, "file", fname)
 		}
 		var signed trc.Signed
 		if err := json.Unmarshal(raw, &signed); err != nil {
-			return nil, common.NewBasicError("unable to parse file", err, "file", fname)
+			return nil, serrors.WrapStr("unable to parse file", err, "file", fname)
 		}
 		if !bytes.Equal(encoded, signed.EncodedTRC) {
 			pkicmn.QuietPrint("Ignoring signed in %s. Payload is different", fname)
@@ -88,7 +87,7 @@ func loadUniqueSignatures(isd addr.ISD, ver scrypto.Version,
 		for _, sign := range signed.Signatures {
 			protected, err := sign.EncodedProtected.Decode()
 			if err != nil {
-				return nil, common.NewBasicError("unable to parse protected", err, "file", fname)
+				return nil, serrors.WrapStr("unable to parse protected", err, "file", fname)
 			}
 			signatures[protected] = sign
 		}

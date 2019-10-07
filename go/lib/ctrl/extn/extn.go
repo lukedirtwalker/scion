@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -64,7 +65,7 @@ type CtrlExtnData struct {
 func NewCtrlExtnDataFromValues(e Extension, arenaSize int) (*CtrlExtnData, error) {
 	raw, err := e.Pack()
 	if err != nil {
-		return nil, common.NewBasicError("Unable to pack extension", err, "extn", e)
+		return nil, serrors.WrapStr("Unable to pack extension", err, "extn", e)
 	}
 	return &CtrlExtnData{Type: e.CtrlExtnType(), Data: raw}, nil
 }

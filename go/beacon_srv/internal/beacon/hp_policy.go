@@ -99,7 +99,7 @@ func ParseHPRegYaml(b common.RawBytes) (*HPRegistration, error) {
 func LoadHPRegFromYaml(path string) (*HPRegistration, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to read policy file", err, "path", path)
+		return nil, serrors.WrapStr("Unable to read policy file", err, "path", path)
 	}
 	return ParseHPRegYaml(b)
 }

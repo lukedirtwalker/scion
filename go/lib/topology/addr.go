@@ -21,6 +21,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/overlay"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -69,7 +70,7 @@ func topoAddrFromRAM(s RawAddrMap, ot overlay.Type) (*TopoAddr, error) {
 	}
 	t := &TopoAddr{Overlay: ot}
 	if err := t.fromRaw(s); err != nil {
-		return nil, common.NewBasicError("Failed to parse raw topo address", err, "addr", s)
+		return nil, serrors.WrapStr("Failed to parse raw topo address", err, "addr", s)
 	}
 	return t, nil
 }

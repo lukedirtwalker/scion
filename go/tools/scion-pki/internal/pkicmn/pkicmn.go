@@ -25,6 +25,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -123,7 +124,7 @@ func ProcessSelector(selector string) (map[addr.ISD][]addr.IA, error) {
 func isdFromDir(dir string) (addr.ISD, error) {
 	isd, err := addr.ISDFromFileFmt(filepath.Base(dir), true)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to parse ISD number from dir", err, "dir", dir)
+		return 0, serrors.WrapStr("Unable to parse ISD number from dir", err, "dir", dir)
 	}
 	return isd, nil
 }
@@ -131,7 +132,7 @@ func isdFromDir(dir string) (addr.ISD, error) {
 func asFromDir(dir string) (addr.AS, error) {
 	as, err := addr.ASFromFileFmt(filepath.Base(dir), true)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to parse AS number from dir", err, "dir", dir)
+		return 0, serrors.WrapStr("Unable to parse AS number from dir", err, "dir", dir)
 	}
 	return as, nil
 }

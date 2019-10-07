@@ -129,7 +129,7 @@ func (h *handler) buildBeacon(ifid common.IFIDType) (beacon.Beacon, *infra.Handl
 	}
 	if err := pseg.ParseRaw(seg.ValidateBeacon); err != nil {
 		return beacon.Beacon{}, infra.MetricsErrInvalid,
-			common.NewBasicError("Unable to parse beacon", err, "beacon", pseg)
+			serrors.WrapStr("Unable to parse beacon", err, "beacon", pseg)
 	}
 	return beacon.Beacon{InIfId: ifid, Segment: pseg}, nil, nil
 }

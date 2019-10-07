@@ -27,7 +27,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/discovery"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/fatal"
@@ -238,11 +237,11 @@ func StartServer(name, sockPath string, server *servers.Server) {
 		defer log.LogPanicAndExit()
 		if cfg.SD.DeleteSocket {
 			if err := os.Remove(sockPath); err != nil && !os.IsNotExist(err) {
-				fatal.Fatal(common.NewBasicError("SocketRemoval error", err, "name", name))
+				fatal.Fatal(serrors.WrapStr("SocketRemoval error", err, "name", name))
 			}
 		}
 		if err := server.ListenAndServe(); err != nil {
-			fatal.Fatal(common.NewBasicError("ListenAndServe error", err, "name", name))
+			fatal.Fatal(serrors.WrapStr("ListenAndServe error", err, "name", name))
 		}
 	}()
 }

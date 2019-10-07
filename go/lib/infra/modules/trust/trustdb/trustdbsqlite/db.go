@@ -475,7 +475,7 @@ func (db *executor) GetTRCVersion(ctx context.Context,
 	}
 	trcobj, err := trc.TRCFromRaw(raw, false)
 	if err != nil {
-		return nil, common.NewBasicError("TRC parse error", err, "isd", isd)
+		return nil, serrors.WrapStr("TRC parse error", err, "isd", isd)
 	}
 	return trcobj, nil
 }
@@ -494,7 +494,7 @@ func (db *executor) GetTRCMaxVersion(ctx context.Context, isd addr.ISD) (*trc.TR
 	}
 	trcobj, err := trc.TRCFromRaw(raw, false)
 	if err != nil {
-		return nil, common.NewBasicError("TRC parse error", err, "isd", isd, "version", "max")
+		return nil, serrors.WrapStr("TRC parse error", err, "isd", isd, "version", "max")
 	}
 	return trcobj, nil
 }
@@ -686,9 +686,9 @@ func parseCert(raw common.RawBytes, ia addr.IA, version scrypto.Version,
 	crt, err := cert.CertificateFromRaw(raw)
 	if err != nil {
 		if version.IsLatest() {
-			return nil, common.NewBasicError("Cert parse error", err, "ia", ia, "version", "max")
+			return nil, serrors.WrapStr("Cert parse error", err, "ia", ia, "version", "max")
 		}
-		return nil, common.NewBasicError("Cert parse error", err, "ia", ia, "version", version)
+		return nil, serrors.WrapStr("Cert parse error", err, "ia", ia, "version", version)
 	}
 	return crt, nil
 }

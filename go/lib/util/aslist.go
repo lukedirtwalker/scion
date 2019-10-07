@@ -20,7 +20,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 )
 
@@ -40,7 +39,7 @@ func LoadASList(fileName string) (*ASList, error) {
 	asList := &ASList{}
 	buffer, err := ioutil.ReadFile(fileName)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to read from file", err, "name", fileName)
+		return nil, serrors.WrapStr("Unable to read from file", err, "name", fileName)
 	}
 	var locations asData
 	err = yaml.Unmarshal(buffer, &locations)
@@ -63,7 +62,7 @@ func parse(names []string) ([]addr.IA, error) {
 	for _, name := range names {
 		ia, err := addr.IAFromString(name)
 		if err != nil {
-			return nil, common.NewBasicError("Unable to parse AS Name", err, "ISDAS", name)
+			return nil, serrors.WrapStr("Unable to parse AS Name", err, "ISDAS", name)
 		}
 		iaList = append(iaList, ia)
 	}

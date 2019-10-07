@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
@@ -142,7 +141,7 @@ func (bi *binaryIntegration) StartServer(ctx context.Context, dst snet.Addr) (Wa
 		bi.writeLog("server", dst.IA.FileFmt(false), dst.IA.FileFmt(false), ep)
 	}()
 	if err = r.Start(); err != nil {
-		return nil, common.NewBasicError("Failed to start server", err, "dst", dst.IA)
+		return nil, serrors.WrapStr("Failed to start server", err, "dst", dst.IA)
 	}
 	select {
 	case <-ready:

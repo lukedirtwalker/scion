@@ -107,7 +107,7 @@ func (r *Requester) sendReq(ctx context.Context, chain *cert.Chain) (bool, error
 	}
 	logger.Trace("[reiss.Requester] Received certificate reissue reply", "addr", a, "rep", rep)
 	if crit, err := r.handleRep(ctx, rep); err != nil {
-		return crit, common.NewBasicError("Unable to handle reply", err, "addr", a, "rep", rep)
+		return crit, serrors.WrapStr("Unable to handle reply", err, "addr", a, "rep", rep)
 	}
 	return false, nil
 }
@@ -119,7 +119,7 @@ func (r *Requester) handleRep(ctx context.Context, rep *cert_mgmt.ChainIssRep) (
 		return false, serrors.WrapStr("Unable to parse chain", err)
 	}
 	if err = r.validateRep(ctx, chain); err != nil {
-		return true, common.NewBasicError("Unable to validate chain", err, "chain", chain)
+		return true, serrors.WrapStr("Unable to validate chain", err, "chain", chain)
 	}
 	if _, err = r.State.TrustDB.InsertChain(ctx, chain); err != nil {
 		return true, common.NewBasicError("Unable to insert reissued certificate chain in TrustDB",

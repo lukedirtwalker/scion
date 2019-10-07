@@ -199,7 +199,7 @@ func (r *segmentRegistrar) setSegToRegister() error {
 	if err := r.extend(r.beacon.Segment, r.beacon.InIfId, 0, r.peers); err != nil {
 		r.metrics.IncTotalBeacons(r.segType, r.beacon.Segment.FirstIA(), r.beacon.InIfId,
 			metrics.CreateErr)
-		return common.NewBasicError("Unable to terminate", err, "beacon", r.beacon)
+		return serrors.WrapStr("Unable to terminate", err, "beacon", r.beacon)
 	}
 	r.reg = &path_mgmt.SegReg{
 		SegRecs: &path_mgmt.SegRecs{
