@@ -213,14 +213,14 @@ func ExpTimeFromDuration(duration time.Duration, roundUp bool) (ExpTimeType, err
 	unit := time.Duration(ExpTimeUnit) * time.Second
 	if duration > (time.Duration(MaxTTLField)+1)*unit {
 		if roundUp {
-			return 0, common.NewBasicError("Requested duration exceeds maximum value", nil,
+			return 0, serrors.New("Requested duration exceeds maximum value",
 				"duration", duration, "max", MaxTTLField.ToDuration())
 		}
 		return MaxTTLField, nil
 	}
 	if duration < unit {
 		if !roundUp {
-			return 0, common.NewBasicError("Requested duration below minimum value", nil,
+			return 0, serrors.New("Requested duration below minimum value",
 				"duration", duration, "min", ExpTimeType(0).ToDuration())
 		}
 		return 0, nil

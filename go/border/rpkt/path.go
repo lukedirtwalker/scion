@@ -37,7 +37,7 @@ import (
 func (rp *RtrPkt) validatePath(dirFrom rcmn.Dir) error {
 	// First check if there is a path
 	if rp.infoF == nil || rp.hopF == nil {
-		return common.NewBasicError("Path required",
+		return serrors.WrapStr("Path required",
 			scmp.NewError(scmp.C_Path, scmp.T_P_PathRequired, nil, nil))
 	}
 	// There is a path, so ifCurr will be set
@@ -53,14 +53,14 @@ func (rp *RtrPkt) validatePath(dirFrom rcmn.Dir) error {
 	}
 	// A verify-only Hop Field cannot be used for routing.
 	if rp.hopF.VerifyOnly {
-		return common.NewBasicError("Hop field is VERIFY_ONLY",
+		return serrors.WrapStr("Hop field is VERIFY_ONLY",
 			scmp.NewError(scmp.C_Path, scmp.T_P_NonRoutingHopF,
 				rp.mkInfoPathOffsets(rp.CmnHdr.CurrInfoF, rp.CmnHdr.CurrHopF), nil))
 	}
 	// Check if Hop Field has expired.
 	hopfExpiry := rp.infoF.Timestamp().Add(rp.hopF.ExpTime.ToDuration())
 	if time.Now().After(hopfExpiry) {
-		return common.NewBasicError(
+		return serrors.WrapStr(
 			"Hop field expired",
 			scmp.NewError(scmp.C_Path, scmp.T_P_ExpiredHopF,
 				rp.mkInfoPathOffsets(rp.CmnHdr.CurrInfoF, rp.CmnHdr.CurrHopF), nil),
@@ -352,7 +352,7 @@ func (rp *RtrPkt) IncPath() (bool, error) {
 		vOnly++
 	}
 	if hOff > hdrLen {
-		return false, common.NewBasicError("New HopF offset > header length", nil,
+		return false, serrors.New("New HopF offset > header length",
 			"max", hdrLen, "actual", hOff)
 	}
 	segChgd := iOff != rp.CmnHdr.InfoFOffBytes()
@@ -360,13 +360,13 @@ func (rp *RtrPkt) IncPath() (bool, error) {
 	currHopF := uint8(hOff / common.LineLen)
 	// Check that there's no VERIFY_ONLY fields in the middle of a segment.
 	if vOnly > 0 && !segChgd {
-		return segChgd, common.NewBasicError("VERIFY_ONLY in middle of segment",
+		return segChgd, serrors.WrapStr("VERIFY_ONLY in middle of segment",
 			scmp.NewError(scmp.C_Path, scmp.T_P_BadHopField,
 				rp.mkInfoPathOffsets(currInfoF, currHopF), nil))
 	}
 	// Check that the segment didn't change from a down-segment to an up-segment.
 	if origConsDir && !infoF.ConsDir {
-		return segChgd, common.NewBasicError("Switched from down-segment to up-segment",
+		return segChgd, serrors.WrapStr("Switched from down-segment to up-segment",
 			scmp.NewError(scmp.C_Path, scmp.T_P_BadSegment,
 				rp.mkInfoPathOffsets(currInfoF, currHopF), nil))
 	}
@@ -433,7 +433,7 @@ func (rp *RtrPkt) IFCurr() (*common.IFIDType, error) {
 			case rcmn.DirExternal:
 				ingress = *rp.consDirFlag
 			default:
-				return nil, common.NewBasicError("DirFrom value unsupported", nil,
+				return nil, serrors.New("DirFrom value unsupported",
 					"val", rp.DirFrom)
 			}
 			if ingress {

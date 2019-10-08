@@ -22,7 +22,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo/internal/metrics"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -277,7 +276,7 @@ func (s *state) dynamicPreCheck(dynamic *topology.Topo) error {
 	}
 	now := time.Now()
 	if !dynamic.Active(now) {
-		return common.NewBasicError("Dynamic topology must be active", nil,
+		return serrors.New("Dynamic topology must be active",
 			"ts", dynamic.Timestamp, "now", now, "expiry", dynamic.Expiry())
 	}
 	return nil

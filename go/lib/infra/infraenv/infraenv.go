@@ -284,7 +284,7 @@ type LegacyForwardingHandler struct {
 func (h *LegacyForwardingHandler) Handle(request *svc.Request) (svc.Result, error) {
 	p, ok := request.Packet.Payload.(common.RawBytes)
 	if !ok {
-		return svc.Error, common.NewBasicError("Unsupported payload type", nil,
+		return svc.Error, serrors.New("Unsupported payload type",
 			"payload", request.Packet.Payload)
 	}
 	if bytes.Compare(h.ExpectedPayload, []byte(p)) == 0 {

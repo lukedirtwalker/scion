@@ -24,7 +24,6 @@ import (
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 )
 
@@ -54,7 +53,7 @@ func ConnectTun(name string) (netlink.Link, io.ReadWriteCloser, error) {
 	}
 	err = netlink.LinkSetTxQLen(link, SIGTxQlen)
 	if err != nil {
-		err = common.NewBasicError("Unable to set Tx queue length on new TUN device", err,
+		err = serrors.WrapStr("Unable to set Tx queue length on new TUN device", err,
 			"name", name)
 		goto Cleanup
 	}
@@ -77,7 +76,7 @@ func AddRoute(rTable int, link netlink.Link, dest *net.IPNet, src net.IP) error 
 		route.Src = src
 	}
 	if err := netlink.RouteAdd(route); err != nil {
-		return common.NewBasicError("EgressReader: Unable to add SIG route", err,
+		return serrors.WrapStr("EgressReader: Unable to add SIG route", err,
 			"route", route)
 	}
 	return nil

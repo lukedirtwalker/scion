@@ -66,7 +66,7 @@ func (u *union) set(c proto.Cerealizable) error {
 		u.Which = proto.CtrlPld_Which_ack
 		u.Ack = p
 	default:
-		return common.NewBasicError("Unsupported ctrl union type (set)", nil,
+		return serrors.New("Unsupported ctrl union type (set)",
 			"type", common.TypeOf(c))
 	}
 	return nil

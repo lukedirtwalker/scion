@@ -75,7 +75,7 @@ func (rp *RtrPkt) findL4() (bool, error) {
 	offset := rp.idxs.nextHdrIdx.Index
 	for nextHdr == common.HopByHopClass || nextHdr == common.End2EndClass {
 		if len(rp.Raw[offset:]) < common.LineLen {
-			return false, common.NewBasicError("Bad header length", nil,
+			return false, serrors.New("Bad header length",
 				"min", common.LineLen, "actual", len(rp.Raw[offset:]))
 		}
 		currHdr := nextHdr
@@ -89,7 +89,7 @@ func (rp *RtrPkt) findL4() (bool, error) {
 		hdrLen := int(rp.Raw[offset+1]) * common.LineLen
 		if hdrLen == 0 {
 			// FIXME(kormat): Can't return an SCMP error as we can't parse the headers
-			return false, common.NewBasicError("0-length header", nil,
+			return false, serrors.New("0-length header",
 				"currHdr", currHdr, "nextHdr", nextHdr, "offset", offset)
 		}
 		offset += hdrLen

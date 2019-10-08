@@ -20,13 +20,13 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/seghandler"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathdb"
 	"github.com/scionproto/scion/go/lib/revcache"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -128,7 +128,7 @@ func (f *Fetcher) FetchSegs(ctx context.Context, req Request) (Segments, error) 
 		}
 		if i > 3 {
 			log.FromCtx(ctx).Error("No convergence in lookup", "iteration", i+1)
-			return segs, common.NewBasicError("Segment lookup doesn't converge", nil,
+			return segs, serrors.New("Segment lookup doesn't converge",
 				"iterations", i+1)
 		}
 		// XXX(lukedirtwalker): Optimally we wouldn't need a different timeout

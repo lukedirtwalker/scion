@@ -148,7 +148,7 @@ func NewExtn(secMode SecMode) (*Extn, error) {
 // Set the Metadata.
 func (s *Extn) SetMetadata(metadata common.RawBytes) error {
 	if len(s.Metadata) != len(metadata) {
-		return common.NewBasicError("The length does not match", nil,
+		return serrors.New("The length does not match",
 			"expected", len(s.Metadata), "actual", len(metadata))
 	}
 	copy(s.Metadata, metadata)
@@ -158,7 +158,7 @@ func (s *Extn) SetMetadata(metadata common.RawBytes) error {
 // Set the Authenticator.
 func (s *Extn) SetAuthenticator(authenticator common.RawBytes) error {
 	if len(s.Authenticator) != len(authenticator) {
-		return common.NewBasicError("The length does not match", nil,
+		return serrors.New("The length does not match",
 			"expected", len(s.Authenticator), "actual", len(authenticator))
 	}
 	copy(s.Authenticator, authenticator)
@@ -167,7 +167,7 @@ func (s *Extn) SetAuthenticator(authenticator common.RawBytes) error {
 
 func (s *Extn) Write(b common.RawBytes) error {
 	if len(b) < s.Len() {
-		return common.NewBasicError("Buffer too short", nil,
+		return serrors.New("Buffer too short",
 			"method", "SCIONPacketSecurityExtn.Write", "expected min", s.Len(), "actual", len(b))
 	}
 	b[0] = uint8(s.SecMode)

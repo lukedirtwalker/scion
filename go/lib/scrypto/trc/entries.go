@@ -109,7 +109,7 @@ func (c *CertLog) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if len(m) != 1 {
-		return common.NewBasicError("Invalid number of sub-entries in CertLogEntry", nil,
+		return serrors.New("Invalid number of sub-entries in CertLogEntry",
 			"expect", 1, "actual", len(m))
 	}
 	for key, cert := range m {

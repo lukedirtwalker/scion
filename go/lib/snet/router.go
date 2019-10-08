@@ -19,7 +19,6 @@ import (
 	"net"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/pathmgr"
 	"github.com/scionproto/scion/go/lib/sciond"
@@ -77,7 +76,7 @@ func (r *BaseRouter) AllRoutes(ctx context.Context, dst addr.IA) ([]Path, error)
 	}
 	aps := r.PathResolver.Query(ctx, r.IA, dst, sciond.PathReqFlags{})
 	if len(aps) == 0 {
-		return nil, common.NewBasicError("unable to find paths", nil)
+		return nil, serrors.New("unable to find paths")
 	}
 	paths := make([]Path, 0, len(aps))
 	for _, ap := range aps {

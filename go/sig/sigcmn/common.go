@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/pathmgr"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -78,7 +77,7 @@ func EncapSnetAddr() *snet.Addr {
 
 func ValidatePort(desc string, port int) error {
 	if port < 1 || port > MaxPort {
-		return common.NewBasicError("Invalid port", nil,
+		return serrors.New("Invalid port",
 			"min", 1, "max", MaxPort, "actual", port, "desc", desc)
 	}
 	return nil

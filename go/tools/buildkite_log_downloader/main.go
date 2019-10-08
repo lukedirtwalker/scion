@@ -24,8 +24,7 @@ import (
 	"strings"
 
 	"github.com/buildkite/go-buildkite/buildkite"
-
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var (
@@ -86,7 +85,7 @@ func verifyFlags() (buildDesc, error) {
 		problems = append(problems, "Build number not provided")
 	}
 	if len(problems) > 0 {
-		return buildDesc{}, common.NewBasicError("Not all required flags provided", nil,
+		return buildDesc{}, serrors.New("Not all required flags provided",
 			"problems", strings.Join(problems, "\n"))
 	}
 	return buildDesc{

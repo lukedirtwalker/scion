@@ -54,7 +54,7 @@ func (u *union) set(c proto.Cerealizable) error {
 		u.Which = proto.CertMgmt_Which_trc
 		u.TRCRep = p
 	default:
-		return common.NewBasicError("Unsupported cert mgmt union type (set)", nil,
+		return serrors.New("Unsupported cert mgmt union type (set)",
 			"type", common.TypeOf(c))
 	}
 	return nil

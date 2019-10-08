@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/overlay"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const CfgName = "topology.json"
@@ -183,7 +184,7 @@ func (b RawBRIntf) localTopoBRAddr(o overlay.Type) (*TopoBRAddr, error) {
 func (b RawBRIntf) remoteBRAddr(o overlay.Type) (*overlay.OverlayAddr, error) {
 	l3 := addr.HostFromIPStr(b.RemoteOverlay.Addr)
 	if l3 == nil {
-		return nil, common.NewBasicError("Could not parse remote IP from string", nil,
+		return nil, serrors.New("Could not parse remote IP from string",
 			"ip", b.RemoteOverlay.Addr)
 	}
 	if !o.IsUDP() && (b.RemoteOverlay.OverlayPort != 0) {

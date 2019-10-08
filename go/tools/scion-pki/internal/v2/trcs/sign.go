@@ -20,7 +20,6 @@ import (
 	"os"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -97,11 +96,11 @@ func sanityChecks(isd addr.ISD, isdCfg *conf.ISDCfg, t *trc.TRC) error {
 		return serrors.New("ISD does not match", "proto", t.ISD, "cfg", isd)
 	}
 	if isdCfg.Version != uint64(t.Version) {
-		return common.NewBasicError("version does not match", nil, "proto", t.Version,
+		return serrors.New("version does not match", "proto", t.Version,
 			"cfg", isdCfg.Version)
 	}
 	if isdCfg.BaseVersion != uint64(t.BaseVersion) {
-		return common.NewBasicError("base_version does not match", nil, "proto", t.BaseVersion,
+		return serrors.New("base_version does not match", "proto", t.BaseVersion,
 			"cfg", isdCfg.BaseVersion)
 	}
 	return nil

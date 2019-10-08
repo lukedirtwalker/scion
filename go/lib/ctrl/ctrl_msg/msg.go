@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl"
 	"github.com/scionproto/scion/go/lib/infra/disp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -51,7 +52,7 @@ func (r *Requester) Request(ctx context.Context, pld *ctrl.Pld,
 	}
 	rspld, ok := reply.(*ctrl.SignedPld)
 	if !ok {
-		return nil, nil, common.NewBasicError("ctrl_msg: reply is not a ctrl.SignedPld", nil,
+		return nil, nil, serrors.New("ctrl_msg: reply is not a ctrl.SignedPld",
 			"type", common.TypeOf(reply), "reply", reply)
 	}
 	rpld, err := rspld.GetVerifiedPld(ctx, r.sigv)

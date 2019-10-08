@@ -78,8 +78,7 @@ func HopPredicateFromString(str string) (*HopPredicate, error) {
 	// IfID cannot be set when the AS is a wildcard
 	if as == 0 && (ifIDs[0] != 0 || (len(ifIDs) > 1 && ifIDs[1] != 0)) {
 		return &HopPredicate{},
-			common.NewBasicError("Failed to parse hop predicate, IfIDs must be 0",
-				nil, "value", str)
+			serrors.New("Failed to parse hop predicate, IfIDs must be 0", "value", str)
 	}
 	return &HopPredicate{ISD: isd, AS: as, IfIDs: ifIDs}, nil
 }

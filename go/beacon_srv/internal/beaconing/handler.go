@@ -138,7 +138,7 @@ func (h *handler) getIFID() (common.IFIDType, addr.IA, error) {
 	var ia addr.IA
 	peer, ok := h.request.Peer.(*snet.Addr)
 	if !ok {
-		return 0, ia, common.NewBasicError("Invalid peer address type, expected *snet.Addr", nil,
+		return 0, ia, serrors.New("Invalid peer address type, expected *snet.Addr",
 			"peer", h.request.Peer, "type", common.TypeOf(h.request.Peer))
 	}
 	hopF, err := peer.Path.GetHopField(peer.Path.HopOff)
@@ -147,7 +147,7 @@ func (h *handler) getIFID() (common.IFIDType, addr.IA, error) {
 	}
 	intf := h.intfs.Get(hopF.ConsIngress)
 	if intf == nil {
-		return 0, ia, common.NewBasicError("Received beacon on non-existent ifid", nil,
+		return 0, ia, serrors.New("Received beacon on non-existent ifid",
 			"ifid", hopF.ConsIngress)
 	}
 	return hopF.ConsIngress, intf.TopoInfo().ISD_AS, nil
@@ -155,7 +155,7 @@ func (h *handler) getIFID() (common.IFIDType, addr.IA, error) {
 
 func (h *handler) verifyBeacon(b beacon.Beacon) error {
 	if err := h.validateASEntry(b); err != nil {
-		return common.NewBasicError("Invalid last AS entry", err,
+		return serrors.WrapStr("Invalid last AS entry", err,
 			"entry", b.Segment.ASEntries[b.Segment.MaxAEIdx()])
 	}
 	if err := h.verifySegment(b.Segment); err != nil {
@@ -171,22 +171,22 @@ func (h *handler) validateASEntry(b beacon.Beacon) error {
 	}
 	topoInfo := intf.TopoInfo()
 	if topoInfo.LinkType != proto.LinkType_parent && topoInfo.LinkType != proto.LinkType_core {
-		return common.NewBasicError("Beacon received on invalid link", nil,
+		return serrors.New("Beacon received on invalid link",
 			"ifid", b.InIfId, "linkType", topoInfo.LinkType)
 	}
 	asEntry := b.Segment.ASEntries[b.Segment.MaxAEIdx()]
 	if !asEntry.IA().Equal(topoInfo.ISD_AS) {
-		return common.NewBasicError("Invalid remote IA", nil,
+		return serrors.New("Invalid remote IA",
 			"expected", topoInfo.ISD_AS, "actual", asEntry.IA())
 	}
 	for i, hopEntry := range asEntry.HopEntries {
 		if !hopEntry.OutIA().Equal(h.ia) {
-			return common.NewBasicError("Out IA of hop entry does not match local IA", nil,
+			return serrors.New("Out IA of hop entry does not match local IA",
 				"index", i, "expected", h.ia, "actual", hopEntry.OutIA())
 		}
 		if hopEntry.RemoteOutIF != b.InIfId {
-			return common.NewBasicError("RemoteOutIF of hop entry does not match ingress interface",
-				nil, "expected", b.InIfId, "actual", hopEntry.RemoteOutIF)
+			return serrors.New("RemoteOutIF of hop entry does not match ingress interface",
+				"expected", b.InIfId, "actual", hopEntry.RemoteOutIF)
 		}
 	}
 	return nil

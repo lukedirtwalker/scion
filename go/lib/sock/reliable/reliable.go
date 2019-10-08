@@ -239,7 +239,7 @@ func RegisterTimeout(dispatcher string, ia addr.IA, public *addr.AppAddr,
 	}
 	if publicUDP.Port != 0 && publicUDP.Port != int(c.Port) {
 		conn.Close()
-		return nil, 0, common.NewBasicError("port mismatch", nil, "requested", publicUDP.Port,
+		return nil, 0, serrors.New("port mismatch", "requested", publicUDP.Port,
 			"received", c.Port)
 	}
 	// Disable deadline to not affect calling code
@@ -349,7 +349,7 @@ func createUDPAddrFromAppAddr(address *addr.AppAddr) (*net.UDPAddr, error) {
 		return nil, serrors.New("nil application address")
 	}
 	if address.L3.Type() != addr.HostTypeIPv4 && address.L3.Type() != addr.HostTypeIPv6 {
-		return nil, common.NewBasicError("unsupported application address type", nil,
+		return nil, serrors.New("unsupported application address type",
 			"type", address.L3.Type())
 	}
 	var port int

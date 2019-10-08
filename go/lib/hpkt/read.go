@@ -165,12 +165,12 @@ func (p *parseCtx) CmnHdrParser() error {
 	p.cmnHdrOffsets.end = p.offset
 
 	if int(p.cmnHdr.TotalLen) != len(p.b) {
-		return common.NewBasicError("Malformed total packet length", nil,
+		return serrors.New("Malformed total packet length",
 			"expected", p.cmnHdr.TotalLen, "actual", len(p.b))
 	}
 
 	if len(p.b) < int(p.cmnHdr.HdrLenBytes()) {
-		return common.NewBasicError("Malformed hdr length", nil,
+		return serrors.New("Malformed hdr length",
 			"expected", p.cmnHdr.HdrLenBytes(), "larger than ", len(p.b))
 	}
 	return nil
@@ -194,7 +194,7 @@ func (p *parseCtx) DefaultAddrHdrParser() error {
 	// Validate address padding bytes
 	padBytes := util.CalcPadding(p.offset, common.LineLen)
 	if pos, ok := isZeroMemory(p.b[p.offset : p.offset+padBytes]); !ok {
-		return common.NewBasicError("Invalid padding", nil,
+		return serrors.New("Invalid padding",
 			"position", pos, "expected", 0, "actual", p.b[p.offset+pos])
 	}
 	p.offset += padBytes
@@ -238,7 +238,7 @@ func (p *parseCtx) DefaultL4Parser() error {
 			return serrors.WrapStr("Unable to parse SCMP header", err)
 		}
 	default:
-		return common.NewBasicError("Unsupported NextHdr value", nil,
+		return serrors.New("Unsupported NextHdr value",
 			"expected", common.L4UDP, "actual", p.nextHdr)
 	}
 	p.offset += p.s.L4.L4Len()

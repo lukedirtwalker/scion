@@ -75,7 +75,7 @@ func (r *Requester) run(ctx context.Context) (bool, error) {
 	exp := util.SecsToTime(chain.Leaf.ExpirationTime)
 	now := time.Now()
 	if now.After(exp) {
-		return true, common.NewBasicError("Certificate expired without being reissued", nil,
+		return true, serrors.New("Certificate expired without being reissued",
 			"chain", chain, "expTime", util.TimeToCompact(exp), "now", util.TimeToString(now))
 	}
 	if now.Add(r.LeafTime).Before(exp) {
@@ -122,7 +122,7 @@ func (r *Requester) handleRep(ctx context.Context, rep *cert_mgmt.ChainIssRep) (
 		return true, serrors.WrapStr("Unable to validate chain", err, "chain", chain)
 	}
 	if _, err = r.State.TrustDB.InsertChain(ctx, chain); err != nil {
-		return true, common.NewBasicError("Unable to insert reissued certificate chain in TrustDB",
+		return true, serrors.WrapStr("Unable to insert reissued certificate chain in TrustDB",
 			err, "chain", chain)
 	}
 	meta, err := trust.CreateSignMeta(ctx, r.IA, r.State.TrustDB)
@@ -147,7 +147,7 @@ func (r *Requester) validateRep(ctx context.Context, chain *cert.Chain) error {
 	verKey := common.RawBytes(ed25519.PrivateKey(
 		r.State.GetSigningKey()).Public().(ed25519.PublicKey))
 	if !bytes.Equal(chain.Leaf.SubjectSignKey, verKey) {
-		return common.NewBasicError("Invalid SubjectSignKey", nil, "expected",
+		return serrors.New("Invalid SubjectSignKey", "expected",
 			verKey, "actual", chain.Leaf.SubjectSignKey)
 	}
 	// FIXME(roosd): validate SubjectEncKey
@@ -158,7 +158,7 @@ func (r *Requester) validateRep(ctx context.Context, chain *cert.Chain) error {
 	}
 	issuer := chain.Leaf.Issuer
 	if !chain.Leaf.Issuer.Equal(issuer) {
-		return common.NewBasicError("Invalid Issuer", nil, "expected",
+		return serrors.New("Invalid Issuer", "expected",
 			issuer, "actual", chain.Leaf.Issuer)
 	}
 	return trust.VerifyChain(ctx, r.IA, chain, r.State.Store)

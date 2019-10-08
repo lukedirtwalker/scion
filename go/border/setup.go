@@ -366,7 +366,7 @@ func validateCtx(ctx, oldCtx *rctx.Ctx, sockConf brconf.SockConf) error {
 	}
 	// Validate local sock of same type.
 	if oldCtx.LocSockIn.Type != sockType {
-		return common.NewBasicError("Unable to switch local socket type", nil,
+		return serrors.New("Unable to switch local socket type",
 			"expected", oldCtx.LocSockIn.Type, "actual", sockType)
 	}
 	// Validate interfaces.
@@ -374,29 +374,29 @@ func validateCtx(ctx, oldCtx *rctx.Ctx, sockConf brconf.SockConf) error {
 		sockType := sockConf.Ext(intf.Id)
 		// Validate socket type is registered
 		if _, ok := registeredExtSockOps[sockType]; !ok {
-			return common.NewBasicError("No ExtSockOps found", nil,
+			return serrors.New("No ExtSockOps found",
 				"sockType", sockType, "ifid", intf.Id)
 		}
 		// Validate same socket type.
 		if oldCtx.ExtSockIn[intf.Id] != nil && oldCtx.ExtSockIn[intf.Id].Type != sockType {
-			return common.NewBasicError("Unable to switch external socket type", nil,
+			return serrors.New("Unable to switch external socket type",
 				"expected", oldCtx.ExtSockIn[intf.Id].Type, "actual", sockType)
 		}
 
 		// Validate interface does not take over local address.
 		if intf.Local.Equal(oldCtx.Conf.BR.InternalAddrs) {
-			return common.NewBasicError("Address must not switch from local", nil,
+			return serrors.New("Address must not switch from local",
 				"intf", intf, "locAddr", oldCtx.Conf.BR.InternalAddrs)
 		}
 		for _, oldIntf := range oldCtx.Conf.BR.IFs {
 			// Validate interface does not take over the address of old interface.
 			if intf.Local.Equal(oldIntf.Local) && intf.Id != oldIntf.Id {
-				return common.NewBasicError("Address must not switch interface", nil,
+				return serrors.New("Address must not switch interface",
 					"intf", intf, "oldIntf", oldIntf)
 			}
 			// Validate local sock does not take over the address of old interface.
 			if ctx.Conf.BR.InternalAddrs.Equal(oldIntf.Local) {
-				return common.NewBasicError("Address must not switch to local", nil,
+				return serrors.New("Address must not switch to local",
 					"oldIntf", intf, "locAddr", oldCtx.Conf.BR.InternalAddrs)
 			}
 		}

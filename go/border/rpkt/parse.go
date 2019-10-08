@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spkt"
 	"github.com/scionproto/scion/go/lib/util"
 )
@@ -98,7 +99,7 @@ func (rp *RtrPkt) parseBasic() error {
 	rp.idxs.path = spkt.CmnHdrLen + addrLen + addrPad
 	if rp.idxs.path > hdrLen {
 		// Can't generate SCMP error as we can't parse anything after the address header
-		return common.NewBasicError("Header length indicated in common header is too small", nil,
+		return serrors.New("Header length indicated in common header is too small",
 			"min", rp.idxs.path, "hdrLen", rp.CmnHdr.HdrLen, "byteSize", hdrLen)
 	}
 	return nil

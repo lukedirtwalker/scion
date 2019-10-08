@@ -596,22 +596,21 @@ func (db *executor) InsertCustKey(ctx context.Context,
 		return serrors.New("Inserting nil key not allowed")
 	}
 	if key.Version == oldVersion {
-		return common.NewBasicError("Same version as oldVersion not allowed",
-			nil, "version", key.Version)
+		return serrors.New("Same version as oldVersion not allowed", "version", key.Version)
 	}
 	db.Lock()
 	defer db.Unlock()
 	if oldVersion == 0 {
 		_, err := db.db.ExecContext(ctx, insertCustKeyStr, key.IA.I, key.IA.A, key.Version, key.Key)
 		if err != nil {
-			return common.NewBasicError("Failed to insert cust key", err,
+			return serrors.WrapStr("Failed to insert cust key", err,
 				"ia", key.IA, "ver", key.Version)
 		}
 	} else {
 		res, err := db.db.ExecContext(ctx, updateCustKeyStr,
 			key.Version, key.Key, key.IA.I, key.IA.A, oldVersion)
 		if err != nil {
-			return common.NewBasicError("Failed to update cust key", err,
+			return serrors.WrapStr("Failed to update cust key", err,
 				"ia", key.IA, "ver", key.Version)
 		}
 		n, err := res.RowsAffected()
@@ -619,7 +618,7 @@ func (db *executor) InsertCustKey(ctx context.Context,
 			return serrors.WrapStr("Unable to determine affected rows", err)
 		}
 		if n == 0 {
-			return common.NewBasicError("Cust keys has been modified", nil, "ia", key.IA,
+			return serrors.New("Cust keys has been modified", "ia", key.IA,
 				"newVersion", key.Version, "oldVersion", oldVersion)
 		}
 	}
@@ -738,7 +737,7 @@ func getIssCertRowIDCtx(ctx context.Context, db db.Sqler,
 	var rowId int64
 	err := db.QueryRowContext(ctx, getIssCertRowIDStr, ia.I, ia.A, ver).Scan(&rowId)
 	if err == sql.ErrNoRows {
-		return 0, common.NewBasicError("Unable to get RowID of issuer certificate", nil,
+		return 0, serrors.New("Unable to get RowID of issuer certificate",
 			"ia", ia, "ver", ver)
 	}
 	if err != nil {

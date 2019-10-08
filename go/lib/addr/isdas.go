@@ -108,7 +108,7 @@ func asParse(s string, sep string) (AS, error) {
 	}
 	parts := strings.Split(s, sep)
 	if len(parts) != asParts {
-		return 0, common.NewBasicError("unable to parse AS: wrong number of separators", nil,
+		return 0, serrors.New("unable to parse AS: wrong number of separators",
 			"expected", asParts, "actual", len(parts), "sep", sep, "raw", s)
 	}
 	var as AS

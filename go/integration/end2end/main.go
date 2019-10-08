@@ -267,7 +267,7 @@ func (c client) pong(ctx context.Context) error {
 	}
 	expected := pong + remote.IA.String() + integration.Local.IA.String()
 	if string(p.Payload.(common.RawBytes)) != expected {
-		return common.NewBasicError("Received unexpected data", nil, "data",
+		return serrors.New("Received unexpected data", "data",
 			string(p.Payload.(common.RawBytes)), "expected", expected)
 	}
 	log.Debug(fmt.Sprintf("Received pong from %s", remote.IA))

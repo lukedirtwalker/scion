@@ -113,12 +113,12 @@ func (h *scmpHandler) Handle(pkt *SCIONPacket) error {
 func (h *scmpHandler) handleSCMPRev(hdr *scmp.Hdr, pkt *SCIONPacket) error {
 	scmpPayload, ok := pkt.Payload.(*scmp.Payload)
 	if !ok {
-		return common.NewBasicError("Unable to type assert payload to SCMP payload", nil,
+		return serrors.New("Unable to type assert payload to SCMP payload",
 			"type", common.TypeOf(pkt.Payload))
 	}
 	info, ok := scmpPayload.Info.(*scmp.InfoRevocation)
 	if !ok {
-		return common.NewBasicError("Unable to type assert SCMP Info to SCMP Revocation Info", nil,
+		return serrors.New("Unable to type assert SCMP Info to SCMP Revocation Info",
 			"type", common.TypeOf(scmpPayload.Info))
 	}
 	log.Info("Received SCMP revocation", "header", hdr.String(), "payload", scmpPayload.String(),

@@ -40,8 +40,8 @@ const (
 
 func MetaFromRaw(b []byte) (*Meta, error) {
 	if len(b) < MetaLen {
-		return nil, common.NewBasicError("Can't parse SCMP meta subheader, buffer is too short",
-			nil, "expected", MetaLen, "actual", len(b))
+		return nil, serrors.New("Can't parse SCMP meta subheader, buffer is too short",
+			"expected", MetaLen, "actual", len(b))
 	}
 	m := &Meta{}
 	if err := restruct.Unpack(b, binary.BigEndian, m); err != nil {

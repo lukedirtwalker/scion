@@ -115,7 +115,7 @@ func (c *scionConnReader) read(b []byte) (int, *Addr, error) {
 		case *scmp.Hdr:
 			l4i = addr.NewL4SCMPInfo()
 		default:
-			err = common.NewBasicError("Unexpected SCION L4 protocol", nil,
+			err = serrors.New("Unexpected SCION L4 protocol",
 				"expected", "UDP or SCMP", "actual", pkt.L4Header.L4Type())
 		}
 		// Copy the address to prevent races. See

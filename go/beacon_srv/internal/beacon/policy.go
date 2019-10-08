@@ -70,15 +70,15 @@ func (p *Policies) InitDefaults() {
 // Validate checks that each policy is of the correct type.
 func (p *Policies) Validate() error {
 	if p.Prop.Type != PropPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", PropPolicy, "actual", p.Prop.Type)
 	}
 	if p.UpReg.Type != UpRegPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", UpRegPolicy, "actual", p.UpReg.Type)
 	}
 	if p.DownReg.Type != DownRegPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", DownRegPolicy, "actual", p.DownReg.Type)
 	}
 	return nil
@@ -136,11 +136,11 @@ func (p *CorePolicies) InitDefaults() {
 // Validate checks that each policy is of the correct type.
 func (p *CorePolicies) Validate() error {
 	if p.Prop.Type != PropPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", PropPolicy, "actual", p.Prop.Type)
 	}
 	if p.CoreReg.Type != CoreRegPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", CoreRegPolicy, "actual", p.CoreReg.Type)
 	}
 	return nil
@@ -209,7 +209,7 @@ func (p *Policy) InitDefaults() {
 func (p *Policy) initDefaults(t PolicyType) error {
 	p.InitDefaults()
 	if p.Type != "" && p.Type != t {
-		return common.NewBasicError("Specified policy type does not match", nil,
+		return serrors.New("Specified policy type does not match",
 			"expected", t, "actual", p.Type)
 	}
 	p.Type = t
@@ -264,7 +264,7 @@ func (f *Filter) InitDefaults() {
 // Apply returns an error if the beacon is filtered.
 func (f Filter) Apply(beacon Beacon) error {
 	if len(beacon.Segment.ASEntries) > f.MaxHopsLength {
-		return common.NewBasicError("MaxHopsLength exceeded", nil, "max", f.MaxHopsLength,
+		return serrors.New("MaxHopsLength exceeded", "max", f.MaxHopsLength,
 			"actual", len(beacon.Segment.ASEntries))
 	}
 	hops := buildHops(beacon)

@@ -166,7 +166,7 @@ func validate(pkt *spkt.ScnPkt) (*scmp.Hdr, *scmp.InfoEcho, error) {
 			// XXX Special case where the L4Hdr quote contains the Meta and Info fields
 			info, e := scmp.InfoEchoFromRaw(scmpPld.L4Hdr[scmp.HdrLen+scmp.MetaLen:])
 			if e == nil {
-				return nil, nil, common.NewBasicError("", err, "scmp_seq", info.Seq)
+				return nil, nil, serrors.WrapStr("", err, "scmp_seq", info.Seq)
 			}
 		}
 		return nil, nil, err

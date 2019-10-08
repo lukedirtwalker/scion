@@ -448,14 +448,14 @@ func (i IFInfo) Verify(isCore bool, brName string) error {
 		switch i.LinkType {
 		case proto.LinkType_core, proto.LinkType_child:
 		default:
-			return common.NewBasicError("Illegal link type for core AS", nil,
+			return serrors.New("Illegal link type for core AS",
 				"type", i.LinkType, "br", brName)
 		}
 	} else {
 		switch i.LinkType {
 		case proto.LinkType_parent, proto.LinkType_child, proto.LinkType_peer:
 		default:
-			return common.NewBasicError("Illegal link type for non-core AS", nil,
+			return serrors.New("Illegal link type for non-core AS",
 				"type", i.LinkType, "br", brName)
 		}
 	}

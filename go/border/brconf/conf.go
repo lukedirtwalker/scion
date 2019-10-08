@@ -21,7 +21,6 @@ import (
 	"path/filepath"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/keyconf"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
@@ -91,7 +90,7 @@ func (cfg *BRConf) initTopo(id string, topo *topology.Topo) error {
 	// Find the config for this router.
 	topoBR, ok := cfg.Topo.BR[id]
 	if !ok {
-		return common.NewBasicError("Unable to find element ID in topology", nil,
+		return serrors.New("Unable to find element ID in topology",
 			"id", id)
 	}
 	cfg.BR = &topoBR

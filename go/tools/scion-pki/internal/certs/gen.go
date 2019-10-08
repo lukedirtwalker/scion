@@ -83,8 +83,8 @@ func genCert(ia addr.IA, isIssuer bool) error {
 		return serrors.WrapStr("Error loading as.ini", err, "path", cpath)
 	}
 	if isIssuer && a.IssuerCert == nil {
-		return common.NewBasicError("Section missing from as.ini",
-			nil, "path", cpath, "section", conf.IssuerSectionName)
+		return serrors.New("Section missing from as.ini",
+			"path", cpath, "section", conf.IssuerSectionName)
 	}
 	// Check if file already exists.
 	fname := fmt.Sprintf(pkicmn.CertNameFmt, ia.I, ia.A.FileFmt(), a.AsCert.Version)
@@ -160,8 +160,7 @@ func genIssuerCert(issuerConf *conf.IssuerCert, s addr.IA) (*cert.Certificate, e
 	}
 	coreAs, ok := currTrc.CoreASes[s]
 	if !ok {
-		return nil, common.NewBasicError("Issuer of IssuerCert not found in Core ASes of TRC",
-			nil, "issuer", s)
+		return nil, serrors.New("Issuer of IssuerCert not found in Core ASes of TRC", "issuer", s)
 	}
 	// Make sure the certificates are in the validity period.
 	c.IssuingTime = max(c.IssuingTime, currTrc.CreationTime)
@@ -186,7 +185,7 @@ func genASCert(conf *conf.AsCert, s addr.IA, issuerCert *cert.Certificate) (*cer
 	}
 	// Ensure issuer can issue certificates.
 	if !issuerCert.CanIssue {
-		return nil, common.NewBasicError("Issuer cert not authorized to issue certs.", nil,
+		return nil, serrors.New("Issuer cert not authorized to issue certs.",
 			"issuer", c.Issuer, "subject", c.Subject)
 	}
 	// Make sure the certificates are in the validity period.

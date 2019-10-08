@@ -21,7 +21,6 @@ package sockctrl
 import (
 	"net"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 )
 
@@ -38,7 +37,7 @@ func SockControl(c *net.UDPConn, f func(int) error) error {
 		return serrors.WrapStr("sockctrl: RawConn.Control error", err)
 	}
 	if ctrlErr != nil {
-		return common.NewBasicError("sockctrl: control function error", ctrlErr)
+		return serrors.WrapStr("sockctrl: control function error", ctrlErr)
 	}
 	return nil
 }

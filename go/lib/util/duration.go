@@ -20,7 +20,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 )
 
@@ -72,7 +71,7 @@ func ParseDuration(durationStr string) (time.Duration, error) {
 	case "ns":
 		// Value already correct
 	default:
-		return 0, common.NewBasicError("Invalid time unit in duration string", nil,
+		return 0, serrors.New("Invalid time unit in duration string",
 			"unit", unit, "val", durationStr)
 	}
 	return dur, nil

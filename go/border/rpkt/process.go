@@ -80,7 +80,7 @@ func (rp *RtrPkt) processSCMP() (HookResult, error) {
 			}
 		}
 	default:
-		return HookError, common.NewBasicError("Unsupported destination SCMP payload", nil,
+		return HookError, serrors.New("Unsupported destination SCMP payload",
 			"class", hdr.Class, "type", hdr.Type.Name(hdr.Class))
 	}
 	return HookContinue, nil
@@ -89,12 +89,12 @@ func (rp *RtrPkt) processSCMP() (HookResult, error) {
 func (rp *RtrPkt) processSCMPTraceRoute() error {
 	pld, ok := rp.pld.(*scmp.Payload)
 	if !ok {
-		return common.NewBasicError("Invalid payload type in SCMP packet", nil,
+		return serrors.New("Invalid payload type in SCMP packet",
 			"expected", "*scmp.Payload", "actual", common.TypeOf(rp.pld))
 	}
 	infoTrace, ok := pld.Info.(*scmp.InfoTraceRoute)
 	if !ok {
-		return common.NewBasicError("Invalid SCMP Info type in SCMP packet", nil,
+		return serrors.New("Invalid SCMP Info type in SCMP packet",
 			"expected", "*scmp.InfoTraceRoute", "actual", common.TypeOf(pld.Info))
 	}
 	if infoTrace.HopOff != rp.CmnHdr.CurrHopF {
@@ -132,12 +132,12 @@ func (rp *RtrPkt) processSCMPTraceRoute() error {
 func (rp *RtrPkt) processSCMPRecordPath() error {
 	pld, ok := rp.pld.(*scmp.Payload)
 	if !ok {
-		return common.NewBasicError("Invalid payload type in SCMP packet", nil,
+		return serrors.New("Invalid payload type in SCMP packet",
 			"expected", "*scmp.Payload", "actual", common.TypeOf(rp.pld))
 	}
 	infoRec, ok := pld.Info.(*scmp.InfoRecordPath)
 	if !ok {
-		return common.NewBasicError("Invalid SCMP Info type in SCMP packet", nil,
+		return serrors.New("Invalid SCMP Info type in SCMP packet",
 			"expected", "*scmp.InfoRecordPath", "actual", common.TypeOf(pld.Info))
 	}
 	// Calculate time in microseconds since scmp packet was created
@@ -174,12 +174,12 @@ func (rp *RtrPkt) processSCMPRevocation() error {
 	var err error
 	pld, ok := rp.pld.(*scmp.Payload)
 	if !ok {
-		return common.NewBasicError("Invalid payload type in SCMP packet", nil,
+		return serrors.New("Invalid payload type in SCMP packet",
 			"expected", "*scmp.Payload", "actual", common.TypeOf(rp.pld))
 	}
 	infoRev, ok := pld.Info.(*scmp.InfoRevocation)
 	if !ok {
-		return common.NewBasicError("Invalid SCMP Info type in SCMP packet", nil,
+		return serrors.New("Invalid SCMP Info type in SCMP packet",
 			"expected", "*scmp.InfoRevocation", "actual", common.TypeOf(pld.Info))
 	}
 	if args.SignedRevInfo, err = path_mgmt.NewSignedRevInfoFromRaw(infoRev.RawSRev); err != nil {

@@ -296,7 +296,7 @@ func (store *Store) getTRCFromNetwork(ctx context.Context, req *trcRequest) (*tr
 		}
 		return response.Data.(*trc.TRC), nil
 	case <-ctx.Done():
-		return nil, common.NewBasicError("Context done while waiting for TRC",
+		return nil, serrors.WrapStr("Context done while waiting for TRC",
 			ctx.Err(), "isd", req.isd, "version", req.version)
 	}
 }
@@ -603,7 +603,7 @@ func (store *Store) LoadAuthoritativeTRC(dir string) error {
 				return serrors.WrapStr("Unable to compare TRCs", err)
 			}
 			if !eq {
-				return common.NewBasicError("Conflicting TRCs found for same version", nil,
+				return serrors.New("Conflicting TRCs found for same version",
 					"db", dbTRC, "file", fileTRC)
 			}
 			return nil
@@ -651,7 +651,7 @@ func (store *Store) LoadAuthoritativeChain(dir string) error {
 		case fileChain.Leaf.Version == chain.Leaf.Version:
 			// Because it is the same version, check if the chains match
 			if !fileChain.Equal(chain) {
-				return common.NewBasicError("Conflicting chains found for same version", nil,
+				return serrors.New("Conflicting chains found for same version",
 					"db", chain, "file", fileChain)
 			}
 			return nil
@@ -732,11 +732,11 @@ func (store *Store) isLocal(address net.Addr) error {
 	if address != nil {
 		switch saddr, ok := address.(*snet.Addr); {
 		case !ok:
-			return common.NewBasicError("Unable to determine AS of address",
-				nil, "addr", address)
+			return serrors.New("Unable to determine AS of address",
+				"addr", address)
 		case !store.ia.Equal(saddr.IA):
-			return common.NewBasicError("Object not found in DB, and recursion not "+
-				"allowed for clients outside AS", nil, "addr", address)
+			return serrors.New("Object not found in DB, and recursion not "+
+				"allowed for clients outside AS", "addr", address)
 		}
 	}
 	return nil
@@ -760,7 +760,7 @@ func (store *Store) ChooseServer(ctx context.Context, destination addr.IA) (net.
 	}
 	path, err := store.config.Router.Route(ctx, addr.IA{I: destISD})
 	if err != nil {
-		return nil, common.NewBasicError("Unable to find path to any core AS", err,
+		return nil, serrors.WrapStr("Unable to find path to any core AS", err,
 			"isd", destISD)
 	}
 	a := &snet.Addr{

@@ -52,7 +52,7 @@ func (rp *RtrPkt) Route() error {
 		}
 	}
 	if len(rp.Egress) == 0 {
-		return common.NewBasicError("No routing information found", nil,
+		return serrors.New("No routing information found",
 			"egress", rp.Egress, "dirFrom", rp.DirFrom, "raw", rp.Raw)
 	}
 	l := metrics.ProcessLabels{
@@ -73,7 +73,7 @@ func (rp *RtrPkt) Route() error {
 func (rp *RtrPkt) RouteResolveSVC() (HookResult, error) {
 	svc, ok := rp.dstHost.(addr.HostSVC)
 	if !ok {
-		return HookError, common.NewBasicError("Destination host is NOT an SVC address", nil,
+		return HookError, serrors.New("Destination host is NOT an SVC address",
 			"actual", rp.dstHost, "type", fmt.Sprintf("%T", rp.dstHost))
 	}
 	addrs, err := rp.Ctx.ResolveSVC(svc)
@@ -94,7 +94,7 @@ func (rp *RtrPkt) forward() (HookResult, error) {
 	case rcmn.DirLocal:
 		return rp.forwardFromLocal()
 	default:
-		return HookError, common.NewBasicError("Unsupported forwarding DirFrom", nil,
+		return HookError, serrors.New("Unsupported forwarding DirFrom",
 			"dirFrom", rp.DirFrom)
 	}
 }
@@ -164,7 +164,7 @@ func (rp *RtrPkt) xoverFromExternal() error {
 	// If this is a peering XOVER point.
 	if infoF.Peer {
 		if segChgd {
-			return common.NewBasicError("Path inc on ingress caused illegal peer segment change",
+			return serrors.WrapStr("Path inc on ingress caused illegal peer segment change",
 				scmp.NewError(scmp.C_Path, scmp.T_P_BadSegment,
 					rp.mkInfoPathOffsets(rp.CmnHdr.CurrInfoF, rp.CmnHdr.CurrHopF), nil))
 		}
@@ -180,7 +180,7 @@ func (rp *RtrPkt) xoverFromExternal() error {
 			newIF = *rp.ifCurr
 		}
 		if origIF != newIF {
-			return common.NewBasicError(
+			return serrors.WrapStr(
 				"Downstream interfaces don't match on peer XOVER hop fields",
 				scmp.NewError(scmp.C_Path, scmp.T_P_BadHopField,
 					rp.mkInfoPathOffsets(rp.CmnHdr.CurrInfoF, rp.CmnHdr.CurrHopF), nil),
@@ -197,13 +197,13 @@ func (rp *RtrPkt) xoverFromExternal() error {
 	nextLink := rp.Ctx.Conf.Topo.IFInfoMap[*rp.ifNext].LinkType
 	// Never allowed to switch between core segments.
 	if prevLink == proto.LinkType_core && nextLink == proto.LinkType_core {
-		return common.NewBasicError("Segment change between CORE links",
+		return serrors.WrapStr("Segment change between CORE links",
 			scmp.NewError(scmp.C_Path, scmp.T_P_BadSegment,
 				rp.mkInfoPathOffsets(rp.CmnHdr.CurrInfoF, rp.CmnHdr.CurrHopF), nil))
 	}
 	// Only allowed to switch from up- to up-segment if the next link is CORE.
 	if !infoF.ConsDir && !rp.infoF.ConsDir && nextLink != proto.LinkType_core {
-		return common.NewBasicError(
+		return serrors.WrapStr(
 			"Segment change from up segment to up segment with non-CORE next link",
 			scmp.NewError(scmp.C_Path, scmp.T_P_BadSegment,
 				rp.mkInfoPathOffsets(rp.CmnHdr.CurrInfoF, rp.CmnHdr.CurrHopF), nil),
@@ -212,7 +212,7 @@ func (rp *RtrPkt) xoverFromExternal() error {
 	}
 	// Only allowed to switch from down- to down-segment if the previous link is CORE.
 	if infoF.ConsDir && rp.infoF.ConsDir && prevLink != proto.LinkType_core {
-		return common.NewBasicError(
+		return serrors.WrapStr(
 			"Segment change from down segment to down segment with non-CORE previous link",
 			scmp.NewError(scmp.C_Path, scmp.T_P_BadSegment,
 				rp.mkInfoPathOffsets(rp.CmnHdr.CurrInfoF, rp.CmnHdr.CurrHopF), nil),

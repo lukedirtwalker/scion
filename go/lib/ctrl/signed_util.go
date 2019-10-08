@@ -58,7 +58,7 @@ type SignSrcDef struct {
 func NewSignSrcDefFromRaw(b common.RawBytes) (SignSrcDef, error) {
 	match := reSrcDefault.FindSubmatch(b)
 	if len(match) == 0 {
-		return SignSrcDef{}, common.NewBasicError("Unable to match default src", nil,
+		return SignSrcDef{}, serrors.New("Unable to match default src",
 			"string", string(b))
 	}
 	ia, err := addr.IAFromString(string(match[1]))

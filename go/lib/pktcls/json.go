@@ -188,7 +188,7 @@ func unmarshalStringField(b []byte, name, field string) (string, error) {
 	}
 	s, ok := v.(string)
 	if !ok {
-		return "", common.NewBasicError("Field is non-string", nil,
+		return "", serrors.New("Field is non-string",
 			"name", name, "field", field, "type", common.TypeOf(v))
 	}
 	return s, nil
@@ -201,7 +201,7 @@ func unmarshalUintField(b []byte, name, field string, width int) (uint64, error)
 	}
 	i, err := strconv.ParseUint(s, 0, width)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to parse uint field", err,
+		return 0, serrors.WrapStr("Unable to parse uint field", err,
 			"name", name, "field", field)
 	}
 	return i, nil

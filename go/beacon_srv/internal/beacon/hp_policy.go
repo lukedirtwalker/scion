@@ -64,15 +64,15 @@ func (hp *HPRegistration) Validate() error {
 	for _, p := range hp.HPPolicies.Policies {
 		for id := range p.Hidden {
 			if _, ok := hp.HPGroups[id]; !ok {
-				return common.NewBasicError("Policy references unavailable Group",
-					nil, "GroupId", id)
+				return serrors.New("Policy references unavailable Group",
+					"GroupId", id)
 			}
 		}
 	}
 	for id, g := range hp.HPGroups {
 		if id != g.Group.Id {
-			return common.NewBasicError("GroupId key doesn't match loaded HPGroup",
-				nil, "key", id, "loaded", g.Group.Id)
+			return serrors.New("GroupId key doesn't match loaded HPGroup",
+				"key", id, "loaded", g.Group.Id)
 		}
 	}
 	return nil
@@ -116,7 +116,7 @@ func (hp *HPRegistration) init() error {
 func (g *HPGroup) loadGroup() error {
 	b, err := ioutil.ReadFile(g.GroupCfgPath)
 	if err != nil {
-		return common.NewBasicError("Unable to read hidden path group file", err,
+		return serrors.WrapStr("Unable to read hidden path group file", err,
 			"path", g.GroupCfgPath)
 	}
 	err = json.Unmarshal(b, &g.Group)

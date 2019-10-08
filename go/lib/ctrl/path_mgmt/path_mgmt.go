@@ -96,7 +96,7 @@ func (u *union) set(c proto.Cerealizable) error {
 		u.Which = proto.PathMgmt_Which_hpCfgReply
 		u.HPCfgReply = p
 	default:
-		return common.NewBasicError("Unsupported path mgmt union type (set)", nil,
+		return serrors.New("Unsupported path mgmt union type (set)",
 			"type", common.TypeOf(c))
 	}
 	return nil

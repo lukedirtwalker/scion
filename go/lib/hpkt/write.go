@@ -46,7 +46,7 @@ func WriteScnPkt(s *spkt.ScnPkt, b common.RawBytes) (int, error) {
 	scionHdrLen := spkt.CmnHdrLen + addrHdrLen + pathHdrLen
 	pktLen := scionHdrLen + s.L4.L4Len() + s.Pld.Len()
 	if len(b) < pktLen {
-		return 0, common.NewBasicError("Buffer too small", nil,
+		return 0, serrors.New("Buffer too small",
 			"expected", pktLen, "actual", len(b))
 	}
 

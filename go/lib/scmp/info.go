@@ -142,13 +142,13 @@ type InfoPathOffsets struct {
 func InfoPathOffsetsFromRaw(b common.RawBytes) (*InfoPathOffsets, error) {
 	p := &InfoPathOffsets{}
 	if len(b) < p.Len() {
-		return nil, common.NewBasicError("Can't parse InfoPathOffsets, buffer is too small", nil,
+		return nil, serrors.New("Can't parse InfoPathOffsets, buffer is too small",
 			"min", p.Len(), "actual", len(b))
 	}
 	// Check 0 padding
 	for _, pad := range b[infoPathOffsetsLen:p.Len()] {
 		if pad != 0 {
-			return nil, common.NewBasicError("InfoPathOffsets padding is not zeroed", nil,
+			return nil, serrors.New("InfoPathOffsets padding is not zeroed",
 				"actual", b[infoPathOffsetsLen:p.Len()])
 		}
 	}
@@ -169,7 +169,7 @@ func (p *InfoPathOffsets) Len() int {
 
 func (p *InfoPathOffsets) Write(b common.RawBytes) (int, error) {
 	if len(b) < p.Len() {
-		return 0, common.NewBasicError("Can't write InfoPathOffsets, buffer is too small", nil,
+		return 0, serrors.New("Can't write InfoPathOffsets, buffer is too small",
 			"min", p.Len(), "actual", len(b))
 	}
 	b[0] = p.InfoF

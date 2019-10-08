@@ -26,6 +26,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/sig/egress/iface"
 	"github.com/scionproto/scion/go/sig/egress/router"
 	"github.com/scionproto/scion/go/sig/metrics"
@@ -111,7 +112,7 @@ func (r *Reader) getDestIP(b common.RawBytes) (net.IP, error) {
 	case ip6Ver:
 		return net.IP(b[ip6DstOff : ip6DstOff+net.IPv6len]), nil
 	default:
-		return nil, common.NewBasicError("Unsupported IP protocol version in egress packet", nil,
+		return nil, serrors.New("Unsupported IP protocol version in egress packet",
 			"type", ver)
 	}
 }

@@ -98,7 +98,7 @@ func (s *rSPSExtn) SetMetadata(metadata common.RawBytes) error {
 		return err
 	}
 	if len(meta) != len(metadata) {
-		return common.NewBasicError("Invalid metadata length", nil,
+		return serrors.New("Invalid metadata length",
 			"expected", len(meta), "actual", len(metadata))
 	}
 	copy(meta, metadata)
@@ -121,7 +121,7 @@ func (s *rSPSExtn) SetAuthenticator(authenticator common.RawBytes) error {
 		return err
 	}
 	if len(auth) != len(authenticator) {
-		return common.NewBasicError("Invalid authenticator length", nil,
+		return serrors.New("Invalid authenticator length",
 			"expected", len(auth), "actual", len(authenticator))
 	}
 	copy(auth, authenticator)
@@ -149,7 +149,7 @@ func (s *rSPSExtn) Validate() (HookResult, error) {
 	}
 
 	if len(s.raw) != expectedLen {
-		return HookError, common.NewBasicError("Invalid header length", nil,
+		return HookError, serrors.New("Invalid header length",
 			"expected", expectedLen, "actual", len(s.raw))
 	}
 
@@ -198,7 +198,7 @@ func (s *rSPSExtn) limitsMetadata() (int, int, error) {
 	case spse.GcmAes128:
 		size = spse.GcmAes128MetaLength
 	default:
-		return 0, 0, common.NewBasicError("Invalid SecMode", nil,
+		return 0, 0, serrors.New("Invalid SecMode",
 			"mode", s.SecMode, "func", "limitsMetadata")
 	}
 	return spse.SecModeLength, spse.SecModeLength + size, nil
@@ -218,7 +218,7 @@ func (s *rSPSExtn) limitsAuthenticator() (int, int, error) {
 	case spse.GcmAes128:
 		size = spse.GcmAes128AuthLength
 	default:
-		return 0, 0, common.NewBasicError("Invalid SecMode", nil,
+		return 0, 0, serrors.New("Invalid SecMode",
 			"mode", s.SecMode, "func", "limitsAuthenticator")
 	}
 	_, l, _ := s.limitsMetadata()

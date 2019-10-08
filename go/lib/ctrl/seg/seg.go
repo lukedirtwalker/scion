@@ -316,7 +316,7 @@ func (ps *PathSegment) WalkHopEntries() error {
 		for _, hopEntry := range asEntry.HopEntries {
 			_, err := hopEntry.HopField()
 			if err != nil {
-				return common.NewBasicError("invalid hop field found in ASEntry",
+				return serrors.WrapStr("invalid hop field found in ASEntry",
 					err, "asEntry", asEntry)
 			}
 		}
@@ -374,7 +374,7 @@ func (ps *PathSegment) MaxAEIdx() int {
 
 func (ps *PathSegment) validateIdx(idx int) error {
 	if idx < 0 || idx > ps.MaxAEIdx() {
-		return common.NewBasicError("Invalid ASEntry index", nil,
+		return serrors.New("Invalid ASEntry index",
 			"min", 0, "max", ps.MaxAEIdx(), "actual", idx)
 	}
 	return nil

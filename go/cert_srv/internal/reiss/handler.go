@@ -132,12 +132,12 @@ func (h *Handler) validateSign(ctx context.Context, addr *snet.Addr,
 		return nil, err
 	}
 	if signed.Sign.Type.String() != verChain.Leaf.SignAlgorithm {
-		return nil, common.NewBasicError("Invalid sign type", nil,
+		return nil, serrors.New("Invalid sign type",
 			"expected", verChain.Leaf.SignAlgorithm, "actual", signed.Sign.Type)
 	}
 	// Verify that the requester matches the signer
 	if !verChain.Leaf.Subject.Equal(addr.IA) {
-		return nil, common.NewBasicError("Origin AS does not match signer", nil,
+		return nil, serrors.New("Origin AS does not match signer",
 			"signer", verChain.Leaf.Subject, "origin", addr.IA)
 	}
 	return verChain, nil
@@ -149,15 +149,15 @@ func (h *Handler) validateReq(c *cert.Certificate, vKey common.RawBytes,
 	vChain, maxChain *cert.Chain) error {
 
 	if !c.Subject.Equal(vChain.Leaf.Subject) {
-		return common.NewBasicError("Requester does not match subject", nil, "ia",
+		return serrors.New("Requester does not match subject", "ia",
 			vChain.Leaf.Subject, "sub", c.Subject)
 	}
 	if maxChain.Leaf.Version+1 != c.Version {
-		return common.NewBasicError("Invalid version", nil, "expected", maxChain.Leaf.Version+1,
+		return serrors.New("Invalid version", "expected", maxChain.Leaf.Version+1,
 			"actual", c.Version)
 	}
 	if !c.Issuer.Equal(h.IA) {
-		return common.NewBasicError("Requested Issuer is not this AS", nil, "iss",
+		return serrors.New("Requested Issuer is not this AS", "iss",
 			c.Issuer, "expected", h.IA)
 	}
 	if c.CanIssue {

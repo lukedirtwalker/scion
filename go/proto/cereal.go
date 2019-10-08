@@ -51,7 +51,7 @@ func WriteRoot(c Cerealizable, b common.RawBytes) (int, error) {
 	raw := &util.Raw{B: b}
 	enc := capnp.NewPackedEncoder(raw)
 	if err := enc.Encode(msg); err != nil {
-		return 0, common.NewBasicError("Failed to encode capnp struct", err,
+		return 0, serrors.WrapStr("Failed to encode capnp struct", err,
 			"id", c.ProtoId(), "type", common.TypeOf(c))
 	}
 	return raw.Offset, nil
@@ -65,7 +65,7 @@ func PackRoot(c Cerealizable) (common.RawBytes, error) {
 	}
 	raw, err := msg.MarshalPacked()
 	if err != nil {
-		return nil, common.NewBasicError("Failed to marshal capnp struct", err,
+		return nil, serrors.WrapStr("Failed to marshal capnp struct", err,
 			"id", c.ProtoId(), "type", common.TypeOf(c))
 	}
 	return raw, nil
@@ -86,7 +86,7 @@ func SerializeTo(c Cerealizable, wr io.Writer) error {
 func cerealInsert(c Cerealizable) (*capnp.Message, error) {
 	msg, arena, err := capnp.NewMessage(capnp.SingleSegment(nil))
 	if err != nil {
-		return nil, common.NewBasicError("Failed to create new capnp message", err,
+		return nil, serrors.WrapStr("Failed to create new capnp message", err,
 			"id", c.ProtoId(), "type", common.TypeOf(c))
 	}
 	s, err := NewRootStruct(c.ProtoId(), arena)
@@ -94,7 +94,7 @@ func cerealInsert(c Cerealizable) (*capnp.Message, error) {
 		return nil, err
 	}
 	if err := pogs.Insert(uint64(c.ProtoId()), s, c); err != nil {
-		return nil, common.NewBasicError("Failed to insert struct into capnp message", err,
+		return nil, serrors.WrapStr("Failed to insert struct into capnp message", err,
 			"id", c.ProtoId(), "type", common.TypeOf(c))
 	}
 	return msg, nil

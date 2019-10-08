@@ -123,7 +123,7 @@ func (h *handler) handle(logger log.Logger) (*infra.HandlerResult, error) {
 func (h *handler) getIntfInfo() (common.IFIDType, *ifstate.Interface, error) {
 	peer, ok := h.request.Peer.(*snet.Addr)
 	if !ok {
-		return 0, nil, common.NewBasicError("Invalid peer address type, expected *snet.Addr", nil,
+		return 0, nil, serrors.New("Invalid peer address type, expected *snet.Addr",
 			"peer", h.request.Peer, "type", common.TypeOf(h.request.Peer))
 	}
 	hopF, err := peer.Path.GetHopField(peer.Path.HopOff)
@@ -132,12 +132,12 @@ func (h *handler) getIntfInfo() (common.IFIDType, *ifstate.Interface, error) {
 	}
 	info := h.intfs.Get(hopF.ConsIngress)
 	if info == nil {
-		return 0, nil, common.NewBasicError("Received keepalive for non-existent ifid", nil,
+		return 0, nil, serrors.New("Received keepalive for non-existent ifid",
 			"ifid", hopF.ConsIngress)
 	}
 	originIA := info.TopoInfo().ISD_AS
 	if !info.TopoInfo().ISD_AS.Equal(peer.IA) {
-		return 0, nil, common.NewBasicError("Keepalive origin IA does not match", nil,
+		return 0, nil, serrors.New("Keepalive origin IA does not match",
 			"ifid", hopF.ConsIngress, "expected", originIA, "actual", peer.IA)
 	}
 	return hopF.ConsIngress, info, nil

@@ -28,6 +28,7 @@ import (
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/scmp"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 )
 
@@ -146,11 +147,11 @@ func (ctx *Ctx) GetSVCNamesMap(svc addr.HostSVC) ([]string,
 	case addr.SvcSIG:
 		names, elemMap = t.SIGNames, t.SIG
 	default:
-		return nil, nil, common.NewBasicError("Unsupported SVC address",
+		return nil, nil, serrors.WrapStr("Unsupported SVC address",
 			scmp.NewError(scmp.C_Routing, scmp.T_R_BadHost, nil, nil), "svc", svc)
 	}
 	if len(elemMap) == 0 {
-		return nil, nil, common.NewBasicError("No instances found for SVC address",
+		return nil, nil, serrors.WrapStr("No instances found for SVC address",
 			scmp.NewError(scmp.C_Routing, scmp.T_R_UnreachHost, nil, nil), "svc", svc)
 	}
 	return names, elemMap, nil

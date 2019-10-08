@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/beacon_srv/internal/beaconstorage"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/env"
@@ -184,7 +183,7 @@ func (cfg *BSConfig) Validate() error {
 		return serrors.New("RevTTL is not set")
 	}
 	if cfg.RevTTL.Duration < path_mgmt.MinRevTTL {
-		return common.NewBasicError("RevTTL must be equal or greater than MinRevTTL", nil,
+		return serrors.New("RevTTL must be equal or greater than MinRevTTL",
 			"MinRevTTL", path_mgmt.MinRevTTL)
 	}
 	if cfg.RevOverlap.Duration == 0 {

@@ -20,7 +20,6 @@ import (
 
 	"github.com/scionproto/scion/go/cert_srv/internal/config"
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust"
 	"github.com/scionproto/scion/go/lib/log"
@@ -171,8 +170,7 @@ func (s *Self) getCoreASEntry(ctx context.Context) (*trc.CoreAS, error) {
 	}
 	coreAS := maxTrc.CoreASes[s.IA]
 	if coreAS == nil {
-		return nil, common.NewBasicError("Local AS is not a core AS in the max TRC",
-			nil, "maxTrc", maxTrc)
+		return nil, serrors.New("Local AS is not a core AS in the max TRC", "maxTrc", maxTrc)
 	}
 	return coreAS, nil
 }

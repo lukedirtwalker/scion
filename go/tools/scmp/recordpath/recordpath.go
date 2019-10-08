@@ -125,20 +125,20 @@ func validate(pkt *spkt.ScnPkt, pathEntry *sciond.PathReplyEntry) (*scmp.Hdr,
 	interfaces := pathEntry.Path.Interfaces
 	if len(info.Entries) != len(interfaces) {
 		return nil, nil,
-			common.NewBasicError("Invalid number of entries", nil,
+			serrors.New("Invalid number of entries",
 				"Expected", len(interfaces), "Actual", len(info.Entries))
 	}
 	for i, e := range info.Entries {
 		ia := interfaces[i].RawIsdas.IA()
 		if e.IA != ia {
 			return nil, nil,
-				common.NewBasicError("Invalid ISD-AS", nil, "entry", i,
+				serrors.New("Invalid ISD-AS", "entry", i,
 					"Expected", ia, "Actual", e.IA)
 		}
 		ifid := common.IFIDType(interfaces[i].IfID)
 		if e.IfID != ifid {
 			return nil, nil,
-				common.NewBasicError("Invalid IfID", nil, "entry", i,
+				serrors.New("Invalid IfID", "entry", i,
 					"Expected", ifid, "Actual", e.IfID)
 		}
 	}

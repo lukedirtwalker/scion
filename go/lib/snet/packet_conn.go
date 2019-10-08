@@ -186,7 +186,7 @@ func (c *SCIONPacketConn) ReadFrom(pkt *SCIONPacket, ov *overlay.OverlayAddr) er
 		}
 		if scmpHdr, ok := pkt.L4Header.(*scmp.Hdr); ok {
 			if c.scmpHandler == nil {
-				return common.NewBasicError("scmp packet received, but no handler found", nil,
+				return serrors.New("scmp packet received, but no handler found",
 					"scmp.Hdr", scmpHdr, "src", pkt.Source)
 			}
 			if err := c.scmpHandler.Handle(pkt); err != nil {
@@ -214,7 +214,7 @@ func (c *SCIONPacketConn) readFrom(pkt *SCIONPacket, ov *overlay.OverlayAddr) er
 	var ok bool
 	lastHop, ok = lastHopNetAddr.(*overlay.OverlayAddr)
 	if !ok {
-		return common.NewBasicError("Invalid lastHop address Type", nil,
+		return serrors.New("Invalid lastHop address Type",
 			"Actual", lastHopNetAddr)
 	}
 

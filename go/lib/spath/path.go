@@ -92,7 +92,7 @@ func (p *Path) Reverse() error {
 		if origOff == len(p.Raw) {
 			break
 		} else if origOff > len(p.Raw) {
-			return common.NewBasicError("Unable to reverse corrupt path", nil,
+			return serrors.New("Unable to reverse corrupt path",
 				"currOff", origOff, "max", len(p.Raw))
 		}
 	}

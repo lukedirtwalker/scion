@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/cert_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -77,7 +78,7 @@ func (p *Pld) GetCertMgmt() (*cert_mgmt.Pld, *Data, error) {
 	}
 	certP, ok := u.(*cert_mgmt.Pld)
 	if !ok {
-		return nil, nil, common.NewBasicError("Non-matching ctrl pld contents", nil,
+		return nil, nil, serrors.New("Non-matching ctrl pld contents",
 			"expected", "*cert_mgmt.Pld", "actual", common.TypeOf(u))
 	}
 	return certP, p.Data, nil
@@ -92,7 +93,7 @@ func (p *Pld) GetPathMgmt() (*path_mgmt.Pld, *Data, error) {
 	}
 	pathP, ok := u.(*path_mgmt.Pld)
 	if !ok {
-		return nil, nil, common.NewBasicError("Non-matching ctrl pld contents", nil,
+		return nil, nil, serrors.New("Non-matching ctrl pld contents",
 			"expected", "*path_mgmt.Pld", "actual", common.TypeOf(u))
 	}
 	return pathP, p.Data, nil

@@ -22,7 +22,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
@@ -76,7 +75,7 @@ func (srv *Server) ListenAndServe() error {
 	listener, err := srv.listen()
 	if err != nil {
 		srv.mu.Unlock()
-		return common.NewBasicError("unable to listen on socket", nil,
+		return serrors.New("unable to listen on socket",
 			"address", srv.address, "err", err)
 	}
 	srv.listener = listener

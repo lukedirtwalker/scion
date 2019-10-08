@@ -61,7 +61,7 @@ func HdrFromRaw(b common.RawBytes) (*Hdr, error) {
 
 func (h *Hdr) Validate(plen int) error {
 	if plen+HdrLen != int(h.TotalLen) || plen <= 0 {
-		return common.NewBasicError("SCMP header total length doesn't match", nil,
+		return serrors.New("SCMP header total length doesn't match",
 			"expected", h.TotalLen, "actual", plen)
 	}
 	return nil
@@ -77,7 +77,7 @@ func (h *Hdr) Write(b common.RawBytes) error {
 		return serrors.WrapStr("Error packing SCMP header", err)
 	}
 	if count := copy(b, out); count != HdrLen {
-		return common.NewBasicError("Partial write of SCMP header", nil,
+		return serrors.New("Partial write of SCMP header",
 			"expected(B)", HdrLen, "actual(B)", count)
 	}
 	return nil

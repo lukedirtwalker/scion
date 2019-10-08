@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -98,7 +97,7 @@ func newTRC(isd addr.ISD, isdCfg *conf.ISDCfg, primaryASes map[addr.AS]*asCfg) (
 		ProofOfPossession:    make(map[addr.AS][]trc.KeyType),
 	}
 	if !t.Base() {
-		return nil, common.NewBasicError("TRC updates not supported yet", nil,
+		return nil, serrors.New("TRC updates not supported yet",
 			"version", t.Version, "base", t.BaseVersion)
 	}
 	for as, cfg := range primaryASes {

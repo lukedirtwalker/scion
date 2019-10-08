@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/seg/mock_seg"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/xtest"
 	"github.com/scionproto/scion/go/proto"
@@ -193,7 +194,7 @@ func (t *keyPair) Verify(_ context.Context, msg common.RawBytes,
 	sign *proto.SignS) error {
 
 	if !bytes.Equal(sign.Src, common.RawBytes{1, 4, 4, 2}) {
-		return common.NewBasicError("Invalid sign", nil,
+		return serrors.New("Invalid sign",
 			"expected", common.RawBytes{1, 4, 4, 2}, "actual", sign.Src)
 	}
 	return scrypto.Verify(msg, sign.Signature, t.pubKey, scrypto.Ed25519)

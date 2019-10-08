@@ -21,7 +21,6 @@ import (
 	"sync"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ringbuf"
 	"github.com/scionproto/scion/go/lib/serrors"
 )
@@ -55,7 +54,7 @@ func (ns *Networks) Add(ipnet *net.IPNet, ia addr.IA, ring *ringbuf.Ring) error 
 	newNet := &network{cnet, ia, ring}
 	for _, exnet := range ns.nets {
 		if exnet.net.Contains(cnet.IP) || cnet.Contains(exnet.net.IP) {
-			return common.NewBasicError("Networks.Add(): Networks overlap", nil,
+			return serrors.New("Networks.Add(): Networks overlap",
 				"new", newNet, "existing", exnet)
 		}
 	}

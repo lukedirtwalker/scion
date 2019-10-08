@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/sig/metrics"
 	"github.com/scionproto/scion/go/sig/mgmt"
@@ -154,7 +155,7 @@ func (w *Worker) cleanup() {
 func (w *Worker) send(packet common.RawBytes) error {
 	bytesWritten, err := w.tunIO.Write(packet)
 	if err != nil {
-		return common.NewBasicError("Unable to write to internal ingress", err,
+		return serrors.WrapStr("Unable to write to internal ingress", err,
 			"length", len(packet))
 	}
 	w.sentCtrs.Pkts.Inc()

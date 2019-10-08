@@ -208,13 +208,13 @@ func (v *BasicVerifier) sanityChecks(sign *proto.SignS, isPldSignature bool) err
 	signatureAge := now.Sub(ts)
 	if timeInFuture := -signatureAge; timeInFuture > v.tsRange.MaxInFuture {
 		metrics.Store.Verification(l).Inc()
-		return common.NewBasicError("Invalid timestamp. Signature from future", nil,
+		return serrors.New("Invalid timestamp. Signature from future",
 			"ts", util.TimeToString(ts), "now", util.TimeToString(now),
 			"maxFuture", v.tsRange.MaxInFuture)
 	}
 	if isPldSignature && signatureAge > v.tsRange.MaxPldAge {
 		metrics.Store.Verification(l).Inc()
-		return common.NewBasicError("Invalid timestamp. Signature expired", nil,
+		return serrors.New("Invalid timestamp. Signature expired",
 			"ts", util.TimeToString(ts), "now", util.TimeToString(now),
 			"validity", v.tsRange.MaxPldAge)
 	}
@@ -258,11 +258,11 @@ func (v *BasicVerifier) verify(ctx context.Context, msg common.RawBytes,
 
 func (v *BasicVerifier) checkSrc(src ctrl.SignSrcDef) error {
 	if v.ia.A != 0 && src.IA.A != v.ia.A {
-		return common.NewBasicError("AS does not match bound source", nil,
+		return serrors.New("AS does not match bound source",
 			"srcSet", !v.src.IsUninitialized(), "expected", v.ia, "actual", src.IA)
 	}
 	if v.ia.I != 0 && src.IA.I != v.ia.I {
-		return common.NewBasicError("ISD does not match bound source", nil,
+		return serrors.New("ISD does not match bound source",
 			"srcSet", !v.src.IsUninitialized(), "expected", v.ia, "actual", src.IA)
 	}
 	return nil

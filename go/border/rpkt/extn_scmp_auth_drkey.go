@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spse"
 	"github.com/scionproto/scion/go/lib/spse/scmp_auth"
 )
@@ -58,7 +59,7 @@ func (s *rSCMPAuthDRKeyExtn) RegisterHooks(h *hooks) error {
 
 func (s *rSCMPAuthDRKeyExtn) Validate() (HookResult, error) {
 	if len(s.raw) != scmp_auth.DRKeyTotalLength {
-		return HookError, common.NewBasicError("Invalid header length", nil,
+		return HookError, serrors.New("Invalid header length",
 			"expected", scmp_auth.DRKeyTotalLength, "actual", len(s.raw))
 	}
 	return HookContinue, nil
@@ -89,7 +90,7 @@ func (s *rSCMPAuthDRKeyExtn) MAC() common.RawBytes {
 
 func (s *rSCMPAuthDRKeyExtn) SetMAC(mac common.RawBytes) error {
 	if len(mac) != scmp_auth.MACLength {
-		return common.NewBasicError("Invalid MAC length", nil,
+		return serrors.New("Invalid MAC length",
 			"expected", len(s.MAC()), "actual", len(mac))
 	}
 	copy(s.MAC(), mac)

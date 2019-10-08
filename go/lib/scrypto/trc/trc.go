@@ -156,12 +156,12 @@ func TRCFromRaw(raw common.RawBytes, lz4_ bool) (*TRC, error) {
 		// endian, unsigned integer. We need to make sure that a malformed message does
 		// not exhaust the available memory.
 		if len(raw) < 4 {
-			return nil, common.NewBasicError("TRC raw input too small", nil,
+			return nil, serrors.New("TRC raw input too small",
 				"min", 4, "actual", len(raw))
 		}
 		bLen := binary.LittleEndian.Uint32(raw[:4])
 		if bLen > MaxTRCByteLength {
-			return nil, common.NewBasicError("TRC LZ4 block too large", nil,
+			return nil, serrors.New("TRC LZ4 block too large",
 				"max", MaxTRCByteLength, "actual", bLen)
 		}
 		buf := make([]byte, bLen)

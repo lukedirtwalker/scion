@@ -44,7 +44,7 @@ func UDPFromRaw(b common.RawBytes) (*UDP, error) {
 
 func (u *UDP) Validate(plen int) error {
 	if plen+UDPLen != int(u.TotalLen) {
-		return common.NewBasicError("UDP header total length doesn't match", nil,
+		return serrors.New("UDP header total length doesn't match",
 			"expected", u.TotalLen, "actual", plen+UDPLen)
 	}
 	return nil
@@ -52,7 +52,7 @@ func (u *UDP) Validate(plen int) error {
 
 func (u *UDP) Parse(b common.RawBytes) error {
 	if len(b) < UDPLen {
-		return common.NewBasicError("Buffer is shorter than the UDP header", nil,
+		return serrors.New("Buffer is shorter than the UDP header",
 			"expected", UDPLen, "actual", len(b))
 	}
 	offset := 0

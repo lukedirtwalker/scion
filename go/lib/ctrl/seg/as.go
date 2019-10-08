@@ -63,11 +63,11 @@ func (ase *ASEntry) Validate(prevIA addr.IA, nextIA addr.IA, ignoreNext bool) er
 		if i == 0 && !prevIA.Equal(h.InIA()) {
 			// Only perform this checks for the first HopEntry, as we can't validate
 			// peering HopEntries from the available information.
-			return common.NewBasicError("HopEntry InIA mismatch", nil,
+			return serrors.New("HopEntry InIA mismatch",
 				"hopIdx", i, "expected", h.InIA(), "actual", prevIA)
 		}
 		if !ignoreNext && !nextIA.Equal(h.OutIA()) {
-			return common.NewBasicError("HopEntry OutIA mismatch", nil,
+			return serrors.New("HopEntry OutIA mismatch",
 				"hopIdx", i, "expected", h.OutIA(), "actual", prevIA)
 		}
 	}

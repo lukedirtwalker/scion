@@ -10,7 +10,6 @@ go_library(
     visibility = ["//go/beacon_srv:__subpackages__"],
     deps = [
         "//go/beacon_srv/internal/beaconstorage:go_default_library",
-        "//go/lib/common:go_default_library",
         "//go/lib/config:go_default_library",
         "//go/lib/ctrl/path_mgmt:go_default_library",
         "//go/lib/env:go_default_library",

@@ -19,13 +19,13 @@ import (
 	"net"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/hiddenpath"
 	"github.com/scionproto/scion/go/lib/infra/modules/segverifier"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // Segments is a list of segments and revocations belonging to them.
@@ -116,7 +116,7 @@ func (h *Handler) storeResults(ctx context.Context, verifiedUnits []segverifier.
 	var revs []*path_mgmt.SignedRevInfo
 	for _, unit := range verifiedUnits {
 		if err := unit.SegError(); err != nil {
-			verifyErrs = append(verifyErrs, common.NewBasicError("Failed to verify seg", err,
+			verifyErrs = append(verifyErrs, serrors.WrapStr("Failed to verify seg", err,
 				"seg", unit.Unit.SegMeta.Segment))
 		} else {
 			segs = append(segs, &SegWithHP{
@@ -130,7 +130,7 @@ func (h *Handler) storeResults(ctx context.Context, verifiedUnits []segverifier.
 		}
 		for idx, rev := range unit.Unit.SRevInfos {
 			if err, ok := unit.Errors[idx]; ok {
-				verifyErrs = append(verifyErrs, common.NewBasicError("Failed to verify rev", err,
+				verifyErrs = append(verifyErrs, serrors.WrapStr("Failed to verify rev", err,
 					"rev", rev))
 			} else {
 				revs = append(revs, rev)

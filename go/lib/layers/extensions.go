@@ -60,7 +60,7 @@ func NewExtnOHPFromLayer(extension *Extension) (*ExtnOHP, error) {
 
 func (o *ExtnOHP) DecodeFromLayer(extension *Extension) error {
 	if len(extension.Data) != common.ExtnFirstLineLen {
-		return common.NewBasicError("bad length for OHP extension", nil,
+		return serrors.New("bad length for OHP extension",
 			"actual", len(extension.Data), "want", common.ExtnFirstLineLen)
 	}
 	return nil
@@ -132,7 +132,7 @@ func (e *ExtnSCMP) DecodeFromLayer(extension *Extension) error {
 
 func (e *ExtnSCMP) DecodeFromBytes(b []byte) error {
 	if len(b) < common.LineLen-3 {
-		return common.NewBasicError("bad length for SCMP extension", nil,
+		return serrors.New("bad length for SCMP extension",
 			"actual", len(b), "want", common.LineLen-3)
 	}
 	flags := b[0]
@@ -221,7 +221,7 @@ func NewExtnUnknownFromLayer(class common.L4ProtocolType,
 
 func (u *ExtnUnknown) DecodeFromLayer(extension *Extension) error {
 	if (len(extension.Data)+common.ExtnSubHdrLen)%common.LineLen != 0 {
-		return common.NewBasicError("length of unknown extension not aligned", nil,
+		return serrors.New("length of unknown extension not aligned",
 			"length", len(extension.Data))
 	}
 	u.Length = int(extension.NumLines)*common.LineLen - common.ExtnSubHdrLen
