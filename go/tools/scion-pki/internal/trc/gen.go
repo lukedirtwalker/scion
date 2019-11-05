@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/keyconf"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/conf"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
@@ -54,7 +55,7 @@ func genTrc(isd addr.ISD) error {
 	}
 	iconf, err := conf.LoadIsdConf(confDir)
 	if err != nil {
-		return common.NewBasicError("Error loading TRC conf", err)
+		return serrors.WrapStr("Error loading TRC conf", err)
 	}
 	pkicmn.QuietPrint("Generating TRC for ISD %d\n", isd)
 	outDir := pkicmn.GetIsdPath(pkicmn.OutDir, isd)
@@ -64,13 +65,13 @@ func genTrc(isd addr.ISD) error {
 	}
 	raw, err := t.JSON(true)
 	if err != nil {
-		return common.NewBasicError("Error json-encoding TRC", err)
+		return serrors.WrapStr("Error json-encoding TRC", err)
 	}
 	// Check if output directory exists.
 	outDir = filepath.Join(outDir, pkicmn.TRCsDir)
 	if _, err = os.Stat(outDir); os.IsNotExist(err) {
 		if err = os.MkdirAll(outDir, 0755); err != nil {
-			return common.NewBasicError("Cannot create output dir", err, "path", outDir)
+			return serrors.WrapStr("Cannot create output dir", err, "path", outDir)
 		}
 	}
 	fname := fmt.Sprintf(pkicmn.TrcNameFmt, isd, iconf.Trc.Version)
@@ -105,11 +106,11 @@ func newTrc(isd addr.ISD, iconf *conf.Isd, path string) (*trc.TRC, error) {
 		cpath := filepath.Join(pkicmn.GetAsPath(pkicmn.RootDir, cia), conf.AsConfFileName)
 		a, err := conf.LoadAsConf(filepath.Dir(cpath))
 		if err != nil {
-			return nil, common.NewBasicError("Error loading as.ini", err, "path", cpath)
+			return nil, serrors.WrapStr("Error loading as.ini", err, "path", cpath)
 		}
 		if a.KeyAlgorithms == nil {
-			return nil, common.NewBasicError("Section missing from as.ini",
-				nil, "path", cpath, "section", conf.KeyAlgSectionName)
+			return nil, serrors.New("Section missing from as.ini",
+				"path", cpath, "section", conf.KeyAlgSectionName)
 		}
 		as.OnlineKeyAlg = scrypto.Ed25519
 		if a.KeyAlgorithms.Online != "" {
@@ -123,12 +124,12 @@ func newTrc(isd addr.ISD, iconf *conf.Isd, path string) (*trc.TRC, error) {
 		as.OnlineKey, err = keyconf.LoadKey(filepath.Join(keysPath, keyconf.OnKeyFile),
 			as.OnlineKeyAlg)
 		if err != nil {
-			return nil, common.NewBasicError("Error loading online key", err)
+			return nil, serrors.WrapStr("Error loading online key", err)
 		}
 		as.OfflineKey, err = keyconf.LoadKey(
 			filepath.Join(keysPath, keyconf.OffKeyFile), as.OfflineKeyAlg)
 		if err != nil {
-			return nil, common.NewBasicError("Error loading offline key", err)
+			return nil, serrors.WrapStr("Error loading offline key", err)
 		}
 		ases = append(ases, as)
 	}
@@ -151,7 +152,7 @@ func newTrc(isd addr.ISD, iconf *conf.Isd, path string) (*trc.TRC, error) {
 	// Sign the TRC.
 	for _, as := range ases {
 		if err := t.Sign(as.IA.String(), as.OnlineKey, as.OnlineKeyAlg); err != nil {
-			return nil, common.NewBasicError("Error signing TRC", err, "signer", as.IA)
+			return nil, serrors.WrapStr("Error signing TRC", err, "signer", as.IA)
 		}
 	}
 	return t, nil
@@ -162,7 +163,7 @@ func getPubKey(privKey common.RawBytes, keyType string) (common.RawBytes, error)
 	case scrypto.Ed25519:
 		return common.RawBytes(ed25519.PrivateKey(privKey).Public().(ed25519.PublicKey)), nil
 	}
-	return nil, common.NewBasicError("Unsupported key type", nil, "type", keyType)
+	return nil, serrors.New("Unsupported key type", "type", keyType)
 }
 
 type coreAS struct {

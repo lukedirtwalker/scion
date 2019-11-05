@@ -20,6 +20,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -38,7 +39,7 @@ func (rp *RtrPkt) Validate() (bool, error) {
 	if rp.ifCurr != nil {
 		intf, ok := rp.Ctx.Conf.BR.IFs[*rp.ifCurr]
 		if !ok {
-			return false, common.NewBasicError(errCurrIntfInvalid, nil, "ifid", *rp.ifCurr)
+			return false, serrors.WithCtx(errCurrIntfInvalid, "ifid", *rp.ifCurr)
 		}
 		mtu = intf.MTU
 	} else {
@@ -82,7 +83,7 @@ func (rp *RtrPkt) Validate() (bool, error) {
 		case ret == HookError:
 			return false, nil
 		default:
-			return false, common.NewBasicError(errHookResponse, nil,
+			return false, serrors.WithCtx(errHookResponse,
 				"hook", "Validate", "idx", i, "val", ret)
 		}
 	}

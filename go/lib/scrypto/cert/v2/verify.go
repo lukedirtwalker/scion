@@ -20,6 +20,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -73,15 +74,15 @@ func (v ASVerifier) Verify() error {
 
 func (v ASVerifier) checkIssuer(p ProtectedAS) error {
 	if !v.Issuer.Subject.Equal(v.AS.Issuer.IA) {
-		return common.NewBasicError(ErrUnexpectedIssuer, nil,
+		return serrors.WithCtx(ErrUnexpectedIssuer,
 			"expected", v.AS.Issuer.IA, "actual", v.Issuer.Subject)
 	}
 	if v.Issuer.Version != v.AS.Issuer.CertificateVersion {
-		return common.NewBasicError(ErrUnexpectedCertificateVersion, nil,
+		return serrors.WithCtx(ErrUnexpectedCertificateVersion,
 			"expected", v.AS.Issuer.CertificateVersion, "actual", v.Issuer.Version)
 	}
 	if !v.Issuer.Validity.Covers(*v.AS.Validity) {
-		return common.NewBasicError(ErrASValidityNotCovered, nil,
+		return serrors.WithCtx(ErrASValidityNotCovered,
 			"issuer", v.Issuer.Validity, "as", v.AS.Validity)
 	}
 	expected := ProtectedAS{
@@ -90,7 +91,7 @@ func (v ASVerifier) checkIssuer(p ProtectedAS) error {
 		IA:                 v.Issuer.Subject,
 	}
 	if p != expected {
-		return common.NewBasicError(ErrInvalidProtected, nil, "expected", expected, "actual", p)
+		return serrors.WithCtx(ErrInvalidProtected, "expected", expected, "actual", p)
 	}
 	return nil
 }
@@ -128,11 +129,11 @@ func (v IssuerVerifier) checkIssuer(p ProtectedIssuer) error {
 		return ErrNotIssuing
 	}
 	if v.TRC.Version != v.Issuer.Issuer.TRCVersion {
-		return common.NewBasicError(ErrUnexpectedTRCVersion, nil,
+		return serrors.WithCtx(ErrUnexpectedTRCVersion,
 			"expected", v.Issuer.Issuer.TRCVersion, "actual", v.TRC.Version)
 	}
 	if !v.TRC.Validity.Covers(*v.Issuer.Validity) {
-		return common.NewBasicError(ErrIssuerValidityNotCovered, nil,
+		return serrors.WithCtx(ErrIssuerValidityNotCovered,
 			"trc", v.TRC.Validity, "issuer", v.Issuer.Validity)
 	}
 	expected := ProtectedIssuer{
@@ -140,7 +141,7 @@ func (v IssuerVerifier) checkIssuer(p ProtectedIssuer) error {
 		TRCVersion: v.TRC.Version,
 	}
 	if p != expected {
-		return common.NewBasicError(ErrInvalidProtected, nil, "expected", expected, "actual", p)
+		return serrors.WithCtx(ErrInvalidProtected, "expected", expected, "actual", p)
 	}
 	return nil
 }

@@ -24,11 +24,11 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathmgr"
 	"github.com/scionproto/scion/go/lib/pktdisp"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/spath/spathmeta"
 	"github.com/scionproto/scion/go/sig/egress/iface"
@@ -115,10 +115,10 @@ func (s *Session) Cleanup() error {
 	<-s.pktDispStopped
 	s.Debug("iface.Session Cleanup: closing conn")
 	if err := s.conn.Close(); err != nil {
-		return common.NewBasicError("Unable to close conn", err)
+		return serrors.WrapStr("Unable to close conn", err)
 	}
 	if err := s.pool.Destroy(); err != nil {
-		return common.NewBasicError("Error destroying path pool", err)
+		return serrors.WrapStr("Error destroying path pool", err)
 	}
 	return nil
 }
@@ -166,7 +166,7 @@ var _ iface.PathPool = (*PathPool)(nil)
 func NewPathPool(dst addr.IA) (*PathPool, error) {
 	pool, err := sigcmn.PathMgr.Watch(context.TODO(), sigcmn.IA, dst)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to register watch", err)
+		return nil, serrors.WrapStr("Unable to register watch", err)
 	}
 	return &PathPool{
 		ia:   dst,

@@ -22,7 +22,7 @@ package pathpol
 import (
 	"sort"
 
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // ExtPolicy is an extending policy, it may have a list of policies it extends
@@ -112,7 +112,7 @@ func (p *Policy) applyExtended(extends []string, exPolicies []*ExtPolicy) error 
 			}
 		}
 		if policy == nil {
-			return common.NewBasicError("Extended policy could not be found", nil,
+			return serrors.New("Extended policy could not be found",
 				"policy", extends[i])
 		}
 		// Replace ACL

@@ -19,7 +19,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/infra/modules/idiscovery"
@@ -163,10 +162,10 @@ func (cfg *SDConfig) ConfigName() string {
 
 func (cfg *SDConfig) CreateSocketDirs() error {
 	if err := util.CreateParentDirs(cfg.Reliable); err != nil {
-		return common.NewBasicError("Cannot create reliable socket dir", err)
+		return serrors.WrapStr("Cannot create reliable socket dir", err)
 	}
 	if err := util.CreateParentDirs(cfg.Unix); err != nil {
-		return common.NewBasicError("Cannot create unix socket dir", err)
+		return serrors.WrapStr("Cannot create unix socket dir", err)
 	}
 	return nil
 }

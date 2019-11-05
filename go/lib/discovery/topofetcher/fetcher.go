@@ -107,7 +107,7 @@ func (f *Fetcher) run(ctx context.Context) error {
 	// Update DS server entries based on new topo.
 	err = f.Pool.Update(topo.DS)
 	if err != nil {
-		return common.NewBasicError("Unable to update pool", err)
+		return serrors.WrapStr("Unable to update pool", err)
 	}
 	// Notify the client.
 	if f.Callbacks.Raw != nil {

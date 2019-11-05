@@ -48,7 +48,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const ID = "id"
@@ -134,7 +134,7 @@ func (s StringSampler) ConfigName() string {
 func ValidateAll(validators ...Validator) error {
 	for _, v := range validators {
 		if err := v.Validate(); err != nil {
-			return common.NewBasicError("Unable to validate", err, "type", fmt.Sprintf("%T", v))
+			return serrors.WrapStr("Unable to validate", err, "type", fmt.Sprintf("%T", v))
 		}
 	}
 	return nil

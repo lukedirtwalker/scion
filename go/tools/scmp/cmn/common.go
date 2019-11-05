@@ -186,13 +186,11 @@ func NextHopAddr() net.Addr {
 func Validate(pkt *spkt.ScnPkt) (*scmp.Hdr, *scmp.Payload, error) {
 	scmpHdr, ok := pkt.L4.(*scmp.Hdr)
 	if !ok {
-		return nil, nil,
-			common.NewBasicError("Not an SCMP header", nil, "type", common.TypeOf(pkt.L4))
+		return nil, nil, serrors.New("Not an SCMP header", "type", common.TypeOf(pkt.L4))
 	}
 	scmpPld, ok := pkt.Pld.(*scmp.Payload)
 	if !ok {
-		return scmpHdr, nil,
-			common.NewBasicError("Not an SCMP payload", nil, "type", common.TypeOf(pkt.Pld))
+		return scmpHdr, nil, serrors.New("Not an SCMP payload", "type", common.TypeOf(pkt.Pld))
 	}
 	if scmpHdr.Class != scmp.C_Path || scmpHdr.Type != scmp.T_P_RevokedIF {
 		return scmpHdr, scmpPld, nil
@@ -213,7 +211,7 @@ func Validate(pkt *spkt.ScnPkt) (*scmp.Hdr, *scmp.Payload, error) {
 		return scmpHdr, scmpPld,
 			serrors.New("Failed to decode SCMP revocation Info")
 	}
-	return scmpHdr, scmpPld, common.NewBasicError("", nil, "Revocation", ri)
+	return scmpHdr, scmpPld, serrors.New("", "Revocation", ri)
 }
 
 func Rand() uint64 {

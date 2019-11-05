@@ -23,7 +23,6 @@ import (
 
 	"golang.org/x/crypto/ed25519"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/keyconf"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -39,12 +38,12 @@ func runGenKey(selector string) error {
 	for isd, ases := range asMap {
 		isdCfg, err := conf.LoadISDCfg(pkicmn.GetIsdPath(pkicmn.RootDir, isd))
 		if err != nil {
-			return common.NewBasicError("unable to read isd.ini", err, "isd", isd)
+			return serrors.WrapStr("unable to read isd.ini", err, "isd", isd)
 		}
 		for _, ia := range ases {
 			asCfg, err := conf.LoadASCfg(pkicmn.GetAsPath(pkicmn.RootDir, ia))
 			if err != nil {
-				return common.NewBasicError("unable to read as.ini", err, "ia", ia)
+				return serrors.WrapStr("unable to read as.ini", err, "ia", ia)
 			}
 			as := as{
 				cfg:     asCfg,
@@ -54,7 +53,7 @@ func runGenKey(selector string) error {
 			}
 			pkicmn.QuietPrint("Generating keys for %s\n", ia)
 			if err = as.gen(); err != nil {
-				return common.NewBasicError("unable to generate keys", err, "ia", ia)
+				return serrors.WrapStr("unable to generate keys", err, "ia", ia)
 			}
 		}
 	}
@@ -104,7 +103,7 @@ func (a *as) gen() error {
 func (a *as) genKey(fname, keyType string) error {
 	privKey, err := genKey(keyType)
 	if err != nil {
-		return common.NewBasicError("error generating key", err, "key", fname)
+		return serrors.WrapStr("error generating key", err, "key", fname)
 	}
 	// Skip keys that should not be generated.
 	if privKey == nil {
@@ -114,7 +113,7 @@ func (a *as) genKey(fname, keyType string) error {
 	privKeyPath := filepath.Join(a.outDir, fname)
 	privKeyEnc := base64.StdEncoding.EncodeToString(privKey)
 	if err = pkicmn.WriteToFile([]byte(privKeyEnc), privKeyPath, 0600); err != nil {
-		return common.NewBasicError("cannot write key file", err, "key", fname)
+		return serrors.WrapStr("cannot write key file", err, "key", fname)
 	}
 	return nil
 }

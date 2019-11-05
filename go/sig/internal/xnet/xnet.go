@@ -24,7 +24,7 @@ import (
 	"github.com/songgao/water"
 	"github.com/vishvananda/netlink"
 
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -44,16 +44,16 @@ func ConnectTun(name string) (netlink.Link, io.ReadWriteCloser, error) {
 	if err != nil {
 		tun.Close()
 		// Should clean up the tun device, but if we can't find it...
-		return nil, nil, common.NewBasicError("Unable to find new TUN device", err, "name", name)
+		return nil, nil, serrors.WrapStr("Unable to find new TUN device", err, "name", name)
 	}
 	err = netlink.LinkSetUp(link)
 	if err != nil {
-		err = common.NewBasicError("Unable to set new TUN device Up", err, "name", name)
+		err = serrors.WrapStr("Unable to set new TUN device Up", err, "name", name)
 		goto Cleanup
 	}
 	err = netlink.LinkSetTxQLen(link, SIGTxQlen)
 	if err != nil {
-		err = common.NewBasicError("Unable to set Tx queue length on new TUN device", err,
+		err = serrors.WrapStr("Unable to set Tx queue length on new TUN device", err,
 			"name", name)
 		goto Cleanup
 	}
@@ -76,7 +76,7 @@ func AddRoute(rTable int, link netlink.Link, dest *net.IPNet, src net.IP) error 
 		route.Src = src
 	}
 	if err := netlink.RouteAdd(route); err != nil {
-		return common.NewBasicError("EgressReader: Unable to add SIG route", err,
+		return serrors.WrapStr("EgressReader: Unable to add SIG route", err,
 			"route", route)
 	}
 	return nil

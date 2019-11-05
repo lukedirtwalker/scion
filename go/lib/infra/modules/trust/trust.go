@@ -311,7 +311,7 @@ func (store *Store) insertTRCHook() ValidateTRCFunc {
 // insertTRCHookLocal always inserts the TRC into the database.
 func (store *Store) insertTRCHookLocal(ctx context.Context, trcObj *trc.TRC) error {
 	if _, err := store.trustdb.InsertTRC(ctx, trcObj); err != nil {
-		return common.NewBasicError("Unable to store TRC in database", err)
+		return serrors.WrapStr("Unable to store TRC in database", err)
 	}
 	return nil
 }
@@ -323,11 +323,11 @@ func (store *Store) insertTRCHookForwarding(ctx context.Context, trcObj *trc.TRC
 	}
 	addr, err := store.ChooseServer(ctx, store.ia)
 	if err != nil {
-		return common.NewBasicError("Failed to select server to forward TRC", err)
+		return serrors.WrapStr("Failed to select server to forward TRC", err)
 	}
 	rawTRC, err := trcObj.Compress()
 	if err != nil {
-		return common.NewBasicError("Failed to compress TRC for forwarding", err)
+		return serrors.WrapStr("Failed to compress TRC for forwarding", err)
 	}
 	l := metrics.SentLabels{
 		Trigger: metrics.FromCtx(ctx),
@@ -340,7 +340,7 @@ func (store *Store) insertTRCHookForwarding(ctx context.Context, trcObj *trc.TRC
 	}, addr, messenger.NextId())
 	if err != nil {
 		metrics.Store.Sent(l.WithResult(metrics.ErrTransmit)).Inc()
-		return common.NewBasicError("Failed to forward TRC", err)
+		return serrors.WrapStr("Failed to forward TRC", err)
 	}
 	metrics.Store.Sent(l).Inc()
 	return nil
@@ -442,15 +442,15 @@ func (store *Store) newChainValidatorForwarding(validator *trc.TRC) ValidateChai
 		}
 		_, err := store.trustdb.InsertChain(ctx, chain)
 		if err != nil {
-			return common.NewBasicError("Unable to store CertChain in database", err)
+			return serrors.WrapStr("Unable to store CertChain in database", err)
 		}
 		addr, err := store.ChooseServer(ctx, store.ia)
 		if err != nil {
-			return common.NewBasicError("Failed to select server to forward cert chain", err)
+			return serrors.WrapStr("Failed to select server to forward cert chain", err)
 		}
 		rawChain, err := chain.Compress()
 		if err != nil {
-			return common.NewBasicError("Failed to compress chain for forwarding", err)
+			return serrors.WrapStr("Failed to compress chain for forwarding", err)
 		}
 		l := metrics.SentLabels{
 			Trigger: metrics.FromCtx(ctx),
@@ -463,7 +463,7 @@ func (store *Store) newChainValidatorForwarding(validator *trc.TRC) ValidateChai
 		}, addr, messenger.NextId())
 		if err != nil {
 			metrics.Store.Sent(l.WithResult(metrics.ErrTransmit)).Inc()
-			return common.NewBasicError("Failed to forward cert chain", err, "chain", chain)
+			return serrors.WrapStr("Failed to forward cert chain", err, "chain", chain)
 		}
 		metrics.Store.Sent(l).Inc()
 		return nil
@@ -566,7 +566,7 @@ func (store *Store) LoadAuthoritativeTRC(dir string) error {
 			store.log.Warn("Error reading TRC", "err", err)
 		})
 	if err != nil {
-		return common.NewBasicError("Unable to load TRC from directory", err)
+		return serrors.WrapStr("Unable to load TRC from directory", err)
 	}
 
 	ctx, cancelF := context.WithTimeout(context.Background(), time.Second)
@@ -577,12 +577,12 @@ func (store *Store) LoadAuthoritativeTRC(dir string) error {
 	switch {
 	case err != nil && !xerrors.Is(err, ErrNotFoundLocally):
 		// Unexpected error in trust store
-		return common.NewBasicError("Failed to load TRC from store", err)
+		return serrors.WrapStr("Failed to load TRC from store", err)
 	case xerrors.Is(err, ErrNotFoundLocally) && fileTRC == nil:
 		return serrors.New("No TRC found on disk or in trustdb")
 	case xerrors.Is(err, ErrNotFoundLocally) && fileTRC != nil:
 		if _, err := store.trustdb.InsertTRC(ctx, fileTRC); err != nil {
-			return common.NewBasicError("Failed to insert TRC in trust db", err)
+			return serrors.WrapStr("Failed to insert TRC in trust db", err)
 		}
 		return nil
 	case err == nil && fileTRC == nil:
@@ -593,17 +593,17 @@ func (store *Store) LoadAuthoritativeTRC(dir string) error {
 		switch {
 		case fileTRC.Version > dbTRC.Version:
 			if _, err := store.trustdb.InsertTRC(ctx, fileTRC); err != nil {
-				return common.NewBasicError("Failed to insert newer TRC in trust db", err)
+				return serrors.WrapStr("Failed to insert newer TRC in trust db", err)
 			}
 			return nil
 		case fileTRC.Version == dbTRC.Version:
 			// Because it is the same version, check if the TRCs match
 			eq, err := fileTRC.JSONEquals(dbTRC)
 			if err != nil {
-				return common.NewBasicError("Unable to compare TRCs", err)
+				return serrors.WrapStr("Unable to compare TRCs", err)
 			}
 			if !eq {
-				return common.NewBasicError("Conflicting TRCs found for same version", nil,
+				return serrors.New("Conflicting TRCs found for same version",
 					"db", dbTRC, "file", fileTRC)
 			}
 			return nil
@@ -622,7 +622,7 @@ func (store *Store) LoadAuthoritativeChain(dir string) error {
 			store.log.Warn("Error reading Chain", "err", err)
 		})
 	if err != nil {
-		return common.NewBasicError("Unable to load Chain from directory", err)
+		return serrors.WrapStr("Unable to load Chain from directory", err)
 	}
 
 	ctx, cancelF := context.WithTimeout(context.Background(), time.Second)
@@ -651,7 +651,7 @@ func (store *Store) LoadAuthoritativeChain(dir string) error {
 		case fileChain.Leaf.Version == chain.Leaf.Version:
 			// Because it is the same version, check if the chains match
 			if !fileChain.Equal(chain) {
-				return common.NewBasicError("Conflicting chains found for same version", nil,
+				return serrors.New("Conflicting chains found for same version",
 					"db", chain, "file", fileChain)
 			}
 			return nil
@@ -732,11 +732,11 @@ func (store *Store) isLocal(address net.Addr) error {
 	if address != nil {
 		switch saddr, ok := address.(*snet.Addr); {
 		case !ok:
-			return common.NewBasicError("Unable to determine AS of address",
-				nil, "addr", address)
+			return serrors.New("Unable to determine AS of address",
+				"addr", address)
 		case !store.ia.Equal(saddr.IA):
-			return common.NewBasicError("Object not found in DB, and recursion not "+
-				"allowed for clients outside AS", nil, "addr", address)
+			return serrors.New("Object not found in DB, and recursion not "+
+				"allowed for clients outside AS", "addr", address)
 		}
 	}
 	return nil
@@ -756,11 +756,11 @@ func (store *Store) ChooseServer(ctx context.Context, destination addr.IA) (net.
 	}
 	destISD, err := store.chooseDestCSIsd(ctx, destination, topo)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to determine dest ISD to query", err)
+		return nil, serrors.WrapStr("Unable to determine dest ISD to query", err)
 	}
 	path, err := store.config.Router.Route(ctx, addr.IA{I: destISD})
 	if err != nil {
-		return nil, common.NewBasicError("Unable to find path to any core AS", err,
+		return nil, serrors.WrapStr("Unable to find path to any core AS", err,
 			"isd", destISD)
 	}
 	a := &snet.Addr{
@@ -815,7 +815,7 @@ func (store *Store) ByAttributes(ctx context.Context, isd addr.ISD,
 	trcOpts := infra.TRCOpts{TrustStoreOpts: opts.TrustStoreOpts}
 	trc, err := store.GetTRC(ctx, isd, scrypto.LatestVer, trcOpts)
 	if err != nil {
-		return nil, common.NewBasicError("unable to resolve TRC", err)
+		return nil, serrors.WrapStr("unable to resolve TRC", err)
 	}
 	// TODO(roosd): This has to take Attributes into account when moving
 	// to the new TRC format.
@@ -831,7 +831,7 @@ func (store *Store) HasAttributes(ctx context.Context, ia addr.IA,
 	trcOpts := infra.TRCOpts{TrustStoreOpts: opts.TrustStoreOpts}
 	trc, err := store.GetTRC(ctx, ia.I, scrypto.LatestVer, trcOpts)
 	if err != nil {
-		return false, common.NewBasicError("unable to resolve TRC", err)
+		return false, serrors.WrapStr("unable to resolve TRC", err)
 	}
 	_, ok := trc.CoreASes[ia]
 	if !ok {

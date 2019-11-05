@@ -19,6 +19,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // OverlayPacket contains metadata about a SCION packet going through the
@@ -48,7 +49,7 @@ func (p *OverlayPacket) DecodeFromBytes(b []byte) error {
 		return err
 	}
 	if f.Cookie != expectedCookie {
-		return common.NewBasicError(ErrBadCookie, nil)
+		return ErrBadCookie
 	}
 	p.Address = f.extractAddress()
 	p.Payload = f.Payload
@@ -68,7 +69,7 @@ type frame struct {
 func (f *frame) SerializeTo(b []byte) (int, error) {
 	totalLength := f.length()
 	if totalLength > len(b) {
-		return 0, common.NewBasicError(ErrBufferTooSmall, nil, "have", len(b), "want", totalLength)
+		return 0, serrors.WithCtx(ErrBufferTooSmall, "have", len(b), "want", totalLength)
 	}
 	common.Order.PutUint64(b, f.Cookie)
 	b[8] = f.AddressType
@@ -81,7 +82,7 @@ func (f *frame) SerializeTo(b []byte) (int, error) {
 
 func (f *frame) DecodeFromBytes(data []byte) error {
 	if len(data) < f.headerLength() {
-		return common.NewBasicError(ErrIncompleteFrameHeader, nil)
+		return ErrIncompleteFrameHeader
 	}
 	f.Cookie = common.Order.Uint64(data)
 	f.AddressType = data[8]
@@ -89,23 +90,23 @@ func (f *frame) DecodeFromBytes(data []byte) error {
 	offset := 13
 	addressType := addr.HostAddrType(f.AddressType)
 	if !isValidReliableSockDestination(addressType) {
-		return common.NewBasicError(ErrBadAddressType, nil, "type", addressType)
+		return serrors.WithCtx(ErrBadAddressType, "type", addressType)
 	}
 	addrLen := getAddressLength(addressType)
 	portLen := getPortLength(addressType)
 	if len(data[offset:]) < addrLen {
-		return common.NewBasicError(ErrIncompleteAddress, nil)
+		return ErrIncompleteAddress
 	}
 	f.Address = data[offset : offset+addrLen]
 	offset += addrLen
 	if len(data[offset:]) < portLen {
-		return common.NewBasicError(ErrIncompletePort, nil)
+		return ErrIncompletePort
 	}
 	f.Port = data[offset : offset+portLen]
 	offset += portLen
 	f.Payload = data[offset:]
 	if len(f.Payload) != int(f.Length) {
-		return common.NewBasicError(ErrBadLength, nil)
+		return ErrBadLength
 	}
 	return nil
 }
@@ -123,10 +124,10 @@ func (f *frame) headerLength() int {
 
 func (f *frame) insertAddress(address *net.UDPAddr) error {
 	if address.IP == nil || address.IP.IsUnspecified() {
-		return common.NewBasicError(ErrNoAddress, nil)
+		return ErrNoAddress
 	}
 	if address.Port == 0 {
-		return common.NewBasicError(ErrNoPort, nil)
+		return ErrNoPort
 	}
 	f.Address = []byte(normalizeIP(address.IP))
 	f.Port = make([]byte, 2)

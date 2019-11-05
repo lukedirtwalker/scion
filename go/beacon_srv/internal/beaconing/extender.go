@@ -54,7 +54,7 @@ func (s *segExtender) extend(pseg *seg.PathSegment, inIfid, egIfid common.IFIDTy
 	}
 	infoF, err := pseg.InfoF()
 	if err != nil {
-		return common.NewBasicError("Unable to extract info field", err)
+		return serrors.WrapStr("Unable to extract info field", err)
 	}
 	var prev common.RawBytes
 	if pseg.MaxAEIdx() >= 0 {
@@ -88,7 +88,7 @@ func (s *segExtender) createHopEntries(inIfid, egIfid common.IFIDType, peers []c
 
 	hopEntry, err := s.createHopEntry(inIfid, egIfid, prev, ts)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create first hop entry", err)
+		return nil, serrors.WrapStr("Unable to create first hop entry", err)
 	}
 	hopEntries := []*seg.HopEntry{hopEntry}
 	for _, ifid := range peers {
@@ -107,11 +107,11 @@ func (s *segExtender) createHopEntry(inIfid, egIfid common.IFIDType, prev common
 
 	remoteInIA, remoteInIfid, remoteInMtu, err := s.remoteInfo(inIfid)
 	if err != nil {
-		return nil, common.NewBasicError("Invalid remote ingress interface", err, "ifid", inIfid)
+		return nil, serrors.WrapStr("Invalid remote ingress interface", err, "ifid", inIfid)
 	}
 	remoteOutIA, remoteOutIfid, _, err := s.remoteInfo(egIfid)
 	if err != nil {
-		return nil, common.NewBasicError("Invalid remote egress interface", err, "ifid", egIfid)
+		return nil, serrors.WrapStr("Invalid remote egress interface", err, "ifid", egIfid)
 	}
 	hopF, err := s.createHopF(inIfid, egIfid, prev, ts)
 	if err != nil {
@@ -147,7 +147,7 @@ func (s *segExtender) remoteInfo(ifid common.IFIDType) (
 		return 0, 0, 0, serrors.New("Remote ifid is not set")
 	}
 	if topoInfo.ISD_AS.IsWildcard() {
-		return 0, 0, 0, common.NewBasicError("Remote IA is wildcard", nil, "ia", topoInfo.ISD_AS)
+		return 0, 0, 0, serrors.New("Remote IA is wildcard", "ia", topoInfo.ISD_AS)
 	}
 	return topoInfo.ISD_AS.IAInt(), topoInfo.RemoteIFID, uint16(topoInfo.MTU), nil
 }
@@ -166,7 +166,7 @@ func (s *segExtender) createHopF(inIfid, egIfid common.IFIDType, prev common.Raw
 	expiry, err := spath.ExpTimeFromDuration(diff, false)
 	if err != nil {
 		min := ts.Add(spath.ExpTimeType(0).ToDuration())
-		return nil, common.NewBasicError("Chain does not cover minimum hop expiration time", nil,
+		return nil, serrors.New("Chain does not cover minimum hop expiration time",
 			"minimumExpiration", min, "chainExpiration", meta.ExpTime, "src", meta.Src)
 	}
 	expiry = min(expiry, s.cfg.GetMaxExpTime())

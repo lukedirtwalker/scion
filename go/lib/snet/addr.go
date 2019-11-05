@@ -22,8 +22,8 @@ import (
 	"strconv"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/overlay"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spath"
 )
 
@@ -132,7 +132,7 @@ func AddrFromString(s string) (*Addr, error) {
 	}
 	ia, err := addr.IAFromString(parts["ia"])
 	if err != nil {
-		return nil, common.NewBasicError("Invalid IA string", err, "ia", ia)
+		return nil, serrors.WrapStr("Invalid IA string", err, "ia", ia)
 	}
 	var l3 addr.HostAddr
 	if hostSVC := addr.HostSVCFromString(parts["host"]); hostSVC != addr.SvcNone {
@@ -140,7 +140,7 @@ func AddrFromString(s string) (*Addr, error) {
 	} else {
 		l3 = addr.HostFromIPStr(parts["host"])
 		if l3 == nil {
-			return nil, common.NewBasicError("Invalid IP address string", nil, "ip", parts["host"])
+			return nil, serrors.New("Invalid IP address string", "ip", parts["host"])
 		}
 	}
 	var l4 addr.L4Info
@@ -148,7 +148,7 @@ func AddrFromString(s string) (*Addr, error) {
 		// skip the : (first character) from the port string
 		p, err := strconv.ParseUint(parts["port"][1:], 10, 16)
 		if err != nil {
-			return nil, common.NewBasicError("Invalid port string", err, "port", parts["port"][1:])
+			return nil, serrors.WrapStr("Invalid port string", err, "port", parts["port"][1:])
 		}
 		// FIXME(sgmonroy) We should not assume UDP as the L4 protocol
 		l4 = addr.NewL4UDPInfo(uint16(p))
@@ -160,7 +160,7 @@ func parseAddr(s string) (map[string]string, error) {
 	result := make(map[string]string)
 	match := addrRegexp.FindStringSubmatch(s)
 	if len(match) == 0 {
-		return nil, common.NewBasicError("Invalid address: regex match failed", nil, "addr", s)
+		return nil, serrors.New("Invalid address: regex match failed", "addr", s)
 	}
 	for i, name := range addrRegexp.SubexpNames() {
 		if i == 0 {

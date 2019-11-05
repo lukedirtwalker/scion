@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pktdisp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/sig/mgmt"
 )
@@ -81,7 +82,7 @@ func (dm *dispRegistry) Register(regType RegType, key RegPollKey, c RegPldChan) 
 	case RegPollRep:
 		dm.pollRep[key] = c
 	default:
-		return common.NewBasicError("Register: Unsupported dispatcher RegType", nil, "v", regType)
+		return serrors.New("Register: Unsupported dispatcher RegType", "v", regType)
 	}
 	return nil
 }
@@ -93,7 +94,7 @@ func (dm *dispRegistry) Unregister(regType RegType, key RegPollKey) error {
 	case RegPollRep:
 		delete(dm.pollRep, key)
 	default:
-		return common.NewBasicError("Unregister: Unsupported dispatcher RegType", nil, "v", regType)
+		return serrors.New("Unregister: Unsupported dispatcher RegType", "v", regType)
 	}
 	return nil
 }

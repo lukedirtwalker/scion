@@ -21,9 +21,9 @@ import (
 	"path/filepath"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
 	"github.com/scionproto/scion/go/lib/keyconf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 )
 
@@ -65,7 +65,7 @@ func WithNewTopo(id string, topo itopo.Topology, oldConf *BRConf) (*BRConf, erro
 		MasterKeys: oldConf.MasterKeys,
 	}
 	if err := conf.initTopo(id, topo); err != nil {
-		return nil, common.NewBasicError("Unable to initialize topo", err)
+		return nil, serrors.WrapStr("Unable to initialize topo", err)
 	}
 	return conf, nil
 }
@@ -79,7 +79,7 @@ func (cfg *BRConf) loadTopo(id string) error {
 		return err
 	}
 	if err := cfg.initTopo(id, topo); err != nil {
-		return common.NewBasicError("Unable to initialize topo", err, "path", topoPath)
+		return serrors.WrapStr("Unable to initialize topo", err, "path", topoPath)
 	}
 	return nil
 }
@@ -91,7 +91,7 @@ func (cfg *BRConf) initTopo(id string, topo itopo.Topology) error {
 	// Find the config for this router.
 	topoBR, ok := cfg.Topo.BR(id)
 	if !ok {
-		return common.NewBasicError("Unable to find element ID in topology", nil,
+		return serrors.New("Unable to find element ID in topology",
 			"id", id)
 	}
 	cfg.BR = &topoBR
@@ -103,7 +103,7 @@ func (cfg *BRConf) loadMasterKeys() error {
 	var err error
 	cfg.MasterKeys, err = keyconf.LoadMaster(filepath.Join(cfg.Dir, "keys"))
 	if err != nil {
-		return common.NewBasicError("Unable to load master keys", err)
+		return serrors.WrapStr("Unable to load master keys", err)
 	}
 	return nil
 }

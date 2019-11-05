@@ -14,7 +14,10 @@
 
 package layers
 
-import "github.com/scionproto/scion/go/lib/common"
+import (
+	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
+)
 
 var _ common.Extension = (*ExtnE2EDebug)(nil)
 
@@ -34,7 +37,7 @@ func NewExtnE2EDebugFromLayer(extension *Extension) (*ExtnE2EDebug, error) {
 
 func (o *ExtnE2EDebug) DecodeFromLayer(extension *Extension) error {
 	if len(extension.Data) != common.LineLen-3 {
-		return common.NewBasicError("bad length for E2E debug extension", nil,
+		return serrors.New("bad length for E2E debug extension",
 			"actual", len(extension.Data), "want", common.LineLen-3)
 	}
 	copy(o.ID[:], extension.Data)

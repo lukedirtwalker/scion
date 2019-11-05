@@ -20,6 +20,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -52,7 +53,7 @@ func CmnHdrFromRaw(b common.RawBytes) (*CmnHdr, error) {
 
 func (c *CmnHdr) Parse(b common.RawBytes) error {
 	if len(b) < CmnHdrLen {
-		return common.NewBasicError("Packet is shorter than the common header length", nil,
+		return serrors.New("Packet is shorter than the common header length",
 			"min", CmnHdrLen, "actual", len(b))
 	}
 	offset := 0

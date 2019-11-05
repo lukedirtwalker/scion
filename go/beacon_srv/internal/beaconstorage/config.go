@@ -24,7 +24,6 @@ import (
 	"github.com/scionproto/scion/go/beacon_srv/internal/beacon"
 	"github.com/scionproto/scion/go/beacon_srv/internal/beacon/beacondbsqlite"
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/infra/modules/db"
 	"github.com/scionproto/scion/go/lib/log"
@@ -105,7 +104,7 @@ func (cfg *BeaconDBConf) validateBackend() error {
 	case backendNone:
 		return serrors.New("No backend set")
 	}
-	return common.NewBasicError("Unsupported backend", nil, "backend", cfg.Backend())
+	return serrors.New("Unsupported backend", "backend", cfg.Backend())
 }
 
 // Sample writes a config sample to the writer.
@@ -128,7 +127,7 @@ func (cfg *BeaconDBConf) New(ia addr.IA) (beacon.DB, error) {
 	case BackendSqlite:
 		bdb, err = beacondbsqlite.New(cfg.Connection(), ia)
 	default:
-		return nil, common.NewBasicError("Unsupported backend", nil, "backend", cfg.Backend())
+		return nil, serrors.New("Unsupported backend", "backend", cfg.Backend())
 	}
 	if err != nil {
 		return nil, err

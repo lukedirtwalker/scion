@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // Invariant errors with context
@@ -159,14 +160,14 @@ func (t *TRC) Base() bool {
 // ValidateInvariant ensures that the TRC invariant holds.
 func (t *TRC) ValidateInvariant() error {
 	if err := t.Validity.Validate(); err != nil {
-		return common.NewBasicError(ErrInvalidValidityPeriod, err, "validity", t.Validity)
+		return serrors.Wrap(ErrInvalidValidityPeriod, err, "validity", t.Validity)
 	}
 	if t.VotingQuorum() <= 0 {
 		return ErrZeroVotingQuorum
 	}
 	c := t.PrimaryASes.Count(Voting)
 	if t.VotingQuorum() > c {
-		return common.NewBasicError(ErrVotingQuorumTooLarge, nil,
+		return serrors.WithCtx(ErrVotingQuorumTooLarge,
 			"max", c, "actual", t.VotingQuorum)
 	}
 	if t.PrimaryASes.Count(Issuing) <= 0 {
@@ -299,7 +300,7 @@ func (v *FormatVersion) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if parsed != 1 {
-		return common.NewBasicError(ErrUnsupportedFormat, nil, "fmt", parsed)
+		return serrors.WithCtx(ErrUnsupportedFormat, "fmt", parsed)
 	}
 	*v = FormatVersion(parsed)
 	return nil

@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/layers"
 	"github.com/scionproto/scion/go/lib/sciond"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spkt"
 	"github.com/scionproto/scion/go/tools/scmp/cmn"
 )
@@ -111,34 +112,29 @@ func validate(pkt *spkt.ScnPkt, pathEntry *sciond.PathReplyEntry) (*scmp.Hdr,
 	}
 	info, ok := scmpPld.Info.(*scmp.InfoRecordPath)
 	if !ok {
-		return nil, nil,
-			common.NewBasicError("Not an Info RecordPath", nil, "type", common.TypeOf(scmpPld.Info))
+		return nil, nil, serrors.New("Not an Info RecordPath", "type", common.TypeOf(scmpPld.Info))
 	}
 	if info.Id != id {
-		return nil, nil,
-			common.NewBasicError("Wrong SCMP ID", nil, "expected", id, "actual", info.Id)
+		return nil, nil, serrors.New("Wrong SCMP ID", "expected", id, "actual", info.Id)
 	}
 	if pathEntry == nil {
 		return scmpHdr, info, nil
 	}
 	interfaces := pathEntry.Path.Interfaces
 	if len(info.Entries) != len(interfaces) {
-		return nil, nil,
-			common.NewBasicError("Invalid number of entries", nil,
-				"Expected", len(interfaces), "Actual", len(info.Entries))
+		return nil, nil, serrors.New("Invalid number of entries",
+			"Expected", len(interfaces), "Actual", len(info.Entries))
 	}
 	for i, e := range info.Entries {
 		ia := interfaces[i].RawIsdas.IA()
 		if e.IA != ia {
-			return nil, nil,
-				common.NewBasicError("Invalid ISD-AS", nil, "entry", i,
-					"Expected", ia, "Actual", e.IA)
+			return nil, nil, serrors.New("Invalid ISD-AS", "entry", i,
+				"Expected", ia, "Actual", e.IA)
 		}
 		ifid := common.IFIDType(interfaces[i].IfID)
 		if e.IfID != ifid {
-			return nil, nil,
-				common.NewBasicError("Invalid IfID", nil, "entry", i,
-					"Expected", ifid, "Actual", e.IfID)
+			return nil, nil, serrors.New("Invalid IfID", "entry", i,
+				"Expected", ifid, "Actual", e.IfID)
 		}
 	}
 	return scmpHdr, info, nil

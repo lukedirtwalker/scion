@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spkt"
 )
 
@@ -82,7 +83,7 @@ func ComputeDestination(packet *spkt.ScnPkt) (Destination, error) {
 	case *scmp.Hdr:
 		return ComputeSCMPDestination(packet, header)
 	default:
-		return nil, common.NewBasicError(ErrUnsupportedL4, nil, "type", header.L4Type())
+		return nil, serrors.WithCtx(ErrUnsupportedL4, "type", header.L4Type())
 	}
 }
 
@@ -93,7 +94,7 @@ func ComputeUDPDestination(packet *spkt.ScnPkt, header *l4.UDP) (Destination, er
 	case addr.HostTypeSVC:
 		return SVCDestination(packet.DstHost.(addr.HostSVC)), nil
 	default:
-		return nil, common.NewBasicError(ErrUnsupportedDestination, nil,
+		return nil, serrors.WithCtx(ErrUnsupportedDestination,
 			"type", packet.DstHost.Type())
 	}
 }
@@ -108,7 +109,7 @@ func ComputeSCMPDestination(packet *spkt.ScnPkt, header *scmp.Hdr) (Destination,
 		},
 	).Inc()
 	if packet.DstHost.Type() != addr.HostTypeIPv4 && packet.DstHost.Type() != addr.HostTypeIPv6 {
-		return nil, common.NewBasicError(ErrUnsupportedSCMPDestination, nil,
+		return nil, serrors.WithCtx(ErrUnsupportedSCMPDestination,
 			"type", packet.DstHost.Type())
 	}
 	if header.Class == scmp.C_General {
@@ -121,7 +122,7 @@ func ComputeSCMPDestination(packet *spkt.ScnPkt, header *scmp.Hdr) (Destination,
 func ComputeSCMPGeneralDestination(s *spkt.ScnPkt, header *scmp.Hdr) (Destination, error) {
 	id := getSCMPGeneralID(s)
 	if id == 0 {
-		return nil, common.NewBasicError("Invalid SCMP ID", nil, "id", id)
+		return nil, serrors.New("Invalid SCMP ID", "id", id)
 	}
 	switch {
 	case isSCMPGeneralRequest(header):
@@ -130,7 +131,7 @@ func ComputeSCMPGeneralDestination(s *spkt.ScnPkt, header *scmp.Hdr) (Destinatio
 	case isSCMPGeneralReply(header):
 		return &SCMPAppDestination{ID: id}, nil
 	default:
-		return nil, common.NewBasicError("Unsupported SCMP General type", nil, "type", header.Type)
+		return nil, serrors.New("Unsupported SCMP General type", "type", header.Type)
 	}
 }
 
@@ -140,18 +141,18 @@ func ComputeSCMPErrorDestination(packet *spkt.ScnPkt, header *scmp.Hdr) (Destina
 	case common.L4UDP:
 		quotedUDPHeader, err := l4.UDPFromRaw(scmpPayload.L4Hdr)
 		if err != nil {
-			return nil, common.NewBasicError(ErrMalformedL4Quote, nil, "err", err)
+			return nil, serrors.WithCtx(ErrMalformedL4Quote, "err", err)
 		}
 		return &UDPDestination{IP: packet.DstHost.IP(), Port: int(quotedUDPHeader.SrcPort)}, nil
 	case common.L4SCMP:
 
 		id, err := getQuotedSCMPGeneralID(scmpPayload)
 		if id == 0 {
-			return nil, common.NewBasicError(ErrMalformedL4Quote, err)
+			return nil, serrors.Wrap(ErrMalformedL4Quote, err)
 		}
 		return &SCMPAppDestination{ID: id}, nil
 	default:
-		return nil, common.NewBasicError(ErrUnsupportedQuotedL4Type, nil,
+		return nil, serrors.WithCtx(ErrUnsupportedQuotedL4Type,
 			"type", scmpPayload.Meta.L4Proto)
 	}
 }

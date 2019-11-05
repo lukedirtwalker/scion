@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 )
@@ -60,7 +61,7 @@ type As struct {
 
 func (a *As) validate() error {
 	if a.AsCert == nil {
-		return common.NewBasicError(ErrAsCertMissing, nil)
+		return ErrAsCertMissing
 	}
 	if err := a.AsCert.validate(); err != nil {
 		return err
@@ -143,7 +144,7 @@ type AsCert struct {
 
 func (ac *AsCert) validate() error {
 	if ac.Issuer == "" || ac.Issuer == "0-0" {
-		return common.NewBasicError(ErrIssuerMissing, nil)
+		return ErrIssuerMissing
 	}
 	var err error
 	if ac.IssuerIA, err = addr.IAFromString(ac.Issuer); err != nil {
@@ -192,10 +193,10 @@ func (c *BaseCert) validate() error {
 		return err
 	}
 	if c.TRCVersion == 0 {
-		return common.NewBasicError(ErrTRCVersionNotSet, nil)
+		return ErrTRCVersionNotSet
 	}
 	if c.Version == 0 {
-		return common.NewBasicError(ErrVersionNotSet, nil)
+		return ErrVersionNotSet
 	}
 	if c.RawValidity == "" {
 		c.RawValidity = "0s"
@@ -203,10 +204,10 @@ func (c *BaseCert) validate() error {
 	var err error
 	c.Validity, err = util.ParseDuration(c.RawValidity)
 	if err != nil {
-		return common.NewBasicError(ErrInvalidValidityDuration, nil, "duration", c.RawValidity)
+		return serrors.WithCtx(ErrInvalidValidityDuration, "duration", c.RawValidity)
 	}
 	if int64(c.Validity) == 0 {
-		return common.NewBasicError(ErrValidityDurationNotSet, nil)
+		return ErrValidityDurationNotSet
 	}
 	return nil
 }
@@ -239,7 +240,7 @@ func validateAlgorithm(algorithm string, valid []string, errMsg common.ErrMsg) e
 			return nil
 		}
 	}
-	return common.NewBasicError(errMsg, nil, "algorithm", algorithm)
+	return serrors.WithCtx(errMsg, "algorithm", algorithm)
 }
 
 func NewTemplateCertConf(trcVer uint64) *BaseCert {

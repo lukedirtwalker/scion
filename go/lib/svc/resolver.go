@@ -26,6 +26,7 @@ import (
 	"github.com/scionproto/scion/go/lib/l4"
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/sciond"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/svc/internal/ctxconn"
@@ -70,7 +71,7 @@ func (r *Resolver) LookupSVC(ctx context.Context, p snet.Path, svc addr.HostSVC)
 	conn, port, err := r.ConnFactory.RegisterTimeout(r.LocalIA, r.Machine.AppAddress(),
 		nil, addr.SvcNone, 0)
 	if err != nil {
-		return nil, common.NewBasicError(errRegistration, err)
+		return nil, serrors.Wrap(errRegistration, err)
 	}
 
 	requestPacket := &snet.SCIONPacket{
@@ -125,36 +126,36 @@ func (roundTripper) RoundTrip(ctx context.Context, c snet.PacketConn, pkt *snet.
 	defer cancelF()
 
 	if pkt == nil {
-		return nil, common.NewBasicError(errNilPacket, nil)
+		return nil, errNilPacket
 	}
 	if ov == nil {
-		return nil, common.NewBasicError(errNilOverlay, nil)
+		return nil, errNilOverlay
 	}
 
 	if err := c.WriteTo(pkt, ov); err != nil {
-		return nil, common.NewBasicError(errWrite, err)
+		return nil, serrors.Wrap(errWrite, err)
 	}
 
 	var replyPacket snet.SCIONPacket
 	var replyOv overlay.OverlayAddr
 	if err := c.ReadFrom(&replyPacket, &replyOv); err != nil {
-		return nil, common.NewBasicError(errRead, err)
+		return nil, serrors.Wrap(errRead, err)
 	}
 	b, ok := replyPacket.Payload.(common.RawBytes)
 	if !ok {
-		return nil, common.NewBasicError(errUnsupportedPld, nil, "payload", replyPacket.Payload)
+		return nil, serrors.WithCtx(errUnsupportedPld, "payload", replyPacket.Payload)
 	}
 	var reply Reply
 	if err := reply.DecodeFrom(bytes.NewBuffer([]byte(b))); err != nil {
-		return nil, common.NewBasicError(errDecode, err)
+		return nil, serrors.Wrap(errDecode, err)
 	}
 
 	if replyPacket.Path != nil {
 		if err := replyPacket.Path.Reverse(); err != nil {
-			return nil, common.NewBasicError(errBadPath, err)
+			return nil, serrors.Wrap(errBadPath, err)
 		}
 		if err := replyPacket.Path.InitOffsets(); err != nil {
-			return nil, common.NewBasicError(errBadPath, err)
+			return nil, serrors.Wrap(errBadPath, err)
 		}
 	}
 	reply.ReturnPath = &path{

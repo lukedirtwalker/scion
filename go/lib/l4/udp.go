@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -36,14 +37,14 @@ type UDP struct {
 func UDPFromRaw(b common.RawBytes) (*UDP, error) {
 	u := &UDP{Checksum: make(common.RawBytes, 2)}
 	if err := u.Parse(b); err != nil {
-		return nil, common.NewBasicError("Error unpacking UDP header", err)
+		return nil, serrors.WrapStr("Error unpacking UDP header", err)
 	}
 	return u, nil
 }
 
 func (u *UDP) Validate(plen int) error {
 	if plen+UDPLen != int(u.TotalLen) {
-		return common.NewBasicError("UDP header total length doesn't match", nil,
+		return serrors.New("UDP header total length doesn't match",
 			"expected", u.TotalLen, "actual", plen+UDPLen)
 	}
 	return nil
@@ -51,7 +52,7 @@ func (u *UDP) Validate(plen int) error {
 
 func (u *UDP) Parse(b common.RawBytes) error {
 	if len(b) < UDPLen {
-		return common.NewBasicError("Buffer is shorter than the UDP header", nil,
+		return serrors.New("Buffer is shorter than the UDP header",
 			"expected", UDPLen, "actual", len(b))
 	}
 	offset := 0
@@ -68,7 +69,7 @@ func (u *UDP) Parse(b common.RawBytes) error {
 func (u *UDP) Pack(csum bool) (common.RawBytes, error) {
 	b := make(common.RawBytes, UDPLen)
 	if err := u.Write(b); err != nil {
-		return nil, common.NewBasicError("Error packing UDP header", err)
+		return nil, serrors.WrapStr("Error packing UDP header", err)
 	}
 	if csum {
 		// Zero out the checksum field if this is being used for checksum calculation.

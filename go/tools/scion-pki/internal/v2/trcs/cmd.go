@@ -18,7 +18,7 @@ package trcs
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var Cmd = &cobra.Command{
@@ -98,7 +98,7 @@ var gen = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runGenTrc(args[0]); err != nil {
-			return common.NewBasicError("unable to generate TRCs", err)
+			return serrors.WrapStr("unable to generate TRCs", err)
 		}
 		return nil
 	},
@@ -114,7 +114,7 @@ var proto = &cobra.Command{
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runProto(args[0]); err != nil {
-			return common.NewBasicError("unable to generate prototype TRCs", err)
+			return serrors.WrapStr("unable to generate prototype TRCs", err)
 		}
 		return nil
 	},
@@ -129,7 +129,7 @@ var sign = &cobra.Command{
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runSign(args[0]); err != nil {
-			return common.NewBasicError("unable to sign TRCs", err)
+			return serrors.WrapStr("unable to sign TRCs", err)
 		}
 		return nil
 	},
@@ -144,7 +144,7 @@ var combine = &cobra.Command{
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runCombine(args[0]); err != nil {
-			return common.NewBasicError("unable to combine TRCs", err)
+			return serrors.WrapStr("unable to combine TRCs", err)
 		}
 		return nil
 	},
@@ -159,7 +159,7 @@ var human = &cobra.Command{
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runHuman(args); err != nil {
-			return common.NewBasicError("unable to display human TRCs", err)
+			return serrors.WrapStr("unable to display human TRCs", err)
 		}
 		return nil
 	},

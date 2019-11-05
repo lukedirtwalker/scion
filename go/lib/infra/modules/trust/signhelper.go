@@ -53,13 +53,13 @@ type BasicSigner struct {
 // messages.
 func NewBasicSigner(key common.RawBytes, meta infra.SignerMeta) (*BasicSigner, error) {
 	if meta.Src.IA.IsWildcard() {
-		return nil, common.NewBasicError("IA must not contain wildcard", nil, "ia", meta.Src.IA)
+		return nil, serrors.New("IA must not contain wildcard", "ia", meta.Src.IA)
 	}
 	if meta.Src.ChainVer.IsLatest() {
-		return nil, common.NewBasicError("ChainVer must be valid", nil, "ver", meta.Src.ChainVer)
+		return nil, serrors.New("ChainVer must be valid", "ver", meta.Src.ChainVer)
 	}
 	if meta.Src.TRCVer.IsLatest() {
-		return nil, common.NewBasicError("TRCVer must be valid", nil, "ver", meta.Src.TRCVer)
+		return nil, serrors.New("TRCVer must be valid", "ver", meta.Src.TRCVer)
 	}
 	signer := &BasicSigner{
 		meta:      meta,
@@ -70,7 +70,7 @@ func NewBasicSigner(key common.RawBytes, meta infra.SignerMeta) (*BasicSigner, e
 	case scrypto.Ed25519:
 		signer.signType = proto.SignType_ed25519
 	default:
-		return nil, common.NewBasicError("Unsupported signing algorithm", nil, "algo", meta.Algo)
+		return nil, serrors.New("Unsupported signing algorithm", "algo", meta.Algo)
 	}
 	return signer, nil
 }
@@ -160,17 +160,17 @@ func (v *BasicVerifier) Verify(ctx context.Context, msg common.RawBytes, sign *p
 func (v *BasicVerifier) VerifyPld(ctx context.Context, spld *ctrl.SignedPld) (*ctrl.Pld, error) {
 	cpld, err := ctrl.NewPldFromRaw(spld.Blob)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse payload", err)
+		return nil, serrors.WrapStr("Unable to parse payload", err)
 	}
 	if v.ignoreSign(cpld, spld.Sign) {
 		// Do not increase metric because we skip verification.
 		return cpld, nil
 	}
 	if err := v.sanityChecks(spld.Sign, true); err != nil {
-		return nil, common.NewBasicError("Sanity check failed", err, "pld", cpld)
+		return nil, serrors.WrapStr("Sanity check failed", err, "pld", cpld)
 	}
 	if err := v.verify(ctx, spld.Blob, spld.Sign); err != nil {
-		return nil, common.NewBasicError("Unable to verify", err, "pld", cpld)
+		return nil, serrors.WrapStr("Unable to verify", err, "pld", cpld)
 	}
 	return cpld, nil
 }
@@ -201,20 +201,20 @@ func (v *BasicVerifier) sanityChecks(sign *proto.SignS, isPldSignature bool) err
 	}
 	if len(sign.Signature) == 0 {
 		metrics.Store.Verification(l).Inc()
-		return common.NewBasicError("SignedPld is missing signature", nil, "type", sign.Type)
+		return serrors.New("SignedPld is missing signature", "type", sign.Type)
 	}
 	now := time.Now()
 	ts := sign.Time()
 	signatureAge := now.Sub(ts)
 	if timeInFuture := -signatureAge; timeInFuture > v.tsRange.MaxInFuture {
 		metrics.Store.Verification(l).Inc()
-		return common.NewBasicError("Invalid timestamp. Signature from future", nil,
+		return serrors.New("Invalid timestamp. Signature from future",
 			"ts", util.TimeToString(ts), "now", util.TimeToString(now),
 			"maxFuture", v.tsRange.MaxInFuture)
 	}
 	if isPldSignature && signatureAge > v.tsRange.MaxPldAge {
 		metrics.Store.Verification(l).Inc()
-		return common.NewBasicError("Invalid timestamp. Signature expired", nil,
+		return serrors.New("Invalid timestamp. Signature expired",
 			"ts", util.TimeToString(ts), "now", util.TimeToString(now),
 			"validity", v.tsRange.MaxPldAge)
 	}
@@ -250,7 +250,7 @@ func (v *BasicVerifier) verify(ctx context.Context, msg common.RawBytes,
 		chain.Leaf.SignAlgorithm)
 	if err != nil {
 		metrics.Store.Verification(l.WithResult(metrics.ErrVerify)).Inc()
-		return common.NewBasicError("Verification failed", err)
+		return serrors.WrapStr("Verification failed", err)
 	}
 	metrics.Store.Verification(l.WithResult(metrics.Success)).Inc()
 	return nil
@@ -258,11 +258,11 @@ func (v *BasicVerifier) verify(ctx context.Context, msg common.RawBytes,
 
 func (v *BasicVerifier) checkSrc(src ctrl.SignSrcDef) error {
 	if v.ia.A != 0 && src.IA.A != v.ia.A {
-		return common.NewBasicError("AS does not match bound source", nil,
+		return serrors.New("AS does not match bound source",
 			"srcSet", !v.src.IsUninitialized(), "expected", v.ia, "actual", src.IA)
 	}
 	if v.ia.I != 0 && src.IA.I != v.ia.I {
-		return common.NewBasicError("ISD does not match bound source", nil,
+		return serrors.New("ISD does not match bound source",
 			"srcSet", !v.src.IsUninitialized(), "expected", v.ia, "actual", src.IA)
 	}
 	return nil

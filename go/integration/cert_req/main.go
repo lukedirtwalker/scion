@@ -22,7 +22,6 @@ import (
 
 	"github.com/scionproto/scion/go/integration"
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/cert_mgmt"
 	"github.com/scionproto/scion/go/lib/hostinfo"
 	"github.com/scionproto/scion/go/lib/infra"
@@ -115,17 +114,17 @@ func (c client) requestCert() (*cert.Chain, error) {
 	defer cancelF()
 	rawChain, err := c.msgr.GetCertChain(ctx, req, &svc, messenger.NextId())
 	if err != nil {
-		return nil, common.NewBasicError("Unable to get chain", err)
+		return nil, serrors.WrapStr("Unable to get chain", err)
 	}
 	chain, err := rawChain.Chain()
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse chain", err)
+		return nil, serrors.WrapStr("Unable to parse chain", err)
 	}
 	if chain == nil {
 		return nil, serrors.New("Empty reply")
 	}
 	if !chain.Leaf.Subject.Equal(remoteIA) {
-		return nil, common.NewBasicError("Invalid subject", nil,
+		return nil, serrors.New("Invalid subject",
 			"expected", remoteIA, "actual", chain.Leaf.Subject)
 	}
 	log.Info("Response from SVC: Correct chain", "chain", chain)
@@ -143,21 +142,21 @@ func (c client) requestTRC(chain *cert.Chain) error {
 	defer cancelF()
 	rawTrc, err := c.msgr.GetTRC(ctx, req, &svc, messenger.NextId())
 	if err != nil {
-		return common.NewBasicError("Unable to get trc", err)
+		return serrors.WrapStr("Unable to get trc", err)
 	}
 	trc, err := rawTrc.TRC()
 	if err != nil {
-		return common.NewBasicError("Unable to parse trc", err)
+		return serrors.WrapStr("Unable to parse trc", err)
 	}
 	if trc == nil {
 		return serrors.New("Empty reply")
 	}
 	if trc.ISD != remoteIA.I {
-		return common.NewBasicError("Invalid ISD", nil,
+		return serrors.New("Invalid ISD",
 			"expected", remoteIA.I, "actual", trc.ISD)
 	}
 	if err := chain.Verify(remoteIA, trc); err != nil {
-		return common.NewBasicError("Certificate verification failed", err)
+		return serrors.WrapStr("Certificate verification failed", err)
 	}
 	log.Info("Response from SVC: Correct TRC", "TRC", trc)
 	return nil

@@ -30,6 +30,7 @@ import (
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
 	"github.com/scionproto/scion/go/lib/scrypto/trc"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/conf"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
@@ -79,11 +80,11 @@ func genCert(ia addr.IA, isIssuer bool) error {
 	}
 	a, err := conf.LoadAsConf(confDir)
 	if err != nil {
-		return common.NewBasicError("Error loading as.ini", err, "path", cpath)
+		return serrors.WrapStr("Error loading as.ini", err, "path", cpath)
 	}
 	if isIssuer && a.IssuerCert == nil {
-		return common.NewBasicError("Section missing from as.ini",
-			nil, "path", cpath, "section", conf.IssuerSectionName)
+		return serrors.New("Section missing from as.ini",
+			"path", cpath, "section", conf.IssuerSectionName)
 	}
 	// Check if file already exists.
 	fname := fmt.Sprintf(pkicmn.CertNameFmt, ia.I, ia.A.FileFmt(), a.AsCert.Version)
@@ -98,36 +99,36 @@ func genCert(ia addr.IA, isIssuer bool) error {
 	if isIssuer {
 		issuerCert, err = genIssuerCert(a.IssuerCert, ia)
 		if err != nil {
-			return common.NewBasicError("Error generating issuer cert", err, "subject", ia)
+			return serrors.WrapStr("Error generating issuer cert", err, "subject", ia)
 		}
 	} else {
 		issuerCert, err = getIssuerCert(a.AsCert.IssuerIA)
 		if err != nil {
-			return common.NewBasicError("Error loading issuer cert", err, "subject", ia)
+			return serrors.WrapStr("Error loading issuer cert", err, "subject", ia)
 		}
 	}
 	if issuerCert == nil {
-		return common.NewBasicError("Issuer cert not found", nil, "issuer", a.AsCert.Issuer)
+		return serrors.New("Issuer cert not found", "issuer", a.AsCert.Issuer)
 	}
 	// Generate the AS certificate chain.
 	chain, err := genASCert(a.AsCert, ia, issuerCert)
 	if err != nil {
-		return common.NewBasicError("Error generating cert", err, "subject", ia)
+		return serrors.WrapStr("Error generating cert", err, "subject", ia)
 	}
 	// Check if out directory exists and if not create it.
 	out := filepath.Join(outDir, pkicmn.CertsDir)
 	if _, err = os.Stat(out); os.IsNotExist(err) {
 		if err = os.MkdirAll(out, 0755); err != nil {
-			return common.NewBasicError("Cannot create output dir", err, "dir", out)
+			return serrors.WrapStr("Cannot create output dir", err, "dir", out)
 		}
 	}
 	// Write the cert to disk.
 	raw, err := chain.JSON(true)
 	if err != nil {
-		return common.NewBasicError("Error json-encoding cert", err, "subject", ia)
+		return serrors.WrapStr("Error json-encoding cert", err, "subject", ia)
 	}
 	if err = pkicmn.WriteToFile(raw, filepath.Join(out, fname), 0644); err != nil {
-		return common.NewBasicError("Error writing cert", err, "subject", ia)
+		return serrors.WrapStr("Error writing cert", err, "subject", ia)
 	}
 	return nil
 }
@@ -155,12 +156,12 @@ func genIssuerCert(issuerConf *conf.IssuerCert, s addr.IA) (*cert.Certificate, e
 		fmt.Sprintf(pkicmn.TrcNameFmt, s.I, c.TRCVersion))
 	currTrc, err := trc.TRCFromFile(currTrcPath, false)
 	if err != nil {
-		return nil, common.NewBasicError("Error reading TRC", err, "path: ", currTrcPath)
+		return nil, serrors.WrapStr("Error reading TRC", err, "path: ", currTrcPath)
 	}
 	coreAs, ok := currTrc.CoreASes[s]
 	if !ok {
-		return nil, common.NewBasicError("Issuer of IssuerCert not found in Core ASes of TRC",
-			nil, "issuer", s)
+		return nil, serrors.New("Issuer of IssuerCert not found in Core ASes of TRC",
+			"issuer", s)
 	}
 	// Make sure the certificates are in the validity period.
 	c.IssuingTime = max(c.IssuingTime, currTrc.CreationTime)
@@ -185,7 +186,7 @@ func genASCert(conf *conf.AsCert, s addr.IA, issuerCert *cert.Certificate) (*cer
 	}
 	// Ensure issuer can issue certificates.
 	if !issuerCert.CanIssue {
-		return nil, common.NewBasicError("Issuer cert not authorized to issue certs.", nil,
+		return nil, serrors.New("Issuer cert not authorized to issue certs.",
 			"issuer", c.Issuer, "subject", c.Subject)
 	}
 	// Make sure the certificates are in the validity period.
@@ -210,7 +211,7 @@ func genASCert(conf *conf.AsCert, s addr.IA, issuerCert *cert.Certificate) (*cer
 		err = verifyChain(chain, c.Subject)
 		if err != nil {
 			fname := fmt.Sprintf(pkicmn.CertNameFmt, c.Subject.I, c.Subject.A, c.Version)
-			return nil, common.NewBasicError("Verification FAILED", err, "cert", fname)
+			return nil, serrors.WrapStr("Verification FAILED", err, "cert", fname)
 		}
 	}
 	// Write the cert to disk.

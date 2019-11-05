@@ -22,6 +22,7 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/disp"
 	"github.com/scionproto/scion/go/lib/infra/messenger/internal/metrics"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -36,9 +37,8 @@ var DefaultAdapter = &Adapter{}
 func (a *Adapter) MsgToRaw(msg proto.Cerealizable) (common.RawBytes, error) {
 	pld, ok := msg.(*ctrl.SignedPld)
 	if !ok {
-		return nil, common.NewBasicError(
-			"Unable to type assert proto.Cerealizable to ctrl.SignedPld",
-			nil, "msg", msg, "type", common.TypeOf(msg))
+		return nil, serrors.New("Unable to type assert proto.Cerealizable to ctrl.SignedPld",
+			"msg", msg, "type", common.TypeOf(msg))
 	}
 	return pld.PackPld()
 }

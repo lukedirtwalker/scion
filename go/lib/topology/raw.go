@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/overlay"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const CfgName = "topology.json"
@@ -183,11 +184,11 @@ func (b RawBRIntf) localTopoBRAddr(o overlay.Type) (*TopoBRAddr, error) {
 func (b RawBRIntf) remoteBRAddr(o overlay.Type) (*overlay.OverlayAddr, error) {
 	l3 := addr.HostFromIPStr(b.RemoteOverlay.Addr)
 	if l3 == nil {
-		return nil, common.NewBasicError("Could not parse remote IP from string", nil,
+		return nil, serrors.New("Could not parse remote IP from string",
 			"ip", b.RemoteOverlay.Addr)
 	}
 	if !o.IsUDP() && (b.RemoteOverlay.OverlayPort != 0) {
-		return nil, common.NewBasicError(ErrOverlayPort, nil, "addr", b.RemoteOverlay)
+		return nil, serrors.WithCtx(ErrOverlayPort, "addr", b.RemoteOverlay)
 	}
 	var l4 addr.L4Info
 	if o.IsUDP() {
@@ -216,11 +217,11 @@ func (a RawAddr) String() string {
 func Load(b common.RawBytes) (*Topo, error) {
 	rt := &RawTopo{}
 	if err := json.Unmarshal(b, rt); err != nil {
-		return nil, common.NewBasicError(ErrParse, err)
+		return nil, serrors.Wrap(ErrParse, err)
 	}
 	ct, err := TopoFromRaw(rt)
 	if err != nil {
-		return nil, common.NewBasicError(ErrConvert, err)
+		return nil, serrors.Wrap(ErrConvert, err)
 	}
 	return ct, nil
 }
@@ -228,7 +229,7 @@ func Load(b common.RawBytes) (*Topo, error) {
 func LoadFromFile(path string) (*Topo, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, common.NewBasicError(ErrOpen, err, "path", path)
+		return nil, serrors.Wrap(ErrOpen, err, "path", path)
 	}
 	return Load(b)
 }
@@ -236,7 +237,7 @@ func LoadFromFile(path string) (*Topo, error) {
 func LoadRaw(b common.RawBytes) (*RawTopo, error) {
 	rt := &RawTopo{}
 	if err := json.Unmarshal(b, rt); err != nil {
-		return nil, common.NewBasicError(ErrParse, err)
+		return nil, serrors.Wrap(ErrParse, err)
 	}
 	return rt, nil
 }
@@ -244,7 +245,7 @@ func LoadRaw(b common.RawBytes) (*RawTopo, error) {
 func LoadRawFromFile(path string) (*RawTopo, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, common.NewBasicError(ErrOpen, err, "path", path)
+		return nil, serrors.Wrap(ErrOpen, err, "path", path)
 	}
 	return LoadRaw(b)
 }

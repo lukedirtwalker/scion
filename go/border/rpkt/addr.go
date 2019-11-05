@@ -18,7 +18,7 @@ package rpkt
 
 import (
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // DstIA retrieves the destination ISD-AS if it isn't already known.
@@ -27,7 +27,7 @@ func (rp *RtrPkt) DstIA() (addr.IA, error) {
 		var err error
 		rp.dstIA, err = rp.hookIA(rp.hooks.DstIA, rp.idxs.dstIA)
 		if err != nil {
-			return addr.IA{}, common.NewBasicError("Unable to retrieve destination ISD-AS", err)
+			return addr.IA{}, serrors.WrapStr("Unable to retrieve destination ISD-AS", err)
 		}
 	}
 	return rp.dstIA, nil
@@ -39,7 +39,7 @@ func (rp *RtrPkt) SrcIA() (addr.IA, error) {
 		var err error
 		rp.srcIA, err = rp.hookIA(rp.hooks.SrcIA, rp.idxs.srcIA)
 		if err != nil {
-			return addr.IA{}, common.NewBasicError("Unable to retrieve source ISD-AS", err)
+			return addr.IA{}, serrors.WrapStr("Unable to retrieve source ISD-AS", err)
 		}
 	}
 	return rp.srcIA, nil
@@ -68,7 +68,7 @@ func (rp *RtrPkt) DstHost() (addr.HostAddr, error) {
 		var err error
 		rp.dstHost, err = rp.hookHost(rp.hooks.DstHost, rp.idxs.dstHost, rp.CmnHdr.DstType)
 		if err != nil {
-			return nil, common.NewBasicError("Unable to retrieve destination host", err)
+			return nil, serrors.WrapStr("Unable to retrieve destination host", err)
 		}
 	}
 	return rp.dstHost, nil
@@ -80,7 +80,7 @@ func (rp *RtrPkt) SrcHost() (addr.HostAddr, error) {
 		var err error
 		rp.srcHost, err = rp.hookHost(rp.hooks.SrcHost, rp.idxs.srcHost, rp.CmnHdr.SrcType)
 		if err != nil {
-			return nil, common.NewBasicError("Unable to retrieve source host", err)
+			return nil, serrors.WrapStr("Unable to retrieve source host", err)
 		}
 	}
 	return rp.srcHost, nil

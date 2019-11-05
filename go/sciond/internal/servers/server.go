@@ -22,7 +22,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
@@ -76,7 +75,7 @@ func (srv *Server) ListenAndServe() error {
 	listener, err := srv.listen()
 	if err != nil {
 		srv.mu.Unlock()
-		return common.NewBasicError("unable to listen on socket", nil,
+		return serrors.New("unable to listen on socket",
 			"address", srv.address, "err", err)
 	}
 	srv.listener = listener
@@ -118,13 +117,13 @@ func (srv *Server) listen() (net.Listener, error) {
 	case "rsock":
 		listener, err = reliable.Listen(srv.address)
 	default:
-		return nil, common.NewBasicError("unknown network", nil, "net", srv.network)
+		return nil, serrors.New("unknown network", "net", srv.network)
 	}
 	if err != nil {
 		return nil, err
 	}
 	if err := os.Chmod(srv.address, srv.filemode); err != nil {
-		return nil, common.NewBasicError("chmod failed", err, "address", srv.address)
+		return nil, serrors.WrapStr("chmod failed", err, "address", srv.address)
 	}
 	return listener, nil
 }

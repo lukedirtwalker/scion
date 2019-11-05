@@ -21,10 +21,10 @@ import (
 	"github.com/scionproto/scion/go/border/brconf"
 	"github.com/scionproto/scion/go/border/rcmn"
 	"github.com/scionproto/scion/go/border/rctx"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/overlay/conn"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 )
 
@@ -87,7 +87,7 @@ func (p posixLoc) addSock(r *Router, ctx *rctx.Ctx) error {
 	// Listen on the socket.
 	over, err := conn.New(bind, nil, nil)
 	if err != nil {
-		return common.NewBasicError("Unable to listen on local socket", err, "bind", bind)
+		return serrors.WrapStr("Unable to listen on local socket", err, "bind", bind)
 	}
 	// Setup input goroutine.
 	ctx.LocSockIn = rctx.NewSock(ringbuf.New(64, nil, "loc_in"),
@@ -156,7 +156,7 @@ func (p posixExt) addIntf(r *Router, ctx *rctx.Ctx, intf *topology.IFInfo) error
 	bind := intf.Local.BindOrPublicOverlay(intf.Local.Overlay)
 	c, err := conn.New(bind, intf.Remote, nil)
 	if err != nil {
-		return common.NewBasicError("Unable to listen on external socket", err)
+		return serrors.WrapStr("Unable to listen on external socket", err)
 	}
 	// Setup input goroutine.
 	ctx.ExtSockIn[intf.Id] = rctx.NewSock(

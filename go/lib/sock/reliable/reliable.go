@@ -254,7 +254,7 @@ func registerTimeout(dispatcher string, ia addr.IA, public *addr.AppAddr,
 	}
 	if publicUDP.Port != 0 && publicUDP.Port != int(c.Port) {
 		conn.Close()
-		return nil, 0, common.NewBasicError("port mismatch", nil, "requested", publicUDP.Port,
+		return nil, 0, serrors.New("port mismatch", "requested", publicUDP.Port,
 			"received", c.Port)
 	}
 	// Disable deadline to not affect calling code
@@ -288,7 +288,7 @@ func (conn *Conn) readFrom(buf []byte) (int, net.Addr, error) {
 			addr.NewL4UDPInfo(uint16(p.Address.Port)),
 		)
 		if err != nil {
-			return 0, nil, common.NewBasicError("overlay error", err)
+			return 0, nil, serrors.WrapStr("overlay error", err)
 		}
 	}
 	if len(buf) < len(p.Payload) {
@@ -352,7 +352,7 @@ type Listener struct {
 func Listen(laddr string) (*Listener, error) {
 	l, err := net.Listen("unix", laddr)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to listen on address", err, "addr", laddr)
+		return nil, serrors.WrapStr("Unable to listen on address", err, "addr", laddr)
 	}
 	return &Listener{l.(*net.UnixListener)}, nil
 }
@@ -376,13 +376,13 @@ func createUDPAddrFromAppAddr(address *addr.AppAddr) (*net.UDPAddr, error) {
 		return nil, serrors.New("nil application address")
 	}
 	if address.L3.Type() != addr.HostTypeIPv4 && address.L3.Type() != addr.HostTypeIPv6 {
-		return nil, common.NewBasicError("unsupported application address type", nil,
+		return nil, serrors.New("unsupported application address type",
 			"type", address.L3.Type())
 	}
 	var port int
 	if address.L4 != nil {
 		if address.L4.Type() != common.L4UDP {
-			return nil, common.NewBasicError("bad L4 type", nil, "type", address.L4.Type())
+			return nil, serrors.New("bad L4 type", "type", address.L4.Type())
 		}
 		port = int(address.L4.Port())
 	}

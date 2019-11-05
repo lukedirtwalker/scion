@@ -22,10 +22,10 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust/trustdb"
 	"github.com/scionproto/scion/go/lib/keyconf"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // reCustVerKey is used to parse the IA and version of a customer verifying key file.
@@ -50,11 +50,11 @@ func LoadCustomers(path string, trustDB trustdb.TrustDB) ([]string, []*CustKeyMe
 		s := reCustVerKey.FindStringSubmatch(name)
 		ia, err := addr.IAFromFileFmt(s[1], true)
 		if err != nil {
-			return nil, nil, common.NewBasicError("Unable to parse IA", err, "file", file)
+			return nil, nil, serrors.WrapStr("Unable to parse IA", err, "file", file)
 		}
 		var ver scrypto.Version
 		if err := ver.UnmarshalJSON([]byte(s[2])); err != nil {
-			return nil, nil, common.NewBasicError("Unable to parse Version", err, "file", file)
+			return nil, nil, serrors.WrapStr("Unable to parse Version", err, "file", file)
 		}
 		if ver >= activeVers[ia] {
 			activeKeys[ia] = file
@@ -68,12 +68,12 @@ func LoadCustomers(path string, trustDB trustdb.TrustDB) ([]string, []*CustKeyMe
 	for ia, file := range activeKeys {
 		key, err := keyconf.LoadKey(file, keyconf.RawKey)
 		if err != nil {
-			return procFiles, addedKeys, common.NewBasicError("Unable to load key", err,
+			return procFiles, addedKeys, serrors.WrapStr("Unable to load key", err,
 				"file", file)
 		}
 		cKey, err := trustDB.GetCustKey(ctx, ia)
 		if err != nil {
-			return procFiles, addedKeys, common.NewBasicError("Failed to check DB cust key", err,
+			return procFiles, addedKeys, serrors.WrapStr("Failed to check DB cust key", err,
 				"ia", ia)
 		}
 		var currentV scrypto.Version
@@ -88,7 +88,7 @@ func LoadCustomers(path string, trustDB trustdb.TrustDB) ([]string, []*CustKeyMe
 		err = trustDB.InsertCustKey(ctx,
 			&trustdb.CustKey{IA: ia, Key: key, Version: activeVers[ia]}, currentV)
 		if err != nil {
-			return procFiles, addedKeys, common.NewBasicError("Failed to save customer key", err,
+			return procFiles, addedKeys, serrors.WrapStr("Failed to save customer key", err,
 				"file", file)
 		}
 		addedKeys = append(addedKeys, &CustKeyMeta{

@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -53,7 +54,7 @@ func (u *union) set(c proto.Cerealizable) error {
 		u.Which = proto.CertMgmt_Which_trc
 		u.TRCRep = p
 	default:
-		return common.NewBasicError("Unsupported cert mgmt union type (set)", nil,
+		return serrors.New("Unsupported cert mgmt union type (set)",
 			"type", common.TypeOf(c))
 	}
 	return nil
@@ -74,7 +75,7 @@ func (u *union) get() (proto.Cerealizable, error) {
 	case proto.CertMgmt_Which_trc:
 		return u.TRCRep, nil
 	}
-	return nil, common.NewBasicError("Unsupported cert mgmt union type (get)", nil, "type", u.Which)
+	return nil, serrors.New("Unsupported cert mgmt union type (get)", "type", u.Which)
 }
 
 var _ proto.Cerealizable = (*Pld)(nil)

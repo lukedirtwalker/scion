@@ -21,6 +21,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // Record Path Entry format:
@@ -97,7 +98,7 @@ type InfoRecordPath struct {
 
 func InfoRecordPathFromRaw(b common.RawBytes) (*InfoRecordPath, error) {
 	if len(b) < recordPathHdrLen {
-		return nil, common.NewBasicError("Truncated RecordPath info header", nil,
+		return nil, serrors.New("Truncated RecordPath info header",
 			"min", recordPathHdrLen, "actual", len(b))
 	}
 	rec := &InfoRecordPath{}
@@ -105,12 +106,12 @@ func InfoRecordPathFromRaw(b common.RawBytes) (*InfoRecordPath, error) {
 	numHops := int(b[8])
 	// Skip header
 	if len(b[recordPathHdrLen:])%recordPathEntryLen != 0 {
-		return nil, common.NewBasicError("Illegal RecordPath info entries length", nil,
+		return nil, serrors.New("Illegal RecordPath info entries length",
 			"len", len(b[recordPathHdrLen:]), "entryLen", recordPathEntryLen)
 	}
 	maxHops := len(b[recordPathHdrLen:]) / recordPathEntryLen
 	if numHops > maxHops {
-		return nil, common.NewBasicError("Invalid header", nil, "NumHops", numHops,
+		return nil, serrors.New("Invalid header", "NumHops", numHops,
 			"MaxHops", maxHops)
 	}
 	rec.Entries = make([]*RecordPathEntry, numHops, maxHops)
@@ -147,7 +148,7 @@ func (rec *InfoRecordPath) Len() int {
 
 func (rec *InfoRecordPath) Write(b common.RawBytes) (int, error) {
 	if len(b) < rec.Len() {
-		return 0, common.NewBasicError("Not enough space in buffer", nil,
+		return 0, serrors.New("Not enough space in buffer",
 			"Expected", rec.Len(), "Actual", len(b))
 	}
 	common.Order.PutUint64(b[0:8], rec.Id)

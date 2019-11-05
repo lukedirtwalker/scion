@@ -19,7 +19,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
@@ -187,7 +186,7 @@ func (f *FailAction) Validate() error {
 	case FailActionContinue, FailActionFatal:
 		return nil
 	default:
-		return common.NewBasicError("Unknown FailAction", nil, "input", string(*f))
+		return serrors.New("Unknown FailAction", "input", string(*f))
 	}
 }
 
@@ -198,7 +197,7 @@ func (f *FailAction) UnmarshalText(text []byte) error {
 	case strings.ToLower(string(FailActionContinue)):
 		*f = FailActionContinue
 	default:
-		return common.NewBasicError("Unknown FailAction", nil, "input", string(text))
+		return serrors.New("Unknown FailAction", "input", string(text))
 	}
 	return nil
 }

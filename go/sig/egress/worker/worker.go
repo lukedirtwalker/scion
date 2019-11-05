@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
 	"github.com/scionproto/scion/go/lib/sciond"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/spkt"
@@ -202,11 +203,11 @@ func (w *worker) write(f *frame) error {
 		snetAddr = w.currSig.EncapSnetAddr()
 		snetAddr.Path = spath.New(w.currPathEntry.Path.FwdPath)
 		if err := snetAddr.Path.InitOffsets(); err != nil {
-			return common.NewBasicError("Error initializing path offsets", err)
+			return serrors.WrapStr("Error initializing path offsets", err)
 		}
 		nh, err := w.currPathEntry.HostInfo.Overlay()
 		if err != nil {
-			return common.NewBasicError("Egress unsupported NextHop", err)
+			return serrors.WrapStr("Egress unsupported NextHop", err)
 		}
 		snetAddr.NextHop = nh
 	}
@@ -214,7 +215,7 @@ func (w *worker) write(f *frame) error {
 	f.writeHdr(w.sess.ID(), w.epoch, seq)
 	bytesWritten, err := w.writer.WriteToSCION(f.raw(), snetAddr)
 	if err != nil {
-		return common.NewBasicError("Egress write error", err)
+		return serrors.WrapStr("Egress write error", err)
 	}
 	w.frameSentCtrs.Pkts.Inc()
 	w.frameSentCtrs.Bytes.Add(float64(bytesWritten))

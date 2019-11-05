@@ -31,6 +31,7 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/periodic"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/snet/addrutil"
 	"github.com/scionproto/scion/go/proto"
@@ -145,7 +146,7 @@ func (r *Registrar) run(ctx context.Context) error {
 		return nil
 	}
 	if s.count <= 0 {
-		return common.NewBasicError("No beacons propagated", nil, "candidates", expected)
+		return serrors.New("No beacons propagated", "candidates", expected)
 	}
 	r.lastSucc = r.tick.now
 	r.logSummary(logger, s)
@@ -192,7 +193,7 @@ func (r *segmentRegistrar) start(ctx context.Context, wg *sync.WaitGroup) {
 func (r *segmentRegistrar) setSegToRegister() error {
 	if err := r.extend(r.beacon.Segment, r.beacon.InIfId, 0, r.peers); err != nil {
 		metrics.Registrar.InternalErrorsWithType(r.segType.String()).Inc()
-		return common.NewBasicError("Unable to terminate", err, "beacon", r.beacon)
+		return serrors.WrapStr("Unable to terminate", err, "beacon", r.beacon)
 	}
 	r.reg = &path_mgmt.SegReg{
 		SegRecs: &path_mgmt.SegRecs{
@@ -208,7 +209,7 @@ func (r *segmentRegistrar) setSegToRegister() error {
 	r.addr, err = r.chooseServer(r.beacon.Segment)
 	if err != nil {
 		metrics.Registrar.InternalErrorsWithType(r.segType.String()).Inc()
-		return common.NewBasicError("Unable to choose server", err)
+		return serrors.WrapStr("Unable to choose server", err)
 	}
 	return nil
 }

@@ -21,6 +21,7 @@ import (
 	"gopkg.in/restruct.v1"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 type Meta struct {
@@ -39,12 +40,12 @@ const (
 
 func MetaFromRaw(b []byte) (*Meta, error) {
 	if len(b) < MetaLen {
-		return nil, common.NewBasicError("Can't parse SCMP meta subheader, buffer is too short",
-			nil, "expected", MetaLen, "actual", len(b))
+		return nil, serrors.New("Can't parse SCMP meta subheader, buffer is too short",
+			"expected", MetaLen, "actual", len(b))
 	}
 	m := &Meta{}
 	if err := restruct.Unpack(b, binary.BigEndian, m); err != nil {
-		return nil, common.NewBasicError("Failed to unpack SCMP Metadata", err)
+		return nil, serrors.WrapStr("Failed to unpack SCMP Metadata", err)
 	}
 	return m, nil
 }
@@ -60,7 +61,7 @@ func (m *Meta) Copy() *Meta {
 func (m *Meta) Write(b common.RawBytes) error {
 	out, err := restruct.Pack(common.Order, m)
 	if err != nil {
-		return common.NewBasicError("Error packing SCMP Metadata", err)
+		return serrors.WrapStr("Error packing SCMP Metadata", err)
 	}
 	copy(b, out)
 	return nil

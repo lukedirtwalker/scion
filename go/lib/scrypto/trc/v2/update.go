@@ -19,6 +19,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // Update validation errors with context.
@@ -84,7 +85,7 @@ type UpdateValidator struct {
 // attribute changes are returned.
 func (v *UpdateValidator) Validate() (UpdateInfo, error) {
 	if err := v.sanity(); err != nil {
-		return UpdateInfo{}, common.NewBasicError(ErrSanityCheck, err)
+		return UpdateInfo{}, serrors.Wrap(ErrSanityCheck, err)
 	}
 	keyChanges, err := v.keyChanges()
 	if err != nil {
@@ -110,26 +111,26 @@ func (v *UpdateValidator) sanity() error {
 		return ErrBaseNotUpdate
 	}
 	if err := v.Next.ValidateInvariant(); err != nil {
-		return common.NewBasicError(ErrInvariantViolation, err)
+		return serrors.Wrap(ErrInvariantViolation, err)
 	}
 	if v.Next.ISD != v.Prev.ISD {
-		return common.NewBasicError(ErrImmutableISD, nil,
+		return serrors.WithCtx(ErrImmutableISD,
 			"expected", v.Prev.ISD, "actual", v.Next.ISD)
 	}
 	if v.Next.TrustResetAllowed() != v.Prev.TrustResetAllowed() {
-		return common.NewBasicError(ErrImmutableTrustResetAllowed, nil, "expected",
+		return serrors.WithCtx(ErrImmutableTrustResetAllowed, "expected",
 			v.Prev.TrustResetAllowed, "actual", v.Next.TrustResetAllowed)
 	}
 	if v.Next.Version != v.Prev.Version+1 {
-		return common.NewBasicError(ErrInvalidVersionIncrement, nil, "expected", v.Prev.Version+1,
+		return serrors.WithCtx(ErrInvalidVersionIncrement, "expected", v.Prev.Version+1,
 			"actual", v.Next.Version)
 	}
 	if v.Next.BaseVersion != v.Prev.BaseVersion {
-		return common.NewBasicError(ErrImmutableBaseVersion, nil, "expected", v.Prev.BaseVersion,
+		return serrors.WithCtx(ErrImmutableBaseVersion, "expected", v.Prev.BaseVersion,
 			"actual", v.Next.BaseVersion)
 	}
 	if !v.Prev.Validity.Contains(v.Next.Validity.NotBefore.Time) {
-		return common.NewBasicError(ErrNotInsidePreviousValidityPeriod, nil,
+		return serrors.WithCtx(ErrNotInsidePreviousValidityPeriod,
 			"previous validity", v.Prev.Validity, "not_before", v.Next.Validity.NotBefore)
 	}
 	return nil
@@ -187,7 +188,7 @@ func (v *UpdateValidator) checkVotes(info UpdateInfo) error {
 		}
 	}
 	if len(v.Next.Votes) < v.Prev.VotingQuorum() {
-		return common.NewBasicError(ErrQuorumUnmet, nil,
+		return serrors.WithCtx(ErrQuorumUnmet,
 			"min", v.Prev.VotingQuorum(), "actual", len(v.Next.Votes))
 	}
 	return nil
@@ -201,13 +202,13 @@ func (v *UpdateValidator) checkVotesRegular(info UpdateInfo) error {
 			expectedKeyType = OfflineKey
 		}
 		if err := v.hasVotingRights(as, vote, expectedKeyType); err != nil {
-			return common.NewBasicError(ErrInvalidVote, err, "as", as, "vote", vote)
+			return serrors.Wrap(ErrInvalidVote, err, "as", as, "vote", vote)
 		}
 	}
 	// Check all ASes with changed online key have cast a vote.
 	for as := range info.KeyChanges.Modified[OnlineKey] {
 		if _, ok := v.Next.Votes[as]; !ok {
-			return common.NewBasicError(ErrMissingVote, nil, "as", as)
+			return serrors.WithCtx(ErrMissingVote, "as", as)
 		}
 	}
 	return nil
@@ -217,7 +218,7 @@ func (v *UpdateValidator) checkVotesSensitive(info UpdateInfo) error {
 	// Check all votes from voting ASes with offline keys.
 	for as, vote := range v.Next.Votes {
 		if err := v.hasVotingRights(as, vote, OfflineKey); err != nil {
-			return common.NewBasicError(ErrInvalidVote, err, "as", as, "vote", vote)
+			return serrors.Wrap(ErrInvalidVote, err, "as", as, "vote", vote)
 		}
 	}
 	return nil
@@ -232,11 +233,11 @@ func (v *UpdateValidator) hasVotingRights(as addr.AS, vote Vote, keyType KeyType
 		return ErrNoVotingRight
 	}
 	if vote.KeyType != keyType {
-		return common.NewBasicError(ErrWrongVotingKeyType, nil,
+		return serrors.WithCtx(ErrWrongVotingKeyType,
 			"expected", keyType, "actual", vote.KeyType)
 	}
 	if primary.Keys[keyType].KeyVersion != vote.KeyVersion {
-		return common.NewBasicError(ErrWrongVotingKeyVersion, nil,
+		return serrors.WithCtx(ErrWrongVotingKeyVersion,
 			"expected", primary.Keys[keyType].KeyVersion, "actual", vote.KeyVersion)
 	}
 	return nil

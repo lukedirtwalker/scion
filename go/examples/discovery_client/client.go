@@ -121,14 +121,14 @@ func validateFlags() error {
 	if *ds != "" {
 		host, port, err := net.SplitHostPort(*ds)
 		if err != nil {
-			return common.NewBasicError("Unable to parse discovery service address", err)
+			return serrors.WrapStr("Unable to parse discovery service address", err)
 		}
 		if dsAddr.L3 = addr.HostFromIPStr(host); dsAddr.L3 == nil {
-			return common.NewBasicError("Unable to parse host", nil, "host", host)
+			return serrors.New("Unable to parse host", "host", host)
 		}
 		p, err := strconv.Atoi(port)
 		if err != nil {
-			return common.NewBasicError("Unable to parse port", nil, "port", port)
+			return serrors.New("Unable to parse port", "port", port)
 		}
 		dsAddr.L4 = addr.NewL4TCPInfo(uint16(p))
 	}

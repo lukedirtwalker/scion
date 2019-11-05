@@ -20,7 +20,7 @@ import (
 	"encoding/json"
 	"net"
 
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // IPNet is custom type of net.IPNet, to allow custom unmarshalling.
@@ -29,15 +29,15 @@ type IPNet net.IPNet
 func (in *IPNet) UnmarshalJSON(b []byte) error {
 	var s string
 	if err := json.Unmarshal(b, &s); err != nil {
-		return common.NewBasicError("Unable to unmarshal IPnet from JSON", err, "raw", b)
+		return serrors.WrapStr("Unable to unmarshal IPnet from JSON", err, "raw", b)
 	}
 	ip, ipnet, err := net.ParseCIDR(s)
 	if err != nil {
-		return common.NewBasicError("Unable to parse IPnet string", err, "raw", s)
+		return serrors.WrapStr("Unable to parse IPnet string", err, "raw", s)
 	}
 	if !ip.Equal(ipnet.IP) {
-		return common.NewBasicError("Network is not canonical (should not be host address).",
-			nil, "raw", s)
+		return serrors.New("Network is not canonical (should not be host address).",
+			"raw", s)
 	}
 	*in = IPNet(*ipnet)
 	return nil

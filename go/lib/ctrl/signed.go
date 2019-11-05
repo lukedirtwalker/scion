@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -51,12 +52,12 @@ func NewSignedPld(cpld *Pld, signer Signer) (*SignedPld, error) {
 func NewSignedPldFromRaw(b common.RawBytes) (*SignedPld, error) {
 	sp := &SignedPld{}
 	if len(b) < 4 {
-		return nil, common.NewBasicError("Ctrl payload length field too short", nil,
+		return nil, serrors.New("Ctrl payload length field too short",
 			"minimum", 4, "actual", len(b))
 	}
 	n := common.Order.Uint32(b)
 	if int(n)+4 != len(b) {
-		return nil, common.NewBasicError("Invalid ctrl payload length", nil,
+		return nil, serrors.New("Invalid ctrl payload length",
 			"expected", n+4, "actual", len(b))
 	}
 	return sp, proto.ParseFromRaw(sp, b[4:])

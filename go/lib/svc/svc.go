@@ -22,6 +22,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/l4"
 	"github.com/scionproto/scion/go/lib/overlay"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/spath"
 )
@@ -132,7 +133,7 @@ func (c *resolverPacketConn) ReadFrom(pkt *snet.SCIONPacket, ov *overlay.Overlay
 		}
 		switch result, err := c.handler.Handle(r); result {
 		case Error:
-			return common.NewBasicError(ErrHandler, err)
+			return serrors.Wrap(ErrHandler, err)
 		case Forward:
 			return nil
 		default:

@@ -46,7 +46,7 @@ func WriteScnPkt(s *spkt.ScnPkt, b common.RawBytes) (int, error) {
 	scionHdrLen := spkt.CmnHdrLen + addrHdrLen + pathHdrLen
 	pktLen := scionHdrLen + s.L4.L4Len() + s.Pld.Len()
 	if len(b) < pktLen {
-		return 0, common.NewBasicError("Buffer too small", nil,
+		return 0, serrors.New("Buffer too small",
 			"expected", pktLen, "actual", len(b))
 	}
 
@@ -89,7 +89,7 @@ func WriteScnPkt(s *spkt.ScnPkt, b common.RawBytes) (int, error) {
 	case common.L4SCMP:
 		buffer.PushLayer(layers.LayerTypeSCMP)
 	default:
-		return 0, common.NewBasicError("Unsupported L4", nil, "type", s.L4.L4Type())
+		return 0, serrors.New("Unsupported L4", "type", s.L4.L4Type())
 	}
 	if err := writeExtensionHeaders(s, buffer); err != nil {
 		return 0, err
@@ -118,7 +118,7 @@ func WriteScnPkt(s *spkt.ScnPkt, b common.RawBytes) (int, error) {
 	s.L4.SetPldLen(s.Pld.Len())
 	err = l4.SetCSum(s.L4, addrSlice, pldSlice)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to compute checksum", err)
+		return 0, serrors.WrapStr("Unable to compute checksum", err)
 	}
 	s.L4.Write(l4Slice)
 
@@ -163,7 +163,7 @@ func getNextHeaderType(buffer gopacket.SerializeBuffer) (common.L4ProtocolType, 
 	lastLayer := serializedLayers[len(serializedLayers)-1]
 	nextHdr, ok := layers.LayerToHeaderMap[lastLayer]
 	if !ok {
-		return 0, common.NewBasicError("unknown header", nil, "gopacket_type", lastLayer)
+		return 0, serrors.New("unknown header", "gopacket_type", lastLayer)
 	}
 	return nextHdr, nil
 }

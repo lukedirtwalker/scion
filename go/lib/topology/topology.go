@@ -151,7 +151,7 @@ func (t *Topo) populateMeta(raw *RawTopo) error {
 		return err
 	}
 	if t.ISD_AS.IsWildcard() {
-		return common.NewBasicError("IA contains wildcard", nil, "ia", t.ISD_AS)
+		return serrors.New("IA contains wildcard", "ia", t.ISD_AS)
 	}
 	if t.Overlay, err = overlay.TypeFromString(raw.Overlay); err != nil {
 		return err
@@ -164,10 +164,10 @@ func (t *Topo) populateMeta(raw *RawTopo) error {
 func (t *Topo) populateBR(raw *RawTopo) error {
 	for name, rawBr := range raw.BorderRouters {
 		if rawBr.CtrlAddr == nil {
-			return common.NewBasicError("Missing Control Address", nil, "br", name)
+			return serrors.New("Missing Control Address", "br", name)
 		}
 		if rawBr.InternalAddrs == nil {
-			return common.NewBasicError("Missing Internal Address", nil, "br", name)
+			return serrors.New("Missing Internal Address", "br", name)
 		}
 		ctrlAddr, err := topoAddrFromRAM(rawBr.CtrlAddr, t.Overlay)
 		if err != nil {
@@ -187,7 +187,7 @@ func (t *Topo) populateBR(raw *RawTopo) error {
 			var err error
 			// Check that ifid is unique
 			if _, ok := t.IFInfoMap[ifid]; ok {
-				return common.NewBasicError("IFID already exists", nil, "ID", ifid)
+				return serrors.New("IFID already exists", "ID", ifid)
 			}
 			brInfo.IFIDs = append(brInfo.IFIDs, ifid)
 			ifinfo := IFInfo{
@@ -290,7 +290,7 @@ func (t *Topo) GetTopoAddr(id string, svc proto.ServiceType) (*TopoAddr, error) 
 	}
 	topoAddr := svcInfo.idTopoAddrMap.GetById(id)
 	if topoAddr == nil {
-		return nil, common.NewBasicError("Element not found", nil, "id", id)
+		return nil, serrors.New("Element not found", "id", id)
 	}
 	return topoAddr, nil
 }
@@ -336,7 +336,7 @@ func (t *Topo) getSvcInfo(svc proto.ServiceType) (*svcInfo, error) {
 	case proto.ServiceType_ds:
 		return &svcInfo{overlay: t.Overlay, names: t.DSNames, idTopoAddrMap: t.DS}, nil
 	default:
-		return nil, common.NewBasicError("Unsupported service type", nil, "type", svc)
+		return nil, serrors.New("Unsupported service type", "type", svc)
 	}
 }
 
@@ -364,8 +364,7 @@ func svcMapFromRaw(ras map[string]*RawSrvInfo, stype string, smap IDAddrMap,
 	for name, svc := range ras {
 		svcTopoAddr, err := svc.Addrs.ToTopoAddr(ot)
 		if err != nil {
-			return nil, common.NewBasicError(
-				"Could not convert RawAddrMap to TopoAddr", err,
+			return nil, serrors.WrapStr("Could not convert RawAddrMap to TopoAddr", err,
 				"servicetype", stype, "RawAddrMap", svc.Addrs, "name", name)
 		}
 		smap[name] = *svcTopoAddr
@@ -379,7 +378,7 @@ func (t *Topo) zkSvcFromRaw(zksvc map[int]*RawAddrPort) error {
 	for id, ap := range zksvc {
 		l3 := addr.HostFromIPStr(ap.Addr)
 		if l3 == nil {
-			return common.NewBasicError("Parsing ZooKeeper address", nil, "addr", ap.Addr)
+			return serrors.New("Parsing ZooKeeper address", "addr", ap.Addr)
 		}
 		t.ZK[id] = &addr.AppAddr{
 			L3: l3,
@@ -429,14 +428,14 @@ func (i IFInfo) Verify(isCore bool, brName string) error {
 		switch i.LinkType {
 		case proto.LinkType_core, proto.LinkType_child:
 		default:
-			return common.NewBasicError("Illegal link type for core AS", nil,
+			return serrors.New("Illegal link type for core AS",
 				"type", i.LinkType, "br", brName)
 		}
 	} else {
 		switch i.LinkType {
 		case proto.LinkType_parent, proto.LinkType_child, proto.LinkType_peer:
 		default:
-			return common.NewBasicError("Illegal link type for non-core AS", nil,
+			return serrors.New("Illegal link type for non-core AS",
 				"type", i.LinkType, "br", brName)
 		}
 	}

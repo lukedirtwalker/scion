@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/infra"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 )
 
@@ -60,17 +61,17 @@ func genIFStateReq() error {
 	cpld, err := ctrl.NewPathMgmtPld(&path_mgmt.IFStateReq{}, nil, nil)
 	if err != nil {
 		metrics.Control.SentIFStateReq(cl).Inc()
-		return common.NewBasicError("Generating IFStateReq Ctrl payload", err)
+		return serrors.WrapStr("Generating IFStateReq Ctrl payload", err)
 	}
 	scpld, err := cpld.SignedPld(infra.NullSigner)
 	if err != nil {
 		metrics.Control.SentIFStateReq(cl).Inc()
-		return common.NewBasicError("Generating IFStateReq signed Ctrl payload", err)
+		return serrors.WrapStr("Generating IFStateReq signed Ctrl payload", err)
 	}
 	pld, err := scpld.PackPld()
 	if err != nil {
 		metrics.Control.SentIFStateReq(cl).Inc()
-		return common.NewBasicError("Writing IFStateReq signed Ctrl payload", err)
+		return serrors.WrapStr("Writing IFStateReq signed Ctrl payload", err)
 	}
 	dst := &snet.Addr{
 		IA:   ia,
@@ -80,7 +81,7 @@ func genIFStateReq() error {
 	if err != nil {
 		cl.Result = metrics.ErrResolveSVC
 		metrics.Control.SentIFStateReq(cl).Inc()
-		return common.NewBasicError("Resolving SVC BS multicast", err)
+		return serrors.WrapStr("Resolving SVC BS multicast", err)
 	}
 
 	var errors common.MultiError
@@ -89,7 +90,7 @@ func genIFStateReq() error {
 		if _, err := snetConn.WriteToSCION(pld, dst); err != nil {
 			cl.Result = metrics.ErrWrite
 			metrics.Control.SentIFStateReq(cl).Inc()
-			errors = append(errors, common.NewBasicError("Writing IFStateReq", err, "dst", dst))
+			errors = append(errors, serrors.WrapStr("Writing IFStateReq", err, "dst", dst))
 			continue
 		}
 		logger.Debug("Sent IFStateReq", "dst", dst, "overlayDst", addr)

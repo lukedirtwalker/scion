@@ -27,6 +27,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/fatal"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 	"github.com/scionproto/scion/go/lib/sock/reliable/reconnect"
@@ -65,7 +66,7 @@ func Control(sRevInfoQ chan rpkt.RawSRevCallbackArgs, dispatcherReconnect bool) 
 	}
 	snetConn, err = scionNetwork.ListenSCIONWithBindSVC("udp4", pub, bind, addr.SvcNone, 0)
 	if err != nil {
-		fatal.Fatal(common.NewBasicError("Listening on address", err, "addr", ctrlAddr))
+		fatal.Fatal(serrors.WrapStr("Listening on address", err, "addr", ctrlAddr))
 	}
 	go func() {
 		defer log.LogPanicAndExit()
@@ -86,7 +87,7 @@ func processCtrl() {
 		if err != nil {
 			cl.Result = metrics.ErrRead
 			metrics.Control.Reads(cl).Inc()
-			fatal.Fatal(common.NewBasicError("Reading packet", err))
+			fatal.Fatal(serrors.WrapStr("Reading packet", err))
 		}
 		cl.Result = metrics.Success
 		metrics.Control.Reads(cl).Inc()
@@ -101,12 +102,12 @@ func processCtrlFromRaw(b common.RawBytes) error {
 	scPld, err := ctrl.NewSignedPldFromRaw(b)
 	if err != nil {
 		metrics.Control.ProcessErrors(cl).Inc()
-		return common.NewBasicError("Parsing signed ctrl pld", nil, "err", err)
+		return serrors.New("Parsing signed ctrl pld", "err", err)
 	}
 	cPld, err := scPld.UnsafePld()
 	if err != nil {
 		metrics.Control.ProcessErrors(cl).Inc()
-		return common.NewBasicError("Getting ctrl pld", nil, "err", err)
+		return serrors.New("Getting ctrl pld", "err", err)
 	}
 	// Determine the type of SCION control payload.
 	u, err := cPld.Union()
@@ -120,7 +121,7 @@ func processCtrlFromRaw(b common.RawBytes) error {
 	default:
 		cl.Result = metrics.ErrInvalidReq
 		metrics.Control.ProcessErrors(cl).Inc()
-		err = common.NewBasicError("Unsupported control payload", nil, "type", common.TypeOf(pld))
+		err = serrors.New("Unsupported control payload", "type", common.TypeOf(pld))
 	}
 	return err
 }
@@ -139,7 +140,7 @@ func processPathMgmtSelf(p *path_mgmt.Pld) error {
 	default:
 		cl.Result = metrics.ErrInvalidReq
 		metrics.Control.ProcessErrors(cl).Inc()
-		err = common.NewBasicError("Unsupported PathMgmt payload", nil, "type", common.TypeOf(pld))
+		err = serrors.New("Unsupported PathMgmt payload", "type", common.TypeOf(pld))
 	}
 	return err
 }

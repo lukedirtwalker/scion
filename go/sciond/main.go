@@ -27,7 +27,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/discovery"
 	"github.com/scionproto/scion/go/lib/env"
 	"github.com/scionproto/scion/go/lib/fatal"
@@ -43,6 +42,7 @@ import (
 	"github.com/scionproto/scion/go/lib/periodic"
 	"github.com/scionproto/scion/go/lib/prom"
 	"github.com/scionproto/scion/go/lib/revcache"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 	"github.com/scionproto/scion/go/sciond/internal/config"
 	"github.com/scionproto/scion/go/sciond/internal/fetcher"
@@ -197,15 +197,15 @@ func setupBasic() error {
 
 func setup() error {
 	if err := cfg.Validate(); err != nil {
-		return common.NewBasicError("unable to validate config", err)
+		return serrors.WrapStr("unable to validate config", err)
 	}
 	itopo.Init("", proto.ServiceType_unset, itopo.Callbacks{})
 	topo, err := itopo.LoadFromFile(cfg.General.Topology)
 	if err != nil {
-		return common.NewBasicError("unable to load topology", err)
+		return serrors.WrapStr("unable to load topology", err)
 	}
 	if _, _, err := itopo.SetStatic(topo.Raw(), false); err != nil {
-		return common.NewBasicError("unable to set initial static topology", err)
+		return serrors.WrapStr("unable to set initial static topology", err)
 	}
 	infraenv.InitInfraEnvironment(cfg.General.Topology)
 	return cfg.SD.CreateSocketDirs()
@@ -236,11 +236,11 @@ func StartServer(name, sockPath string, server *servers.Server) {
 		defer log.LogPanicAndExit()
 		if cfg.SD.DeleteSocket {
 			if err := os.Remove(sockPath); err != nil && !os.IsNotExist(err) {
-				fatal.Fatal(common.NewBasicError("SocketRemoval error", err, "name", name))
+				fatal.Fatal(serrors.WrapStr("SocketRemoval error", err, "name", name))
 			}
 		}
 		if err := server.ListenAndServe(); err != nil {
-			fatal.Fatal(common.NewBasicError("ListenAndServe error", err, "name", name))
+			fatal.Fatal(serrors.WrapStr("ListenAndServe error", err, "name", name))
 		}
 	}()
 }

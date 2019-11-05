@@ -22,6 +22,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // Parsing errors with context.
@@ -66,7 +67,7 @@ type PrimaryASes map[addr.AS]PrimaryAS
 func (p *PrimaryASes) ValidateInvariant() error {
 	for as, primary := range *p {
 		if err := primary.ValidateInvariant(); err != nil {
-			return common.NewBasicError(ErrInvalidPrimaryAS, err, "as", as)
+			return serrors.Wrap(ErrInvalidPrimaryAS, err, "as", as)
 		}
 	}
 	return nil
@@ -134,10 +135,10 @@ func (p *PrimaryAS) ValidateInvariant() error {
 func (p *PrimaryAS) checkKeyExistence(keyType KeyType, shouldExist bool) error {
 	_, ok := p.Keys[keyType]
 	if ok && !shouldExist {
-		return common.NewBasicError(ErrUnexpectedKey, nil, "key_type", keyType)
+		return serrors.WithCtx(ErrUnexpectedKey, "key_type", keyType)
 	}
 	if !ok && shouldExist {
-		return common.NewBasicError(ErrMissingKey, nil, "key_type", keyType)
+		return serrors.WithCtx(ErrMissingKey, "key_type", keyType)
 	}
 	return nil
 }
@@ -171,7 +172,7 @@ type Attributes []Attribute
 // Validate checks that the attributes list is valid.
 func (t *Attributes) Validate() error {
 	if len(*t) > 4 || len(*t) <= 0 {
-		return common.NewBasicError(ErrInvalidAttributesSize, nil, "len", len(*t))
+		return serrors.WithCtx(ErrInvalidAttributesSize, "len", len(*t))
 	}
 	var core, authoritative bool
 	for i := 0; i < len(*t); i++ {
@@ -179,12 +180,12 @@ func (t *Attributes) Validate() error {
 		authoritative = authoritative || (*t)[i] == Authoritative
 		for j := i + 1; j < len(*t); j++ {
 			if (*t)[i] == (*t)[j] {
-				return common.NewBasicError(ErrDuplicateAttributes, nil, "attribute", (*t)[i])
+				return serrors.WithCtx(ErrDuplicateAttributes, "attribute", (*t)[i])
 			}
 		}
 	}
 	if authoritative && !core {
-		return common.NewBasicError(ErrAuthoritativeButNotCore, nil)
+		return ErrAuthoritativeButNotCore
 	}
 	return nil
 }
@@ -233,7 +234,7 @@ func (t *Attribute) UnmarshalText(b []byte) error {
 	case Core:
 		*t = Core
 	default:
-		return common.NewBasicError(ErrInvalidAttribute, nil, "input", string(b))
+		return serrors.WithCtx(ErrInvalidAttribute, "input", string(b))
 	}
 	return nil
 }
@@ -270,7 +271,7 @@ func (t *KeyType) UnmarshalText(b []byte) error {
 	case IssuingKeyJSON:
 		*t = IssuingKey
 	default:
-		return common.NewBasicError(ErrInvalidKeyType, nil, "input", string(b))
+		return serrors.WithCtx(ErrInvalidKeyType, "input", string(b))
 	}
 	return nil
 
@@ -288,5 +289,5 @@ func (t KeyType) MarshalText() ([]byte, error) {
 	case IssuingKey:
 		return []byte(IssuingKeyJSON), nil
 	}
-	return nil, common.NewBasicError(ErrInvalidKeyType, nil, "key_type", int(t))
+	return nil, serrors.WithCtx(ErrInvalidKeyType, "key_type", int(t))
 }

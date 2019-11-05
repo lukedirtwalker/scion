@@ -49,7 +49,7 @@ func NewPool(infos map[Info]struct{}, opts PoolOptions) (*Pool, error) {
 		opts:  opts,
 	}
 	if p.choose = opts.algorithm(p); p.choose == nil {
-		return nil, common.NewBasicError("Invalid algorithm", nil, "algo", opts.Algorithm)
+		return nil, serrors.New("Invalid algorithm", "algo", opts.Algorithm)
 	}
 	if err := p.Update(infos); err != nil {
 		return nil, err
@@ -66,12 +66,12 @@ func NewPool(infos map[Info]struct{}, opts PoolOptions) (*Pool, error) {
 // returned. If the pool is closed, an error is returned.
 func (p *Pool) Update(infos map[Info]struct{}) error {
 	if len(infos) == 0 && !p.opts.AllowEmpty {
-		return common.NewBasicError("Info must contain entry", nil, "opts", p.opts)
+		return serrors.New("Info must contain entry", "opts", p.opts)
 	}
 	p.infosMtx.Lock()
 	defer p.infosMtx.Unlock()
 	if p.closed {
-		return common.NewBasicError(ErrPoolClosed, nil)
+		return ErrPoolClosed
 	}
 	for info := range infos {
 		p.infos[info] = info
@@ -91,7 +91,7 @@ func (p *Pool) Choose() (Info, error) {
 	p.infosMtx.RLock()
 	defer p.infosMtx.RUnlock()
 	if p.closed {
-		return nil, common.NewBasicError(ErrPoolClosed, nil)
+		return nil, ErrPoolClosed
 	}
 	return p.choose()
 }

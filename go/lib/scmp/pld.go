@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var _ common.Payload = (*Payload)(nil)
@@ -98,7 +99,7 @@ func (p *Payload) Copy() (common.Payload, error) {
 
 func (p *Payload) WritePld(b common.RawBytes) (int, error) {
 	if p.Len() > len(b) {
-		return 0, common.NewBasicError("Not engough space in buffer", nil,
+		return 0, serrors.New("Not engough space in buffer",
 			"actual", len(b), "expected", p.Len())
 	}
 	offset := 0

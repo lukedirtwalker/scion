@@ -21,8 +21,8 @@ import (
 	"sync"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var NetMap NetMapI = &Networks{}
@@ -43,10 +43,10 @@ type Networks struct {
 
 func (ns *Networks) Add(ipnet *net.IPNet, ia addr.IA, ring *ringbuf.Ring) error {
 	if ia.IsWildcard() {
-		return common.NewBasicError("Networks.Add(): Illegal wildcard remote AS", nil, "ia", ia)
+		return serrors.New("Networks.Add(): Illegal wildcard remote AS", "ia", ia)
 	}
 	if ring == nil {
-		return common.NewBasicError("Networks.Add(): ringBuf.Ring must not be nil", nil, "ia", ia)
+		return serrors.New("Networks.Add(): ringBuf.Ring must not be nil", "ia", ia)
 	}
 	cnet := newCanonNet(ipnet)
 	ns.m.Lock()
@@ -54,7 +54,7 @@ func (ns *Networks) Add(ipnet *net.IPNet, ia addr.IA, ring *ringbuf.Ring) error 
 	newNet := &network{cnet, ia, ring}
 	for _, exnet := range ns.nets {
 		if exnet.net.Contains(cnet.IP) || cnet.Contains(exnet.net.IP) {
-			return common.NewBasicError("Networks.Add(): Networks overlap", nil,
+			return serrors.New("Networks.Add(): Networks overlap",
 				"new", newNet, "existing", exnet)
 		}
 	}
@@ -68,7 +68,7 @@ func (ns *Networks) Delete(ipnet *net.IPNet) error {
 	defer ns.m.Unlock()
 	idx := ns.getIdxL(cnet)
 	if idx < 0 {
-		return common.NewBasicError("Networks.Delete(): IPNet entry not present", nil, "net", ipnet)
+		return serrors.New("Networks.Delete(): IPNet entry not present", "net", ipnet)
 	}
 	// Fast delete, as it doesn't preserve order.
 	// https://github.com/golang/go/wiki/SliceTricks#delete-without-preserving-order

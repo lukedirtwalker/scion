@@ -21,6 +21,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // Parsing errors with context.
@@ -97,13 +98,13 @@ type Base struct {
 // Validate validates the shared fields are set correctly.
 func (b *Base) Validate() error {
 	if b.Subject.IsWildcard() {
-		return common.NewBasicError(ErrInvalidSubject, nil, "subject", b.Subject)
+		return serrors.WithCtx(ErrInvalidSubject, "subject", b.Subject)
 	}
 	if err := b.validateDistributionPoints(); err != nil {
 		return err
 	}
 	if err := b.Validity.Validate(); err != nil {
-		return common.NewBasicError(ErrInvalidValidityPeriod, err, "validity", b.Validity)
+		return serrors.Wrap(ErrInvalidValidityPeriod, err, "validity", b.Validity)
 	}
 	return nil
 }
@@ -111,7 +112,7 @@ func (b *Base) Validate() error {
 func (b *Base) validateDistributionPoints() error {
 	for _, ia := range b.OptionalDistributionPoints {
 		if ia.IsWildcard() {
-			return common.NewBasicError(ErrInvalidDistributionPoint, nil, "IA", ia)
+			return serrors.WithCtx(ErrInvalidDistributionPoint, "IA", ia)
 		}
 	}
 	return nil
@@ -133,10 +134,10 @@ func (b *Base) validateKeys(issuerCertificate bool) error {
 func (b *Base) checkKeyExistence(keyType KeyType, shouldExist bool) error {
 	_, ok := b.Keys[keyType]
 	if ok && !shouldExist {
-		return common.NewBasicError(ErrUnexpectedKey, nil, "type", keyType)
+		return serrors.WithCtx(ErrUnexpectedKey, "type", keyType)
 	}
 	if !ok && shouldExist {
-		return common.NewBasicError(ErrMissingKey, nil, "type", keyType)
+		return serrors.WithCtx(ErrMissingKey, "type", keyType)
 	}
 	return nil
 }
@@ -198,7 +199,7 @@ func (t *KeyType) UnmarshalText(b []byte) error {
 	case RevocationKeyJSON:
 		*t = RevocationKey
 	default:
-		return common.NewBasicError(ErrInvalidKeyType, nil, "input", string(b))
+		return serrors.WithCtx(ErrInvalidKeyType, "input", string(b))
 	}
 	return nil
 }
@@ -217,7 +218,7 @@ func (t KeyType) MarshalText() ([]byte, error) {
 	case RevocationKey:
 		return []byte(RevocationKeyJSON), nil
 	}
-	return nil, common.NewBasicError(ErrInvalidKeyType, nil, "type", int(t))
+	return nil, serrors.WithCtx(ErrInvalidKeyType, "type", int(t))
 }
 
 // FormatVersion indicates the certificate format version. Currently, only format
@@ -231,7 +232,7 @@ func (v *FormatVersion) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if parsed != 1 {
-		return common.NewBasicError(ErrUnsupportedFormat, nil, "fmt", parsed)
+		return serrors.WithCtx(ErrUnsupportedFormat, "fmt", parsed)
 	}
 	*v = FormatVersion(parsed)
 	return nil

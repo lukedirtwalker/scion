@@ -52,20 +52,20 @@ func (ps *pathSource) Get(ctx context.Context,
 	src, dst addr.IA) (*overlay.OverlayAddr, *spath.Path, error) {
 
 	if ps.resolver == nil {
-		return nil, nil, common.NewBasicError(ErrNoResolver, nil)
+		return nil, nil, ErrNoResolver
 	}
 	paths := ps.resolver.Query(ctx, src, dst, sciond.PathReqFlags{})
 	sciondPath := paths.GetAppPath("")
 	if sciondPath == nil {
-		return nil, nil, common.NewBasicError(ErrNoPath, nil)
+		return nil, nil, ErrNoPath
 	}
 	path := &spath.Path{Raw: sciondPath.Entry.Path.FwdPath}
 	if err := path.InitOffsets(); err != nil {
-		return nil, nil, common.NewBasicError(ErrInitPath, nil)
+		return nil, nil, ErrInitPath
 	}
 	overlayAddr, err := sciondPath.Entry.HostInfo.Overlay()
 	if err != nil {
-		return nil, nil, common.NewBasicError(ErrBadOverlay, nil)
+		return nil, nil, ErrBadOverlay
 	}
 	return overlayAddr, path, nil
 }

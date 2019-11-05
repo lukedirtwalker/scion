@@ -39,7 +39,7 @@ type Registration struct {
 
 func (r *Registration) SerializeTo(b []byte) (int, error) {
 	if r.PublicAddress == nil || r.PublicAddress.IP == nil {
-		return 0, common.NewBasicError(ErrNoAddress, nil)
+		return 0, ErrNoAddress
 	}
 
 	var msg registrationMessage
@@ -101,7 +101,7 @@ type registrationMessage struct {
 
 func (m *registrationMessage) SerializeTo(b []byte) (int, error) {
 	if len(b) < 13 {
-		return 0, common.NewBasicError(ErrBufferTooSmall, nil)
+		return 0, ErrBufferTooSmall
 	}
 	b[0] = byte(m.Command)
 	b[1] = m.L4Proto
@@ -124,7 +124,7 @@ func (m *registrationMessage) SerializeTo(b []byte) (int, error) {
 
 func (l *registrationMessage) DecodeFromBytes(b []byte) error {
 	if len(b) < 13 {
-		return common.NewBasicError(ErrIncompleteMessage, nil)
+		return ErrIncompleteMessage
 	}
 	l.Command = CommandBitField(b[0])
 	l.L4Proto = b[1]
@@ -148,7 +148,7 @@ func (l *registrationMessage) DecodeFromBytes(b []byte) error {
 		l.SVC = b[offset:]
 		return nil
 	default:
-		return common.NewBasicError(ErrPayloadTooLong, nil)
+		return ErrPayloadTooLong
 	}
 }
 
@@ -160,7 +160,7 @@ type registrationAddressField struct {
 
 func (l *registrationAddressField) SerializeTo(b []byte) (int, error) {
 	if len(b) < l.length() {
-		return 0, common.NewBasicError(ErrBufferTooSmall, nil)
+		return 0, ErrBufferTooSmall
 	}
 	common.Order.PutUint16(b, l.Port)
 	b[2] = l.AddressType
@@ -170,16 +170,16 @@ func (l *registrationAddressField) SerializeTo(b []byte) (int, error) {
 
 func (l *registrationAddressField) DecodeFromBytes(b []byte) error {
 	if len(b) < 3 {
-		return common.NewBasicError(ErrIncompleteMessage, nil)
+		return ErrIncompleteMessage
 	}
 	l.Port = common.Order.Uint16(b[:2])
 	l.AddressType = b[2]
 	if !isValidReliableSockDestination(addr.HostAddrType(l.AddressType)) {
-		return common.NewBasicError(ErrBadAddressType, nil)
+		return ErrBadAddressType
 	}
 	addressLength := getAddressLength(addr.HostAddrType(l.AddressType))
 	if len(b[3:]) < addressLength {
-		return common.NewBasicError(ErrIncompleteAddress, nil)
+		return ErrIncompleteAddress
 	}
 	l.Address = b[3 : 3+addressLength]
 	return nil
@@ -204,7 +204,7 @@ type Confirmation struct {
 
 func (c *Confirmation) SerializeTo(b []byte) (int, error) {
 	if len(b) < 2 {
-		return 0, common.NewBasicError(ErrBufferTooSmall, nil)
+		return 0, ErrBufferTooSmall
 	}
 	common.Order.PutUint16(b, c.Port)
 	return 2, nil
@@ -212,7 +212,7 @@ func (c *Confirmation) SerializeTo(b []byte) (int, error) {
 
 func (c *Confirmation) DecodeFromBytes(b []byte) error {
 	if len(b) < 2 {
-		return common.NewBasicError(ErrIncompletePort, nil)
+		return ErrIncompletePort
 	}
 	c.Port = common.Order.Uint16(b)
 	return nil

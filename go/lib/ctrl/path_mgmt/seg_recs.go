@@ -20,8 +20,8 @@ package path_mgmt
 import (
 	"strings"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -55,7 +55,7 @@ func (s *SegRecs) String() string {
 func (s *SegRecs) ParseRaw() error {
 	for i, segMeta := range s.Recs {
 		if err := segMeta.Segment.ParseRaw(false); err != nil {
-			return common.NewBasicError("Unable to parse segment", err, "seg_index", i,
+			return serrors.WrapStr("Unable to parse segment", err, "seg_index", i,
 				"segment", segMeta.Segment)
 		}
 	}

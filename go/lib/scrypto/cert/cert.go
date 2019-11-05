@@ -28,6 +28,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -88,10 +89,10 @@ type Certificate struct {
 func CertificateFromRaw(raw common.RawBytes) (*Certificate, error) {
 	cert := &Certificate{}
 	if err := json.Unmarshal(raw, cert); err != nil {
-		return nil, common.NewBasicError("Unable to parse Certificate", err)
+		return nil, serrors.WrapStr("Unable to parse Certificate", err)
 	}
 	if cert.Version.IsLatest() {
-		return nil, common.NewBasicError(ErrReservedVersion, nil)
+		return nil, ErrReservedVersion
 	}
 	return cert, nil
 }
@@ -101,7 +102,7 @@ func CertificateFromRaw(raw common.RawBytes) (*Certificate, error) {
 // subject, and that it is valid at the current time.
 func (c *Certificate) Verify(subject addr.IA, verifyKey common.RawBytes, signAlgo string) error {
 	if !subject.Equal(c.Subject) {
-		return common.NewBasicError(ErrInvalidSubject, nil,
+		return serrors.WithCtx(ErrInvalidSubject,
 			"expected", c.Subject, "actual", subject)
 	}
 	if err := c.VerifyTime(util.TimeToSecs(time.Now())); err != nil {
@@ -114,12 +115,12 @@ func (c *Certificate) Verify(subject addr.IA, verifyKey common.RawBytes, signAlg
 // not check the validity of the signature.
 func (c *Certificate) VerifyTime(ts uint32) error {
 	if ts < c.IssuingTime {
-		return common.NewBasicError(ErrEarlyUsage, nil,
+		return serrors.WithCtx(ErrEarlyUsage,
 			"IssuingTime", util.SecsToCompact(c.IssuingTime),
 			"current", util.SecsToCompact(ts))
 	}
 	if ts > c.ExpirationTime {
-		return common.NewBasicError(ErrExpired, nil,
+		return serrors.WithCtx(ErrExpired,
 			"ExpirationTime", util.SecsToCompact(c.ExpirationTime),
 			"current", util.SecsToCompact(ts))
 	}
@@ -131,7 +132,7 @@ func (c *Certificate) VerifyTime(ts uint32) error {
 func (c *Certificate) VerifySignature(verifyKey common.RawBytes, signAlgo string) error {
 	sigInput, err := c.sigPack()
 	if err != nil {
-		return common.NewBasicError(ErrUnableSigPack, err)
+		return serrors.Wrap(ErrUnableSigPack, err)
 	}
 	return scrypto.Verify(sigInput, c.Signature, verifyKey, signAlgo)
 }
@@ -154,7 +155,7 @@ func (c *Certificate) Sign(signKey common.RawBytes, signAlgo string) error {
 // sigPack creates a sorted json object of all fields, except for the signature field.
 func (c *Certificate) sigPack() (common.RawBytes, error) {
 	if c.Version.IsLatest() {
-		return nil, common.NewBasicError(ErrReservedVersion, nil)
+		return nil, ErrReservedVersion
 	}
 	m := make(map[string]interface{})
 	m[canIssue] = c.CanIssue
@@ -216,7 +217,7 @@ func (c *Certificate) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if err = validateFields(m, certFields); err != nil {
-		return common.NewBasicError(ErrValidatingFields, err)
+		return serrors.Wrap(ErrValidatingFields, err)
 	}
 	// XXX(roosd): Unmarshalling twice might affect performance.
 	// After switching to go 1.10 we might make use of

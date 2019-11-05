@@ -35,13 +35,13 @@ func NewOverlayAddr(l3 addr.HostAddr, l4 addr.L4Info) (*OverlayAddr, error) {
 	switch l3.Type() {
 	case addr.HostTypeIPv4, addr.HostTypeIPv6:
 	default:
-		return nil, common.NewBasicError("Unsupported L3 protocol", nil, "type", l3.Type())
+		return nil, serrors.New("Unsupported L3 protocol", "type", l3.Type())
 	}
 	if l4 != nil {
 		switch l4.Type() {
 		case common.L4UDP:
 		default:
-			return nil, common.NewBasicError("Unsupported L4 protocol", nil, "type", l4.Type())
+			return nil, serrors.New("Unsupported L4 protocol", "type", l4.Type())
 		}
 	}
 	return &OverlayAddr{l3: l3, l4: l4}, nil

@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/l4"
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet/internal/metrics"
 	"github.com/scionproto/scion/go/lib/spath"
 	"github.com/scionproto/scion/go/lib/spkt"
@@ -149,7 +150,7 @@ func (c *SCIONPacketConn) WriteTo(pkt *SCIONPacket, ov *overlay.OverlayAddr) err
 	StableSortExtensions(pkt.Extensions)
 	hbh, e2e, err := hpkt.ValidateExtensions(pkt.Extensions)
 	if err != nil {
-		return common.NewBasicError("Bad extension list", err)
+		return serrors.WrapStr("Bad extension list", err)
 	}
 	// TODO(scrye): scnPkt is a temporary solution. Its functionality will be
 	// absorbed by the easier to use SCIONPacket structure in this package.
@@ -167,13 +168,13 @@ func (c *SCIONPacketConn) WriteTo(pkt *SCIONPacket, ov *overlay.OverlayAddr) err
 	pkt.Prepare()
 	n, err := hpkt.WriteScnPkt(scnPkt, common.RawBytes(pkt.Bytes))
 	if err != nil {
-		return common.NewBasicError("Unable to serialize SCION packet", err)
+		return serrors.WrapStr("Unable to serialize SCION packet", err)
 	}
 	pkt.Bytes = pkt.Bytes[:n]
 	// Send message
 	n, err = c.conn.WriteTo(pkt.Bytes, ov)
 	if err != nil {
-		return common.NewBasicError("Reliable socket write error", err)
+		return serrors.WrapStr("Reliable socket write error", err)
 	}
 	metrics.M.WriteBytes().Add(float64(n))
 	metrics.M.WritePackets().Inc()
@@ -193,7 +194,7 @@ func (c *SCIONPacketConn) ReadFrom(pkt *SCIONPacket, ov *overlay.OverlayAddr) er
 		if scmpHdr, ok := pkt.L4Header.(*scmp.Hdr); ok {
 			if c.scmpHandler == nil {
 				metrics.M.SCMPErrors().Inc()
-				return common.NewBasicError("scmp packet received, but no handler found", nil,
+				return serrors.New("scmp packet received, but no handler found",
 					"scmp.Hdr", scmpHdr, "src", pkt.Source)
 			}
 			if err := c.scmpHandler.Handle(pkt); err != nil {
@@ -214,7 +215,7 @@ func (c *SCIONPacketConn) readFrom(pkt *SCIONPacket, ov *overlay.OverlayAddr) er
 	n, lastHopNetAddr, err := c.conn.ReadFrom(pkt.Bytes)
 	if err != nil {
 		metrics.M.DispatcherErrors().Inc()
-		return common.NewBasicError("Reliable socket read error", err)
+		return serrors.WrapStr("Reliable socket read error", err)
 	}
 	metrics.M.ReadBytes().Add(float64(n))
 	metrics.M.ReadPackets().Inc()
@@ -225,7 +226,7 @@ func (c *SCIONPacketConn) readFrom(pkt *SCIONPacket, ov *overlay.OverlayAddr) er
 	var ok bool
 	lastHop, ok = lastHopNetAddr.(*overlay.OverlayAddr)
 	if !ok {
-		return common.NewBasicError("Invalid lastHop address Type", nil,
+		return serrors.New("Invalid lastHop address Type",
 			"Actual", lastHopNetAddr)
 	}
 
@@ -238,7 +239,7 @@ func (c *SCIONPacketConn) readFrom(pkt *SCIONPacket, ov *overlay.OverlayAddr) er
 	err = hpkt.ParseScnPkt(scnPkt, common.RawBytes(pkt.Bytes))
 	if err != nil {
 		metrics.M.ParseErrors().Inc()
-		return common.NewBasicError("SCION packet parse error", err)
+		return serrors.WrapStr("SCION packet parse error", err)
 	}
 
 	pkt.Destination = SCIONAddress{IA: scnPkt.DstIA, Host: scnPkt.DstHost}

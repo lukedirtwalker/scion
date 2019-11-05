@@ -22,6 +22,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -58,10 +59,10 @@ func (c *AS) Validate() error {
 		return err
 	}
 	if c.Issuer.IA.IsWildcard() {
-		return common.NewBasicError(ErrWildcardIssuer, nil, "issuer", c.Issuer.IA)
+		return serrors.WithCtx(ErrWildcardIssuer, "issuer", c.Issuer.IA)
 	}
 	if c.Subject.I != c.Issuer.IA.I {
-		return common.NewBasicError(ErrIssuerDifferentISD, nil,
+		return serrors.WithCtx(ErrIssuerDifferentISD,
 			"subject", c.Subject, "issuer", c.Issuer.IA)
 	}
 	return nil
@@ -144,7 +145,7 @@ type TypeAS struct{}
 // UnmarshalText checks that the certificate type matches.
 func (TypeAS) UnmarshalText(b []byte) error {
 	if TypeASJSON != string(b) {
-		return common.NewBasicError(ErrInvalidCertificateType, nil,
+		return serrors.WithCtx(ErrInvalidCertificateType,
 			"expected", TypeASJSON, "actual", string(b))
 	}
 	return nil

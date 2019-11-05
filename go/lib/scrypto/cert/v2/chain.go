@@ -18,6 +18,7 @@ import (
 	"encoding/json"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // ErrInvalidChainLength indicates an invalid chain length.
@@ -45,7 +46,7 @@ func (c *Chain) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if len(tmp) != 2 {
-		return common.NewBasicError(ErrInvalidChainLength, nil, "expected", 2, "actual", len(tmp))
+		return serrors.WithCtx(ErrInvalidChainLength, "expected", 2, "actual", len(tmp))
 	}
 	return nil
 

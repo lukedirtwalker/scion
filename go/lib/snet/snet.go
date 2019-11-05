@@ -170,7 +170,7 @@ func getResolver(sciondPath string) (pathmgr.Resolver, error) {
 	if sciondPath != "" {
 		sciondConn, err := sciond.NewService(sciondPath).Connect()
 		if err != nil {
-			return nil, common.NewBasicError("Unable to initialize SCIOND service", err)
+			return nil, serrors.WrapStr("Unable to initialize SCIOND service", err)
 		}
 		pathResolver = pathmgr.New(
 			sciondConn,
@@ -257,7 +257,7 @@ func (n *SCIONNetwork) ListenSCIONWithBindSVC(network string, laddr, baddr *Addr
 		l4Type = common.L4UDP
 		defL4 = addr.NewL4UDPInfo(0)
 	default:
-		return nil, common.NewBasicError("Network not implemented", nil, "net", network)
+		return nil, serrors.New("Network not implemented", "net", network)
 	}
 	if laddr == nil {
 		return nil, serrors.New("Nil laddr not supported")
@@ -269,7 +269,7 @@ func (n *SCIONNetwork) ListenSCIONWithBindSVC(network string, laddr, baddr *Addr
 		return nil, serrors.New("Nil Host L3 laddr not supported")
 	}
 	if laddr.Host.L3.Type() != l3Type {
-		return nil, common.NewBasicError("Supplied local address does not match network", nil,
+		return nil, serrors.New("Supplied local address does not match network",
 			"expected L3", l3Type, "actual L3", laddr.Host.L3.Type())
 	}
 	if laddr.Host.L3.IP().IsUnspecified() {
@@ -280,7 +280,7 @@ func (n *SCIONNetwork) ListenSCIONWithBindSVC(network string, laddr, baddr *Addr
 		laddr.Host.L4 = defL4
 	}
 	if laddr.Host.L4.Type() != l4Type {
-		return nil, common.NewBasicError("Supplied local address does not match network", nil,
+		return nil, serrors.New("Supplied local address does not match network",
 			"expected L4", l4Type, "actual L4", laddr.Host.L4.Type())
 	}
 	conn := &scionConnBase{
@@ -294,7 +294,7 @@ func (n *SCIONNetwork) ListenSCIONWithBindSVC(network string, laddr, baddr *Addr
 		conn.laddr.IA = n.IA()
 	}
 	if !conn.laddr.IA.Equal(conn.scionNet.localIA) {
-		return nil, common.NewBasicError("Unable to listen on non-local IA", nil,
+		return nil, serrors.New("Unable to listen on non-local IA",
 			"expected", conn.scionNet.localIA, "actual", conn.laddr.IA, "type", "public")
 	}
 	var bindAddr *overlay.OverlayAddr
@@ -303,10 +303,10 @@ func (n *SCIONNetwork) ListenSCIONWithBindSVC(network string, laddr, baddr *Addr
 		conn.baddr = baddr.Copy()
 		bindAddr, err = overlay.NewOverlayAddr(baddr.Host.L3, baddr.Host.L4)
 		if err != nil {
-			return nil, common.NewBasicError("Unable to construct overlay bind address", err)
+			return nil, serrors.WrapStr("Unable to construct overlay bind address", err)
 		}
 		if !conn.baddr.IA.Equal(conn.scionNet.localIA) {
-			return nil, common.NewBasicError("Unable to listen on non-local IA", nil,
+			return nil, serrors.New("Unable to listen on non-local IA",
 				"expected", conn.scionNet.localIA, "actual", conn.baddr.IA, "type", "bind")
 		}
 	}

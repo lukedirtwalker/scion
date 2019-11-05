@@ -30,13 +30,13 @@ import (
 	"github.com/scionproto/scion/go/border/brconf"
 	"github.com/scionproto/scion/go/border/rctx"
 	"github.com/scionproto/scion/go/border/rpkt"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/discovery"
 	"github.com/scionproto/scion/go/lib/fatal"
 	"github.com/scionproto/scion/go/lib/infra/modules/idiscovery"
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 	"github.com/scionproto/scion/go/proto"
 )
@@ -96,7 +96,7 @@ func (r *Router) setup() error {
 func (r *Router) clearCapabilities() error {
 	caps, err := capability.NewPid(0)
 	if err != nil {
-		return common.NewBasicError("Error retrieving capabilities", err)
+		return serrors.WrapStr("Error retrieving capabilities", err)
 	}
 	log.Debug("Startup capabilities", "caps", caps)
 	caps.Clear(capability.CAPS)
@@ -111,7 +111,7 @@ func (r *Router) loadNewConfig() (*brconf.BRConf, error) {
 	var config *brconf.BRConf
 	var err error
 	if config, err = brconf.Load(r.Id, r.confDir); err != nil {
-		return nil, common.NewBasicError("Failed to load topology config", err, "dir", r.confDir)
+		return nil, serrors.WrapStr("Failed to load topology config", err, "dir", r.confDir)
 	}
 	log.Debug("Topology and AS config loaded", "IA", config.IA, "IfIDs", config.BR,
 		"dir", r.confDir)
@@ -255,14 +255,14 @@ func (r *Router) rollbackNet(ctx, oldCtx *rctx.Ctx,
 	for _, intf := range ctx.Conf.BR.IFs {
 		err := registeredExtSockOps[sockConf.Ext(intf.Id)].Rollback(r, ctx, intf, oldCtx)
 		if err != nil {
-			handleErr(common.NewBasicError("Unable to rollback external interface",
+			handleErr(serrors.WrapStr("Unable to rollback external interface",
 				err, "intf", intf))
 		}
 	}
 	// Rollback of local interface.
 	err := registeredLocSockOps[sockConf.Loc()].Rollback(r, ctx, oldCtx)
 	if err != nil {
-		handleErr(common.NewBasicError("Unable to rollback local interface", err))
+		handleErr(serrors.WrapStr("Unable to rollback local interface", err))
 	}
 	if oldCtx != nil {
 		// Start sockets that are possibly created by rollback.
@@ -287,7 +287,7 @@ func (r *Router) startDiscovery() error {
 	var client *http.Client
 	if cfg.Discovery.Dynamic.Enable {
 		if client, err = r.discoveryClient(); err != nil {
-			return common.NewBasicError("Unable to create discovery client", err)
+			return serrors.WrapStr("Unable to create discovery client", err)
 		}
 	}
 	handlers := idiscovery.TopoHandlers{
@@ -297,7 +297,7 @@ func (r *Router) startDiscovery() error {
 	_, err = idiscovery.StartRunners(cfg.Discovery.Config, discovery.Full,
 		handlers, client, "border")
 	if err != nil {
-		return common.NewBasicError("Unable to start discovery runners", err)
+		return serrors.WrapStr("Unable to start discovery runners", err)
 	}
 	return nil
 }
@@ -362,11 +362,11 @@ func validateCtx(ctx, oldCtx *rctx.Ctx, sockConf brconf.SockConf) error {
 	sockType := sockConf.Loc()
 	// Validate socket type is registered.
 	if _, ok := registeredLocSockOps[sockType]; !ok {
-		return common.NewBasicError("No LocSockOps found", nil, "sockType", sockType)
+		return serrors.New("No LocSockOps found", "sockType", sockType)
 	}
 	// Validate local sock of same type.
 	if oldCtx.LocSockIn.Type != sockType {
-		return common.NewBasicError("Unable to switch local socket type", nil,
+		return serrors.New("Unable to switch local socket type",
 			"expected", oldCtx.LocSockIn.Type, "actual", sockType)
 	}
 	// Validate interfaces.
@@ -374,29 +374,29 @@ func validateCtx(ctx, oldCtx *rctx.Ctx, sockConf brconf.SockConf) error {
 		sockType := sockConf.Ext(intf.Id)
 		// Validate socket type is registered
 		if _, ok := registeredExtSockOps[sockType]; !ok {
-			return common.NewBasicError("No ExtSockOps found", nil,
+			return serrors.New("No ExtSockOps found",
 				"sockType", sockType, "ifid", intf.Id)
 		}
 		// Validate same socket type.
 		if oldCtx.ExtSockIn[intf.Id] != nil && oldCtx.ExtSockIn[intf.Id].Type != sockType {
-			return common.NewBasicError("Unable to switch external socket type", nil,
+			return serrors.New("Unable to switch external socket type",
 				"expected", oldCtx.ExtSockIn[intf.Id].Type, "actual", sockType)
 		}
 
 		// Validate interface does not take over local address.
 		if intf.Local.Equal(oldCtx.Conf.BR.InternalAddrs) {
-			return common.NewBasicError("Address must not switch from local", nil,
+			return serrors.New("Address must not switch from local",
 				"intf", intf, "locAddr", oldCtx.Conf.BR.InternalAddrs)
 		}
 		for _, oldIntf := range oldCtx.Conf.BR.IFs {
 			// Validate interface does not take over the address of old interface.
 			if intf.Local.Equal(oldIntf.Local) && intf.Id != oldIntf.Id {
-				return common.NewBasicError("Address must not switch interface", nil,
+				return serrors.New("Address must not switch interface",
 					"intf", intf, "oldIntf", oldIntf)
 			}
 			// Validate local sock does not take over the address of old interface.
 			if ctx.Conf.BR.InternalAddrs.Equal(oldIntf.Local) {
-				return common.NewBasicError("Address must not switch to local", nil,
+				return serrors.New("Address must not switch to local",
 					"oldIntf", intf, "locAddr", oldCtx.Conf.BR.InternalAddrs)
 			}
 		}

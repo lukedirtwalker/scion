@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/hpkt"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spkt"
 	"github.com/scionproto/scion/go/tools/scmp/cmn"
 )
@@ -165,19 +166,17 @@ func validate(pkt *spkt.ScnPkt) (*scmp.Hdr, *scmp.InfoEcho, error) {
 			// XXX Special case where the L4Hdr quote contains the Meta and Info fields
 			info, e := scmp.InfoEchoFromRaw(scmpPld.L4Hdr[scmp.HdrLen+scmp.MetaLen:])
 			if e == nil {
-				return nil, nil, common.NewBasicError("", err, "scmp_seq", info.Seq)
+				return nil, nil, serrors.WrapStr("", err, "scmp_seq", info.Seq)
 			}
 		}
 		return nil, nil, err
 	}
 	info, ok := scmpPld.Info.(*scmp.InfoEcho)
 	if !ok {
-		return nil, nil,
-			common.NewBasicError("Not an Info Echo", nil, "type", common.TypeOf(scmpPld.Info))
+		return nil, nil, serrors.New("Not an Info Echo", "type", common.TypeOf(scmpPld.Info))
 	}
 	if info.Id != id {
-		return nil, nil,
-			common.NewBasicError("Wrong SCMP ID", nil, "expected", id, "actual", info.Id)
+		return nil, nil, serrors.New("Wrong SCMP ID", "expected", id, "actual", info.Id)
 	}
 	return scmpHdr, info, nil
 }

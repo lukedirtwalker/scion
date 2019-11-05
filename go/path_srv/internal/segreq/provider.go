@@ -57,7 +57,7 @@ func (s *SegSelector) SelectSeg(ctx context.Context,
 		return revcache.NoRevokedHopIntf(ctx, s.RevCache, ps)
 	})
 	if err != nil {
-		return nil, common.NewBasicError("failed to filter segments", err)
+		return nil, serrors.WrapStr("failed to filter segments", err)
 	}
 	if len(segs) < 1 {
 		return nil, serrors.New("no segments found")
@@ -111,7 +111,7 @@ func (p *nonCoreDstProvider) coreSvcAddr(ctx context.Context, svc addr.HostSVC,
 	}
 	seg, err := p.SelectSeg(ctx, params)
 	if err != nil {
-		return nil, common.NewBasicError(ErrNoConnectivity, err)
+		return nil, serrors.Wrap(ErrNoConnectivity, err)
 	}
 	return addrutil.GetPath(svc, seg, p.topoProvider)
 }
@@ -139,7 +139,7 @@ func (p *coreDstProvider) corePSAddr(ctx context.Context, destISD addr.ISD) (net
 	}
 	seg, err := p.SelectSeg(ctx, params)
 	if err != nil {
-		return nil, common.NewBasicError(ErrNoConnectivity, err)
+		return nil, serrors.Wrap(ErrNoConnectivity, err)
 	}
 	return addrutil.GetPath(addr.SvcPS, seg, p.topoProvider)
 }

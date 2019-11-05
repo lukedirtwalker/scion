@@ -18,6 +18,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -69,7 +70,7 @@ type UpdateVerifier struct {
 func (v UpdateVerifier) Verify() error {
 	votes, pops, err := decodeSignatures(v.Signatures)
 	if err != nil {
-		return common.NewBasicError(ErrDecodeProtectedFailed, err)
+		return serrors.Wrap(ErrDecodeProtectedFailed, err)
 	}
 	pv := popVerifier{
 		TRC:        v.Next,
@@ -95,7 +96,7 @@ func (v UpdateVerifier) checkVotes(votes Votes) error {
 	for as, sig := range votes {
 		vote, ok := v.Next.Votes[as]
 		if !ok {
-			return common.NewBasicError(ErrUnexpectedVoteSignature, nil, "as", as)
+			return serrors.WithCtx(ErrUnexpectedVoteSignature, "as", as)
 		}
 		expected := Protected{
 			Algorithm:  v.Prev.PrimaryASes[as].Keys[vote.KeyType].Algorithm,
@@ -105,13 +106,13 @@ func (v UpdateVerifier) checkVotes(votes Votes) error {
 			AS:         as,
 		}
 		if sig.Protected != expected {
-			return common.NewBasicError(ErrInvalidProtected, nil,
+			return serrors.WithCtx(ErrInvalidProtected,
 				"expected", expected, "actual", sig.Protected)
 		}
 	}
 	for as := range v.Next.Votes {
 		if _, ok := votes[as]; !ok {
-			return common.NewBasicError(ErrMissingVoteSignature, nil, "as", as)
+			return serrors.WithCtx(ErrMissingVoteSignature, "as", as)
 		}
 	}
 	return nil
@@ -122,7 +123,7 @@ func (v UpdateVerifier) verifyVotes(votes Votes) error {
 		meta := v.Prev.PrimaryASes[as].Keys[sig.Protected.KeyType]
 		input := SigInput(sig.EncodedProtected, v.NextEncoded)
 		if err := scrypto.Verify(input, sig.Signature, meta.Key, meta.Algorithm); err != nil {
-			return common.NewBasicError(ErrVoteVerification, err, "as", as, "meta", meta)
+			return serrors.Wrap(ErrVoteVerification, err, "as", as, "meta", meta)
 		}
 	}
 	return nil
@@ -145,7 +146,7 @@ type POPVerifier struct {
 func (v POPVerifier) Verify() error {
 	_, pops, err := decodeSignatures(v.Signatures)
 	if err != nil {
-		return common.NewBasicError(ErrDecodeProtectedFailed, err)
+		return serrors.Wrap(ErrDecodeProtectedFailed, err)
 	}
 	pv := popVerifier{
 		TRC:        v.TRC,
@@ -171,7 +172,7 @@ func (v *popVerifier) check() error {
 	for as, pops := range v.signatures {
 		for _, sig := range pops {
 			if !containsKeyType(sig.Protected.KeyType, v.TRC.ProofOfPossession[as]) {
-				return common.NewBasicError(ErrUnexpectedPOPSignature, nil,
+				return serrors.WithCtx(ErrUnexpectedPOPSignature,
 					"as", as, "key_type", sig.Protected.KeyType)
 			}
 			meta := v.TRC.PrimaryASes[as].Keys[sig.Protected.KeyType]
@@ -183,7 +184,7 @@ func (v *popVerifier) check() error {
 				AS:         as,
 			}
 			if sig.Protected != expected {
-				return common.NewBasicError(ErrInvalidProtected, nil,
+				return serrors.WithCtx(ErrInvalidProtected,
 					"expected", expected, "actual", sig.Protected)
 			}
 		}
@@ -191,7 +192,7 @@ func (v *popVerifier) check() error {
 	for as, keyTypes := range v.TRC.ProofOfPossession {
 		for _, keyType := range keyTypes {
 			if _, ok := v.signatures[as][keyType]; !ok {
-				return common.NewBasicError(ErrMissingPOPSignature, nil,
+				return serrors.WithCtx(ErrMissingPOPSignature,
 					"as", as, "key_type", keyType)
 			}
 		}
@@ -205,7 +206,7 @@ func (v *popVerifier) verify() error {
 			meta := v.TRC.PrimaryASes[as].Keys[keyType]
 			input := SigInput(sig.EncodedProtected, v.Encoded)
 			if err := scrypto.Verify(input, sig.Signature, meta.Key, meta.Algorithm); err != nil {
-				return common.NewBasicError(ErrPOPVerification, err,
+				return serrors.Wrap(ErrPOPVerification, err,
 					"as", as, "key_type", keyType)
 			}
 		}
@@ -239,13 +240,13 @@ func decodeSignatures(signatures []Signature) (Votes, POPs, error) {
 		switch sig.Protected.Type {
 		case VoteSignature:
 			if _, ok := votes[sig.Protected.AS]; ok {
-				return nil, nil, common.NewBasicError(ErrDuplicateVoteSignature, nil,
+				return nil, nil, serrors.WithCtx(ErrDuplicateVoteSignature,
 					"as", sig.Protected.AS)
 			}
 			votes[sig.Protected.AS] = sig
 		case POPSignature:
 			if _, ok := pops[sig.Protected.AS][sig.Protected.KeyType]; ok {
-				return nil, nil, common.NewBasicError(ErrDuplicatePOPSignature, nil,
+				return nil, nil, serrors.WithCtx(ErrDuplicatePOPSignature,
 					"as", sig.Protected.AS, "key_type", sig.Protected.KeyType)
 			}
 			if _, ok := pops[sig.Protected.AS]; !ok {

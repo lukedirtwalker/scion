@@ -33,6 +33,7 @@ import (
 	"github.com/scionproto/scion/go/lib/periodic"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/util"
 )
@@ -71,12 +72,12 @@ func (r *Requester) run(ctx context.Context) (bool, error) {
 	opts := infra.ChainOpts{TrustStoreOpts: infra.TrustStoreOpts{LocalOnly: true}}
 	chain, err := r.State.Store.GetChain(ctx, r.IA, scrypto.LatestVer, opts)
 	if err != nil {
-		return true, common.NewBasicError("Unable to get local certificate chain", err)
+		return true, serrors.WrapStr("Unable to get local certificate chain", err)
 	}
 	exp := util.SecsToTime(chain.Leaf.ExpirationTime)
 	now := time.Now()
 	if now.After(exp) {
-		return true, common.NewBasicError("Certificate expired without being reissued", nil,
+		return true, serrors.New("Certificate expired without being reissued",
 			"chain", chain, "expTime", util.TimeToCompact(exp), "now", util.TimeToString(now))
 	}
 	if now.Add(r.LeafTime).Before(exp) {
@@ -94,21 +95,21 @@ func (r *Requester) sendReq(ctx context.Context, chain *cert.Chain) (bool, error
 	c.ExpirationTime = c.IssuingTime + (chain.Leaf.ExpirationTime - chain.Leaf.IssuingTime)
 	c.Version++
 	if err := c.Sign(r.State.GetSigningKey(), chain.Leaf.SignAlgorithm); err != nil {
-		return true, common.NewBasicError("Unable to sign certificate", err)
+		return true, serrors.WrapStr("Unable to sign certificate", err)
 	}
 	raw, err := c.JSON(false)
 	if err != nil {
-		return false, common.NewBasicError("Unable to pack certificate", err)
+		return false, serrors.WrapStr("Unable to pack certificate", err)
 	}
 	req := &cert_mgmt.ChainIssReq{RawCert: raw}
 	a := &snet.Addr{IA: c.Issuer, Host: addr.NewSVCUDPAppAddr(addr.SvcCS)}
 	rep, err := r.Msgr.RequestChainIssue(ctx, req, a, messenger.NextId())
 	if err != nil {
-		return false, common.NewBasicError("Unable to request reissued certificate chain", err)
+		return false, serrors.WrapStr("Unable to request reissued certificate chain", err)
 	}
 	logger.Trace("[reiss.Requester] Received certificate reissue reply", "addr", a, "rep", rep)
 	if crit, err := r.handleRep(ctx, rep); err != nil {
-		return crit, common.NewBasicError("Unable to handle reply", err, "addr", a, "rep", rep)
+		return crit, serrors.WrapStr("Unable to handle reply", err, "addr", a, "rep", rep)
 	}
 	return false, nil
 }
@@ -117,22 +118,22 @@ func (r *Requester) handleRep(ctx context.Context, rep *cert_mgmt.ChainIssRep) (
 	logger := log.FromCtx(ctx)
 	chain, err := rep.Chain()
 	if err != nil {
-		return false, common.NewBasicError("Unable to parse chain", err)
+		return false, serrors.WrapStr("Unable to parse chain", err)
 	}
 	if err = r.validateRep(ctx, chain); err != nil {
-		return true, common.NewBasicError("Unable to validate chain", err, "chain", chain)
+		return true, serrors.WrapStr("Unable to validate chain", err, "chain", chain)
 	}
 	if _, err = r.State.TrustDB.InsertChain(ctx, chain); err != nil {
-		return true, common.NewBasicError("Unable to insert reissued certificate chain in TrustDB",
+		return true, serrors.WrapStr("Unable to insert reissued certificate chain in TrustDB",
 			err, "chain", chain)
 	}
 	meta, err := trust.CreateSignMeta(ctx, r.IA, r.State.TrustDB)
 	if err != nil {
-		return true, common.NewBasicError("Unable create sign meta", err)
+		return true, serrors.WrapStr("Unable create sign meta", err)
 	}
 	signer, err := trust.NewBasicSigner(r.State.GetSigningKey(), meta)
 	if err != nil {
-		return true, common.NewBasicError("Unable to create new signer", err)
+		return true, serrors.WrapStr("Unable to create new signer", err)
 	}
 	r.State.SetSigner(signer)
 	r.Msgr.UpdateSigner(signer, []infra.MessageType{infra.ChainIssueRequest})
@@ -148,7 +149,7 @@ func (r *Requester) validateRep(ctx context.Context, chain *cert.Chain) error {
 	verKey := common.RawBytes(ed25519.PrivateKey(
 		r.State.GetSigningKey()).Public().(ed25519.PublicKey))
 	if !bytes.Equal(chain.Leaf.SubjectSignKey, verKey) {
-		return common.NewBasicError("Invalid SubjectSignKey", nil, "expected",
+		return serrors.New("Invalid SubjectSignKey", "expected",
 			verKey, "actual", chain.Leaf.SubjectSignKey)
 	}
 	// FIXME(roosd): validate SubjectEncKey
@@ -159,7 +160,7 @@ func (r *Requester) validateRep(ctx context.Context, chain *cert.Chain) error {
 	}
 	issuer := chain.Leaf.Issuer
 	if !chain.Leaf.Issuer.Equal(issuer) {
-		return common.NewBasicError("Invalid Issuer", nil, "expected",
+		return serrors.New("Invalid Issuer", "expected",
 			issuer, "actual", chain.Leaf.Issuer)
 	}
 	return trust.VerifyChain(ctx, r.IA, chain, r.State.Store)

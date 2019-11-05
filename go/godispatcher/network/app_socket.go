@@ -28,6 +28,7 @@ import (
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/ringbuf"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 	"github.com/scionproto/scion/go/lib/spkt"
 )
@@ -128,7 +129,7 @@ func (h *AppConnHandler) doRegExchange() (registration.RegReference, *TableEntry
 
 	regInfo, err := h.recvRegistration(b)
 	if err != nil {
-		return nil, nil, false, common.NewBasicError("registration message error", nil, "err", err)
+		return nil, nil, false, serrors.New("registration message error", "err", err)
 	}
 
 	tableEntry := newTableEntry(h.Conn)
@@ -140,7 +141,7 @@ func (h *AppConnHandler) doRegExchange() (registration.RegReference, *TableEntry
 		tableEntry,
 	)
 	if err != nil {
-		return nil, nil, false, common.NewBasicError("registration table error", nil, "err", err)
+		return nil, nil, false, serrors.New("registration table error", "err", err)
 	}
 
 	udpRef := ref.(registration.RegReference)
@@ -148,7 +149,7 @@ func (h *AppConnHandler) doRegExchange() (registration.RegReference, *TableEntry
 	if err := h.sendConfirmation(b, &reliable.Confirmation{Port: port}); err != nil {
 		// Need to release stale state from the table
 		ref.Free()
-		return nil, nil, false, common.NewBasicError("confirmation message error", nil, "err", err)
+		return nil, nil, false, serrors.New("confirmation message error", "err", err)
 	}
 	h.logRegistration(regInfo.IA, udpRef.UDPAddr(), getBindIP(regInfo.BindAddress),
 		regInfo.SVCAddress)

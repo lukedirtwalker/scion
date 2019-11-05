@@ -21,7 +21,6 @@ import (
 
 	"github.com/scionproto/scion/go/cert_srv/internal/config"
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust"
 	"github.com/scionproto/scion/go/lib/log"
@@ -29,6 +28,7 @@ import (
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
 	"github.com/scionproto/scion/go/lib/scrypto/trc"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -62,12 +62,12 @@ func (s *Self) Run(ctx context.Context) {
 func (s *Self) run(ctx context.Context) error {
 	issCrt, err := s.getIssuerCert(ctx)
 	if err != nil {
-		return common.NewBasicError("Unable to get issuer certificate", err)
+		return serrors.WrapStr("Unable to get issuer certificate", err)
 	}
 	opts := infra.ChainOpts{TrustStoreOpts: infra.TrustStoreOpts{LocalOnly: true}}
 	chain, err := s.State.Store.GetChain(ctx, s.IA, scrypto.LatestVer, opts)
 	if err != nil {
-		return common.NewBasicError("Unable to get certificate chain", err)
+		return serrors.WrapStr("Unable to get certificate chain", err)
 	}
 	now := time.Now()
 	iSleep := time.Unix(int64(issCrt.ExpirationTime), 0).Sub(now) - s.IssTime
@@ -78,12 +78,12 @@ func (s *Self) run(ctx context.Context) error {
 	if iSleep <= 0 {
 		// The issuer certificated needs to be updated.
 		if err = s.createIssuerCert(ctx, issCrt); err != nil {
-			return common.NewBasicError("Unable to create issuer certificate", err)
+			return serrors.WrapStr("Unable to create issuer certificate", err)
 		}
 	}
 	if lSleep <= 0 {
 		if err = s.createLeafCert(ctx, chain.Leaf); err != nil {
-			return common.NewBasicError("Unable to issue certificate chain", err)
+			return serrors.WrapStr("Unable to issue certificate chain", err)
 		}
 	}
 	if s.CorePusher != nil {
@@ -96,7 +96,7 @@ func (s *Self) run(ctx context.Context) error {
 func (s *Self) createLeafCert(ctx context.Context, leaf *cert.Certificate) error {
 	issCrt, err := s.getIssuerCert(ctx)
 	if err != nil {
-		return common.NewBasicError("Unable to get issuer certificate", err)
+		return serrors.WrapStr("Unable to get issuer certificate", err)
 	}
 	chain := &cert.Chain{Leaf: leaf.Copy(), Issuer: issCrt}
 	chain.Leaf.Version++
@@ -107,22 +107,22 @@ func (s *Self) createLeafCert(ctx context.Context, leaf *cert.Certificate) error
 		chain.Leaf.ExpirationTime = chain.Issuer.ExpirationTime
 	}
 	if err := chain.Leaf.Sign(s.State.GetIssSigningKey(), issCrt.SignAlgorithm); err != nil {
-		return common.NewBasicError("Unable to sign leaf certificate", err, "chain", chain)
+		return serrors.WrapStr("Unable to sign leaf certificate", err, "chain", chain)
 	}
 	if err := trust.VerifyChain(ctx, s.IA, chain, s.State.Store); err != nil {
-		return common.NewBasicError("Unable to verify chain", err, "chain", chain)
+		return serrors.WrapStr("Unable to verify chain", err, "chain", chain)
 	}
 	if _, err := s.State.TrustDB.InsertChain(ctx, chain); err != nil {
-		return common.NewBasicError("Unable to write certificate chain", err, "chain", chain)
+		return serrors.WrapStr("Unable to write certificate chain", err, "chain", chain)
 	}
 	log.FromCtx(ctx).Info("[reiss.Self] Created certificate chain", "chain", chain)
 	meta, err := trust.CreateSignMeta(ctx, s.IA, s.State.TrustDB)
 	if err != nil {
-		return common.NewBasicError("Unable to create sign meta", err)
+		return serrors.WrapStr("Unable to create sign meta", err)
 	}
 	signer, err := trust.NewBasicSigner(s.State.GetSigningKey(), meta)
 	if err != nil {
-		return common.NewBasicError("Unable to create new signer", err)
+		return serrors.WrapStr("Unable to create new signer", err)
 	}
 	s.State.SetSigner(signer)
 	s.Msgr.UpdateSigner(signer, []infra.MessageType{infra.ChainIssueReply})
@@ -135,7 +135,7 @@ func (s *Self) getIssuerCert(ctx context.Context) (*cert.Certificate, error) {
 		return nil, err
 	}
 	if issCrt == nil {
-		return nil, common.NewBasicError("Issuer certificate not found", nil, "ia", s.IA)
+		return nil, serrors.New("Issuer certificate not found", "ia", s.IA)
 	}
 	return issCrt, nil
 }
@@ -149,16 +149,16 @@ func (s *Self) createIssuerCert(ctx context.Context, crt *cert.Certificate) erro
 	crt.ExpirationTime = crt.IssuingTime + cert.DefaultIssuerCertValidity
 	coreAS, err := s.getCoreASEntry(ctx)
 	if err != nil {
-		return common.NewBasicError("Unable to get core AS entry", err, "cert", crt)
+		return serrors.WrapStr("Unable to get core AS entry", err, "cert", crt)
 	}
 	if err = crt.Sign(s.State.GetOnRootKey(), coreAS.OnlineKeyAlg); err != nil {
-		return common.NewBasicError("Unable to sign issuer certificate", err, "cert", crt)
+		return serrors.WrapStr("Unable to sign issuer certificate", err, "cert", crt)
 	}
 	if err = crt.Verify(crt.Issuer, coreAS.OnlineKey, coreAS.OnlineKeyAlg); err != nil {
-		return common.NewBasicError("Invalid issuer certificate signature", err, "cert", crt)
+		return serrors.WrapStr("Invalid issuer certificate signature", err, "cert", crt)
 	}
 	if err = s.setIssuerCert(ctx, crt); err != nil {
-		return common.NewBasicError("Unable to store issuer certificate", err, "cert", crt)
+		return serrors.WrapStr("Unable to store issuer certificate", err, "cert", crt)
 	}
 	log.FromCtx(ctx).Info("[reiss.Self] Created issuer certificate", "cert", crt)
 	return nil
@@ -168,12 +168,12 @@ func (s *Self) getCoreASEntry(ctx context.Context) (*trc.CoreAS, error) {
 	opts := infra.TRCOpts{TrustStoreOpts: infra.TrustStoreOpts{LocalOnly: true}}
 	maxTrc, err := s.State.Store.GetTRC(ctx, s.IA.I, scrypto.LatestVer, opts)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to find local TRC", err)
+		return nil, serrors.WrapStr("Unable to find local TRC", err)
 	}
 	coreAS := maxTrc.CoreASes[s.IA]
 	if coreAS == nil {
-		return nil, common.NewBasicError("Local AS is not a core AS in the max TRC",
-			nil, "maxTrc", maxTrc)
+		return nil, serrors.New("Local AS is not a core AS in the max TRC",
+			"maxTrc", maxTrc)
 	}
 	return coreAS, nil
 }
@@ -184,7 +184,7 @@ func (s *Self) setIssuerCert(ctx context.Context, crt *cert.Certificate) error {
 		return err
 	}
 	if affected == 0 {
-		return common.NewBasicError("Issuer certificate already exists", nil, "cert", crt)
+		return serrors.New("Issuer certificate already exists", "cert", crt)
 	}
 	return nil
 }

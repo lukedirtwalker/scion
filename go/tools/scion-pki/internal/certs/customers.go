@@ -22,8 +22,8 @@ import (
 	"strings"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/conf"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 )
@@ -57,7 +57,7 @@ func runCustomers(args []string) {
 func copyCustomers(ia addr.IA, cfgs map[addr.IA]*conf.As) error {
 	custDir := filepath.Join(pkicmn.GetAsPath(pkicmn.RootDir, ia), "customers")
 	if err := os.MkdirAll(custDir, 0755); err != nil {
-		return common.NewBasicError("unable to make customers dir", err, "path", custDir)
+		return serrors.WrapStr("unable to make customers dir", err, "path", custDir)
 	}
 	for cust, cfg := range cfgs {
 		if !cfg.AsCert.IssuerIA.Equal(ia) {
@@ -67,19 +67,19 @@ func copyCustomers(ia addr.IA, cfgs map[addr.IA]*conf.As) error {
 		pattern := filepath.Join(pkicmn.GetAsPath(pkicmn.RootDir, cust), pkicmn.CertsDir, search)
 		chains, err := filepath.Glob(pattern)
 		if err != nil {
-			return common.NewBasicError("unable to glob chains", err, "pattern", pattern)
+			return serrors.WrapStr("unable to glob chains", err, "pattern", pattern)
 		}
 		for _, chainFile := range chains {
 			c, err := cert.ChainFromFile(chainFile, false)
 			if err != nil {
-				return common.NewBasicError("unable to load chain", err, "file", chainFile)
+				return serrors.WrapStr("unable to load chain", err, "file", chainFile)
 			}
 			_, name := filepath.Split(chainFile)
 			keyName := fmt.Sprintf("%s.key", strings.TrimSuffix(name, filepath.Ext(name)))
 			file := filepath.Join(custDir, keyName)
 			key := base64.StdEncoding.EncodeToString(c.Leaf.SubjectSignKey)
 			if err = pkicmn.WriteToFile([]byte(key), file, 0644); err != nil {
-				return common.NewBasicError("Error writing customer key", err, "file", file)
+				return serrors.WrapStr("Error writing customer key", err, "file", file)
 			}
 		}
 	}
@@ -89,7 +89,7 @@ func copyCustomers(ia addr.IA, cfgs map[addr.IA]*conf.As) error {
 func loadASConfigs(selector string) (map[addr.ISD]map[addr.IA]*conf.As, error) {
 	isd, _, err := pkicmn.ParseSelector(selector)
 	if err != nil {
-		return nil, common.NewBasicError("unable to parse selector", err)
+		return nil, serrors.WrapStr("unable to parse selector", err)
 	}
 	asMap, err := pkicmn.ProcessSelector(isd)
 	if err != nil {
@@ -107,7 +107,7 @@ func loadASConfigs(selector string) (map[addr.ISD]map[addr.IA]*conf.As, error) {
 			}
 			cfg, err := conf.LoadAsConf(confdir)
 			if err != nil {
-				return nil, common.NewBasicError("unable to load as.ini", err, "path", path)
+				return nil, serrors.WrapStr("unable to load as.ini", err, "path", path)
 			}
 			cfgs[isd][ia] = cfg
 		}

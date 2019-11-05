@@ -164,16 +164,16 @@ func (t *TRC) Validate() error {
 func (t *TRC) parsePrimaries() error {
 	var err error
 	if t.AuthoritativeASes, err = t.parsePrimary(t.RawAuthoritativeASes); err != nil {
-		return common.NewBasicError("invalid AuthoritativeASes", err)
+		return serrors.WrapStr("invalid AuthoritativeASes", err)
 	}
 	if t.CoreASes, err = t.parsePrimary(t.RawCoreASes); err != nil {
-		return common.NewBasicError("invalid CoreASes", err)
+		return serrors.WrapStr("invalid CoreASes", err)
 	}
 	if t.IssuingASes, err = t.parsePrimary(t.RawIssuingASes); err != nil {
-		return common.NewBasicError("invalid IssuingASes", err)
+		return serrors.WrapStr("invalid IssuingASes", err)
 	}
 	if t.VotingASes, err = t.parsePrimary(t.RawVotingASes); err != nil {
-		return common.NewBasicError("invalid VotingASes", err)
+		return serrors.WrapStr("invalid VotingASes", err)
 	}
 	return nil
 }
@@ -189,7 +189,7 @@ func (t *TRC) parsePrimary(raw []string) ([]addr.AS, error) {
 			return nil, err
 		}
 		if as == 0 {
-			return nil, common.NewBasicError("invalid AS", nil, "as", as)
+			return nil, serrors.New("invalid AS", "as", as)
 		}
 		ases = append(ases, as)
 	}
@@ -198,13 +198,13 @@ func (t *TRC) parsePrimary(raw []string) ([]addr.AS, error) {
 
 func (t *TRC) checkValuesSet() error {
 	if t.Version == 0 {
-		return common.NewBasicError(ErrTrcVersionNotSet, nil)
+		return ErrTrcVersionNotSet
 	}
 	if t.BaseVersion != t.Version {
 		return serrors.New("only base TRCs supported currently")
 	}
 	if t.VotingQuorum == 0 {
-		return common.NewBasicError(ErrVotingQuorumNotSet, nil)
+		return ErrVotingQuorumNotSet
 	}
 	if t.RawGracePeriod == "" {
 		t.RawGracePeriod = "0s"
@@ -212,7 +212,7 @@ func (t *TRC) checkValuesSet() error {
 	var err error
 	t.GracePeriod, err = util.ParseDuration(t.RawGracePeriod)
 	if err != nil {
-		return common.NewBasicError(ErrInvalidGracePeriod, nil, "duration", t.RawGracePeriod)
+		return serrors.WithCtx(ErrInvalidGracePeriod, "duration", t.RawGracePeriod)
 	}
 	if err := parseValidity(&t.NotBefore, &t.Validity, t.RawValidity); err != nil {
 		return err
@@ -222,20 +222,20 @@ func (t *TRC) checkValuesSet() error {
 
 func (t *TRC) checkInvariant() error {
 	if int(t.VotingQuorum) > len(t.VotingASes) {
-		return common.NewBasicError(ErrVotingQuorumGreaterThanVotingASes, nil,
+		return serrors.WithCtx(ErrVotingQuorumGreaterThanVotingASes,
 			"quorum", t.VotingQuorum, "voting", t.VotingASes)
 	}
 	for _, as := range t.AuthoritativeASes {
 		if !pkicmn.ContainsAS(t.CoreASes, as) {
-			return common.NewBasicError(ErrAuthoritativeNotCore, nil, "as", as)
+			return serrors.WithCtx(ErrAuthoritativeNotCore, "as", as)
 		}
 	}
 	if t.Version == t.BaseVersion && t.GracePeriod != 0 {
-		return common.NewBasicError(ErrInvalidGracePeriod, nil,
+		return serrors.WithCtx(ErrInvalidGracePeriod,
 			"reason", "must be zero for base TRC")
 	}
 	if t.Version != t.BaseVersion && t.GracePeriod == 0 {
-		return common.NewBasicError(ErrInvalidGracePeriod, nil,
+		return serrors.WithCtx(ErrInvalidGracePeriod,
 			"reason", "must not be zero for non-base TRC")
 	}
 	return nil

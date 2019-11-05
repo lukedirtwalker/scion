@@ -22,6 +22,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/hiddenpath"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -63,15 +64,15 @@ func (hp *HPRegistration) Validate() error {
 	for _, p := range hp.HPPolicies.Policies {
 		for id := range p.Hidden {
 			if _, ok := hp.HPGroups[id]; !ok {
-				return common.NewBasicError("Policy references unavailable Group",
-					nil, "GroupId", id)
+				return serrors.New("Policy references unavailable Group",
+					"GroupId", id)
 			}
 		}
 	}
 	for id, g := range hp.HPGroups {
 		if id != g.Group.Id {
-			return common.NewBasicError("GroupId key doesn't match loaded HPGroup",
-				nil, "key", id, "loaded", g.Group.Id)
+			return serrors.New("GroupId key doesn't match loaded HPGroup",
+				"key", id, "loaded", g.Group.Id)
 		}
 	}
 	return nil
@@ -82,7 +83,7 @@ func (hp *HPRegistration) Validate() error {
 func ParseHPRegYaml(b common.RawBytes) (*HPRegistration, error) {
 	r := &HPRegistration{}
 	if err := yaml.Unmarshal(b, r); err != nil {
-		return nil, common.NewBasicError("Unable to parse policy", err)
+		return nil, serrors.WrapStr("Unable to parse policy", err)
 	}
 	if err := r.init(); err != nil {
 		return nil, err
@@ -98,7 +99,7 @@ func ParseHPRegYaml(b common.RawBytes) (*HPRegistration, error) {
 func LoadHPRegFromYaml(path string) (*HPRegistration, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to read policy file", err, "path", path)
+		return nil, serrors.WrapStr("Unable to read policy file", err, "path", path)
 	}
 	return ParseHPRegYaml(b)
 }
@@ -115,7 +116,7 @@ func (hp *HPRegistration) init() error {
 func (g *HPGroup) loadGroup() error {
 	b, err := ioutil.ReadFile(g.GroupCfgPath)
 	if err != nil {
-		return common.NewBasicError("Unable to read hidden path group file", err,
+		return serrors.WrapStr("Unable to read hidden path group file", err,
 			"path", g.GroupCfgPath)
 	}
 	err = json.Unmarshal(b, &g.Group)

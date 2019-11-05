@@ -102,7 +102,7 @@ func New(listen, remote *overlay.OverlayAddr, cfg *Config) (Conn, error) {
 	case overlay.UDPIPv4:
 		return newConnUDPIPv4(listen, remote, cfg)
 	}
-	return nil, common.NewBasicError("Unsupported overlay type", nil, "overlay", a.Type())
+	return nil, serrors.New("Unsupported overlay type", "overlay", a.Type())
 }
 
 type connUDPIPv4 struct {
@@ -231,45 +231,45 @@ func (cc *connUDPBase) initConnUDP(network string, listen, remote *overlay.Overl
 	}
 	laddr = listen.ToUDPAddr()
 	if laddr == nil {
-		return common.NewBasicError("Invalid listen address", nil, "addr", listen)
+		return serrors.New("Invalid listen address", "addr", listen)
 	}
 	if remote == nil {
 		if c, err = net.ListenUDP(network, laddr); err != nil {
-			return common.NewBasicError("Error listening on socket", err,
+			return serrors.WrapStr("Error listening on socket", err,
 				"network", network, "listen", listen)
 		}
 	} else {
 		raddr = remote.ToUDPAddr()
 		if raddr == nil {
-			return common.NewBasicError("Invalid remote address", nil, "addr", remote)
+			return serrors.New("Invalid remote address", "addr", remote)
 		}
 		if c, err = net.DialUDP(network, laddr, raddr); err != nil {
-			return common.NewBasicError("Error setting up connection", err,
+			return serrors.WrapStr("Error setting up connection", err,
 				"network", network, "listen", listen, "remote", remote)
 		}
 	}
 	// Set reporting socket options
 	if err := sockctrl.SetsockoptInt(c, syscall.SOL_SOCKET, syscall.SO_RXQ_OVFL, 1); err != nil {
-		return common.NewBasicError("Error setting SO_RXQ_OVFL socket option", err,
+		return serrors.WrapStr("Error setting SO_RXQ_OVFL socket option", err,
 			"listen", listen, "remote", remote)
 	}
 	if err := sockctrl.SetsockoptInt(c, syscall.SOL_SOCKET, syscall.SO_TIMESTAMPNS, 1); err != nil {
-		return common.NewBasicError("Error setting SO_TIMESTAMPNS socket option", err,
+		return serrors.WrapStr("Error setting SO_TIMESTAMPNS socket option", err,
 			"listen", listen, "remote", remote)
 	}
 	// Set and confirm receive buffer size
 	before, err := sockctrl.GetsockoptInt(c, syscall.SOL_SOCKET, syscall.SO_RCVBUF)
 	if err != nil {
-		return common.NewBasicError("Error getting SO_RCVBUF socket option (before)", err,
+		return serrors.WrapStr("Error getting SO_RCVBUF socket option (before)", err,
 			"listen", listen, "remote", remote)
 	}
 	if err = c.SetReadBuffer(cfg.getReceiveBufferSize()); err != nil {
-		return common.NewBasicError("Error setting recv buffer size", err,
+		return serrors.WrapStr("Error setting recv buffer size", err,
 			"listen", listen, "remote", remote)
 	}
 	after, err := sockctrl.GetsockoptInt(c, syscall.SOL_SOCKET, syscall.SO_RCVBUF)
 	if err != nil {
-		return common.NewBasicError("Error getting SO_RCVBUF socket option (after)", err,
+		return serrors.WrapStr("Error getting SO_RCVBUF socket option (after)", err,
 			"listen", listen, "remote", remote)
 	}
 	if after/2 != ReceiveBufferSize {
@@ -277,7 +277,7 @@ func (cc *connUDPBase) initConnUDP(network string, listen, remote *overlay.Overl
 		ctx := []interface{}{"expected", ReceiveBufferSize, "actual", after / 2,
 			"before", before / 2}
 		if !*sizeIgnore {
-			return common.NewBasicError(common.ErrMsg(msg), nil, ctx...)
+			return serrors.WithCtx(common.ErrMsg(msg), ctx...)
 		}
 		log.Warn(msg, ctx...)
 	}

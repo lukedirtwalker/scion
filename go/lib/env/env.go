@@ -34,7 +34,6 @@ import (
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/config"
 	"github.com/scionproto/scion/go/lib/fatal"
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
@@ -109,7 +108,7 @@ func (cfg *General) checkDir() error {
 			return err
 		}
 		if !info.IsDir() {
-			return common.NewBasicError("Not a directory", nil, "dir", cfg.ConfigDir)
+			return serrors.New("Not a directory", "dir", cfg.ConfigDir)
 		}
 	}
 	return nil
@@ -228,7 +227,7 @@ func (cfg *Metrics) StartPrometheus() {
 		go func() {
 			defer log.LogPanicAndExit()
 			if err := http.ListenAndServe(cfg.Prometheus, nil); err != nil {
-				fatal.Fatal(common.NewBasicError("HTTP ListenAndServe error", err))
+				fatal.Fatal(serrors.WrapStr("HTTP ListenAndServe error", err))
 			}
 		}()
 	}

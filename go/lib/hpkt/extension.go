@@ -16,6 +16,7 @@ package hpkt
 
 import (
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // ValidateExtensions checks that the sequence of extension in argument extns
@@ -35,13 +36,13 @@ func ValidateExtensions(extns []common.Extension) ([]common.Extension, []common.
 			onlyAllowE2E = true
 		}
 		if extn.Class() == common.HopByHopClass && onlyAllowE2E {
-			return nil, nil, common.NewBasicError("HBH extension after E2E", nil,
+			return nil, nil, serrors.New("HBH extension after E2E",
 				"offending_type", extn.Type())
 		}
 		if extn.Type() == common.ExtnSCMPType {
 			haveSCMP = true
 			if i != 0 {
-				return nil, nil, common.NewBasicError("SCMP extension not in 0 position", nil,
+				return nil, nil, serrors.New("SCMP extension not in 0 position",
 					"position", i)
 			}
 		}
@@ -60,7 +61,7 @@ func ValidateExtensions(extns []common.Extension) ([]common.Extension, []common.
 		case common.End2EndClass:
 			e2e = append(e2e, extn)
 		default:
-			return nil, nil, common.NewBasicError("bad class number, must be E2E or HBH", nil,
+			return nil, nil, serrors.New("bad class number, must be E2E or HBH",
 				"class", extn.Type().Class)
 		}
 		seen[extn.Type()] = struct{}{}
@@ -70,7 +71,7 @@ func ValidateExtensions(extns []common.Extension) ([]common.Extension, []common.
 		limit += 1
 	}
 	if len(hbh) > limit {
-		return nil, nil, common.NewBasicError("too many HBH extensions", nil,
+		return nil, nil, serrors.New("too many HBH extensions",
 			"count", len(hbh), "max", limit)
 	}
 	if len(hbh) == 0 {

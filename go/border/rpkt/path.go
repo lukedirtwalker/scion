@@ -352,7 +352,7 @@ func (rp *RtrPkt) IncPath() (bool, error) {
 		vOnly++
 	}
 	if hOff > hdrLen {
-		return false, common.NewBasicError("New HopF offset > header length", nil,
+		return false, serrors.New("New HopF offset > header length",
 			"max", hdrLen, "actual", hOff)
 	}
 	segChgd := iOff != rp.CmnHdr.InfoFOffBytes()
@@ -433,7 +433,7 @@ func (rp *RtrPkt) IFCurr() (*common.IFIDType, error) {
 			case rcmn.DirExternal:
 				ingress = *rp.consDirFlag
 			default:
-				return nil, common.NewBasicError("DirFrom value unsupported", nil,
+				return nil, serrors.New("DirFrom value unsupported",
 					"val", rp.DirFrom)
 			}
 			if ingress {
@@ -452,7 +452,7 @@ func (rp *RtrPkt) checkSetCurrIF(ifid *common.IFIDType) (*common.IFIDType, error
 		return nil, serrors.New("No interface found")
 	}
 	if _, ok := rp.Ctx.Conf.BR.IFs[*ifid]; !ok {
-		return nil, common.NewBasicError("Unknown interface", nil, "ifid", *ifid)
+		return nil, serrors.New("Unknown interface", "ifid", *ifid)
 	}
 	rp.ifCurr = ifid
 	return rp.ifCurr, nil

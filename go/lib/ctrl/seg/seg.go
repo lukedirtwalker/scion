@@ -209,10 +209,9 @@ func (ps *PathSegment) Validate(validationMethod ValidationMethod) error {
 		return serrors.New("PathSegment has no AS Entries")
 	}
 	if len(ps.ASEntries) != len(ps.RawASEntries) {
-		return common.NewBasicError(
-			"PathSegment has mismatched number of raw and parsed AS Entries", nil,
-			"ASEntries", len(ps.ASEntries), "RawASEntries", len(ps.RawASEntries),
-		)
+		return serrors.New("PathSegment has mismatched number of raw and parsed AS Entries",
+			"ASEntries", len(ps.ASEntries), "RawASEntries", len(ps.RawASEntries))
+
 	}
 	for i := range ps.ASEntries {
 		prevIA := addr.IA{}
@@ -227,7 +226,7 @@ func (ps *PathSegment) Validate(validationMethod ValidationMethod) error {
 		// matches, since it is not set yet.
 		ignoreNext := i == len(ps.ASEntries)-1 && (validationMethod == ValidateBeacon)
 		if err := ps.ASEntries[i].Validate(prevIA, nextIA, ignoreNext); err != nil {
-			return common.NewBasicError("Unable to validate AS entry", err, "ASEntryIdx", i)
+			return serrors.WrapStr("Unable to validate AS entry", err, "ASEntryIdx", i)
 		}
 	}
 	// Check that all hop fields can be extracted
@@ -316,7 +315,7 @@ func (ps *PathSegment) WalkHopEntries() error {
 		for _, hopEntry := range asEntry.HopEntries {
 			_, err := hopEntry.HopField()
 			if err != nil {
-				return common.NewBasicError("invalid hop field found in ASEntry",
+				return serrors.WrapStr("invalid hop field found in ASEntry",
 					err, "asEntry", asEntry)
 			}
 		}
@@ -374,7 +373,7 @@ func (ps *PathSegment) MaxAEIdx() int {
 
 func (ps *PathSegment) validateIdx(idx int) error {
 	if idx < 0 || idx > ps.MaxAEIdx() {
-		return common.NewBasicError("Invalid ASEntry index", nil,
+		return serrors.New("Invalid ASEntry index",
 			"min", 0, "max", ps.MaxAEIdx(), "actual", idx)
 	}
 	return nil
@@ -415,7 +414,7 @@ func (ps *PathSegment) RawWriteTo(w io.Writer) (int64, error) {
 	}
 	for _, asEntry := range ps.ASEntries {
 		if len(asEntry.HopEntries) == 0 {
-			return total, common.NewBasicError("ASEntry has no HopEntry", nil, "asEntry", asEntry)
+			return total, serrors.New("ASEntry has no HopEntry", "asEntry", asEntry)
 		}
 		hf, err := asEntry.HopEntries[0].HopField()
 		if err != nil {

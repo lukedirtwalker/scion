@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 )
@@ -128,7 +129,7 @@ func ASCfgPath(dir string) string {
 // Validate parses the raw values and validates that the AS config is correct.
 func (a *ASCfg) Validate() error {
 	if a.AS == nil {
-		return common.NewBasicError(ErrASCertMissing, nil)
+		return ErrASCertMissing
 	}
 	if err := a.AS.validate(); err != nil {
 		return err
@@ -187,18 +188,18 @@ func (c *AS) validate() error {
 		return err
 	}
 	if err := defaultAndValidateSignAlgorithm(&c.SignAlgorithm); err != nil {
-		return common.NewBasicError("invalid SignAlgorithm", err)
+		return serrors.WrapStr("invalid SignAlgorithm", err)
 	}
 	if c.RawIssuerIA == "" {
-		return common.NewBasicError(ErrIssuerMissing, nil)
+		return ErrIssuerMissing
 	}
 	var err error
 	c.IssuerIA, err = addr.IAFromString(c.RawIssuerIA)
 	if err != nil || c.IssuerIA.IsWildcard() {
-		return common.NewBasicError(ErrInvalidIssuer, err, "ia", c.RawIssuerIA)
+		return serrors.Wrap(ErrInvalidIssuer, err, "ia", c.RawIssuerIA)
 	}
 	if c.IssuerCertVersion == 0 {
-		return common.NewBasicError(ErrInvalidIssuerCertVersion, nil)
+		return ErrInvalidIssuerCertVersion
 	}
 	if err := c.BaseCert.validate(); err != nil {
 		return err
@@ -223,10 +224,10 @@ func (c *Issuer) validate() error {
 		return nil
 	}
 	if err := defaultAndValidateSignAlgorithm(&c.IssuingAlgorithm); err != nil {
-		return common.NewBasicError("invalid IssuingAlgorithm", err)
+		return serrors.WrapStr("invalid IssuingAlgorithm", err)
 	}
 	if c.TRCVersion == 0 {
-		return common.NewBasicError(ErrInvalidIssuerTRCVersion, nil)
+		return ErrInvalidIssuerTRCVersion
 	}
 	if err := c.BaseCert.validate(); err != nil {
 		return err
@@ -253,12 +254,12 @@ type BaseCert struct {
 
 func (c *BaseCert) validate() error {
 	if c.Version == 0 {
-		return common.NewBasicError(ErrVersionNotSet, nil)
+		return ErrVersionNotSet
 	}
 	for _, raw := range c.RawOptDistPoints {
 		ia, err := addr.IAFromString(raw)
 		if err != nil || ia.IsWildcard() {
-			return common.NewBasicError(ErrInvalidOptDistPoint, nil, "ia", ia)
+			return serrors.WithCtx(ErrInvalidOptDistPoint, "ia", ia)
 		}
 		c.OptionalDistributionPoints = append(c.OptionalDistributionPoints, ia)
 	}
@@ -267,7 +268,7 @@ func (c *BaseCert) validate() error {
 	}
 	if c.RevAlgorithm != "" {
 		if err := defaultAndValidateSignAlgorithm(&c.RevAlgorithm); err != nil {
-			return common.NewBasicError("invalid RevAlgorithm", err)
+			return serrors.WrapStr("invalid RevAlgorithm", err)
 		}
 	}
 	return nil
@@ -322,7 +323,7 @@ func validateAlgorithm(algorithm string, valid []string, errMsg common.ErrMsg) e
 			return nil
 		}
 	}
-	return common.NewBasicError(errMsg, nil, "algorithm", algorithm)
+	return serrors.WithCtx(errMsg, "algorithm", algorithm)
 }
 
 func parseValidity(notBefore *uint32, validity *time.Duration, raw string) error {
@@ -335,10 +336,10 @@ func parseValidity(notBefore *uint32, validity *time.Duration, raw string) error
 	var err error
 	*validity, err = util.ParseDuration(raw)
 	if err != nil {
-		return common.NewBasicError(ErrInvalidValidityDuration, nil, "duration", raw)
+		return serrors.WithCtx(ErrInvalidValidityDuration, "duration", raw)
 	}
 	if int64(*validity) == 0 {
-		return common.NewBasicError(ErrValidityDurationNotSet, nil)
+		return ErrValidityDurationNotSet
 	}
 	return nil
 }

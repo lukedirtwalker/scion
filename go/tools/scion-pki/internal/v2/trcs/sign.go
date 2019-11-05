@@ -20,7 +20,6 @@ import (
 	"os"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/trc/v2"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -39,7 +38,7 @@ func runSign(selector string) error {
 	}
 	for isd, ases := range asMap {
 		if err = genAndWriteSignatures(isd, ases, asSelector); err != nil {
-			return common.NewBasicError("unable to sign TRC", err, "isd", isd)
+			return serrors.WrapStr("unable to sign TRC", err, "isd", isd)
 		}
 	}
 	return nil
@@ -48,26 +47,26 @@ func runSign(selector string) error {
 func genAndWriteSignatures(isd addr.ISD, ases []addr.IA, selector string) error {
 	isdCfg, err := conf.LoadISDCfg(pkicmn.GetIsdPath(pkicmn.RootDir, isd))
 	if err != nil {
-		return common.NewBasicError("error loading ISD config", err)
+		return serrors.WrapStr("error loading ISD config", err)
 	}
 	primaryASes, err := loadPrimaryASes(isd, isdCfg, ases)
 	if err != nil {
-		return common.NewBasicError("error loading AS configs", err)
+		return serrors.WrapStr("error loading AS configs", err)
 	}
 	t, encoded, err := loadProtoTRC(isd, isdCfg.Version)
 	if err != nil {
-		return common.NewBasicError("unable to load prototype TRC", err)
+		return serrors.WrapStr("unable to load prototype TRC", err)
 	}
 	if err := sanityChecks(isd, isdCfg, t); err != nil {
-		return common.NewBasicError("invalid prototype TRC", err)
+		return serrors.WrapStr("invalid prototype TRC", err)
 	}
 	signed, err := signTRC(t, encoded, primaryASes)
 	if err != nil {
-		return common.NewBasicError("unable to partially sign TRC", err)
+		return serrors.WrapStr("unable to partially sign TRC", err)
 	}
 	raw, err := json.Marshal(signed)
 	if err != nil {
-		return common.NewBasicError("error json-encoding partially signed TRC", err)
+		return serrors.WrapStr("error json-encoding partially signed TRC", err)
 	}
 	if err := os.MkdirAll(PartsDir(isd, uint64(t.Version)), 0755); err != nil {
 		return err
@@ -94,14 +93,14 @@ func loadProtoTRC(isd addr.ISD, ver uint64) (*trc.TRC, trc.Encoded, error) {
 // sanityChecks does some small sanity checks to ensure the right TRC is signed.
 func sanityChecks(isd addr.ISD, isdCfg *conf.ISDCfg, t *trc.TRC) error {
 	if isd != t.ISD {
-		return common.NewBasicError("ISD does not match", nil, "proto", t.ISD, "cfg", isd)
+		return serrors.New("ISD does not match", "proto", t.ISD, "cfg", isd)
 	}
 	if isdCfg.Version != uint64(t.Version) {
-		return common.NewBasicError("version does not match", nil, "proto", t.Version,
+		return serrors.New("version does not match", "proto", t.Version,
 			"cfg", isdCfg.Version)
 	}
 	if isdCfg.BaseVersion != uint64(t.BaseVersion) {
-		return common.NewBasicError("base_version does not match", nil, "proto", t.BaseVersion,
+		return serrors.New("base_version does not match", "proto", t.BaseVersion,
 			"cfg", isdCfg.BaseVersion)
 	}
 	return nil

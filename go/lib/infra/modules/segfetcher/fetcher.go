@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher/internal/metrics"
@@ -143,9 +142,8 @@ func (f *Fetcher) FetchSegs(ctx context.Context, req Request) (Segments, error) 
 		// 2 iteration: up & down resolved, core fetched.
 		// 3 iteration: core resolved -> done.
 		if i >= 2 {
-			return segs, common.NewBasicError(
-				"Segment lookup not done in expected amount of iterations (implementation bug)",
-				nil, "iterations", i+1)
+			return segs, serrors.New("Segment lookup not done in expected amount of iterations (implementation bug)",
+				"iterations", i+1)
 		}
 		// XXX(lukedirtwalker): Optimally we wouldn't need a different timeout
 		// here. The problem is that revocations can't be differentiated from

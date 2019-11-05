@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spse"
 	"github.com/scionproto/scion/go/lib/spse/scmp_auth"
 )
@@ -58,11 +59,11 @@ func (s *rSCMPAuthHashTreeExtn) RegisterHooks(h *hooks) error {
 
 func (s *rSCMPAuthHashTreeExtn) Validate() (HookResult, error) {
 	if s.Height() > scmp_auth.MaxHeight {
-		return HookError, common.NewBasicError("Invalid height", nil,
+		return HookError, serrors.New("Invalid height",
 			"height", s.Height(), "max height", scmp_auth.MaxHeight)
 	}
 	if len(s.raw) != s.TotalLength() {
-		return HookError, common.NewBasicError("Invalid header length", nil,
+		return HookError, serrors.New("Invalid header length",
 			"expected", s.TotalLength(), "actual", len(s.raw))
 	}
 	return HookContinue, nil
@@ -95,7 +96,7 @@ func (s *rSCMPAuthHashTreeExtn) Order() common.RawBytes {
 
 func (s *rSCMPAuthHashTreeExtn) SetOrder(order common.RawBytes) error {
 	if len(order) != scmp_auth.OrderLength {
-		return common.NewBasicError("Invalid order length", nil,
+		return serrors.New("Invalid order length",
 			"expected", scmp_auth.OrderLength, "actual", len(order))
 	}
 	copy(s.raw[scmp_auth.OrderOffset:scmp_auth.SignatureOffset], order)
@@ -109,7 +110,7 @@ func (s *rSCMPAuthHashTreeExtn) Signature() common.RawBytes {
 
 func (s *rSCMPAuthHashTreeExtn) SetSignature(signature common.RawBytes) error {
 	if len(signature) != scmp_auth.SignatureLength {
-		return common.NewBasicError("Invalid signature length", nil,
+		return serrors.New("Invalid signature length",
 			"expected", scmp_auth.SignatureLength, "actual", len(signature))
 	}
 	copy(s.raw[scmp_auth.SignatureOffset:scmp_auth.HashesOffset], signature)
@@ -122,7 +123,7 @@ func (s *rSCMPAuthHashTreeExtn) Hashes() common.RawBytes {
 
 func (s *rSCMPAuthHashTreeExtn) SetHashes(hashes common.RawBytes) error {
 	if len(hashes) != scmpAuthHashesLength(s.Height()) {
-		return common.NewBasicError("Invalid hashes length", nil,
+		return serrors.New("Invalid hashes length",
 			"expected", scmpAuthHashesLength(s.Height()), "actual", len(hashes))
 	}
 	copy(s.raw[scmp_auth.HashesOffset:s.TotalLength()], hashes)

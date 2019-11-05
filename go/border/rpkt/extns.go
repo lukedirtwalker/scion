@@ -62,11 +62,11 @@ func (rp *RtrPkt) extnParseHBH(extType common.ExtnType,
 func (rp *RtrPkt) extnAddHBH(e common.Extension) error {
 	max := rp.maxHBHExtns()
 	if len(rp.HBHExt) >= rp.maxHBHExtns() {
-		return common.NewBasicError("Too many hop-by-hop extensions", nil,
+		return serrors.New("Too many hop-by-hop extensions",
 			"curr", len(rp.HBHExt), "max", max)
 	}
 	if len(rp.HBHExt) > 1 && e.Type() == common.ExtnSCMPType {
-		return common.NewBasicError("Bad extension order - SCMP must be first", nil,
+		return serrors.New("Bad extension order - SCMP must be first",
 			"idx", len(rp.HBHExt), "first", rp.HBHExt[0].Type())
 	}
 	// Find the last hop-by-hop extension, if any, and write the extension
@@ -160,7 +160,7 @@ func (rp *RtrPkt) extnWriteExtension(e common.Extension, isHBH bool) (int, int, 
 	}
 	eLen := e.Len() + common.ExtnSubHdrLen
 	if eLen%common.LineLen != 0 {
-		return 0, 0, common.NewBasicError("Ext length not multiple of line length", nil,
+		return 0, 0, serrors.New("Ext length not multiple of line length",
 			"Class", e.Class(), "Type", e.Type(), "lineLen", common.LineLen, "actual", eLen)
 	}
 	et := e.Type()

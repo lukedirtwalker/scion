@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 // ErrIANotSet indicates the issuing ia is not set.
@@ -157,7 +158,7 @@ type SignatureTypeCertificate struct{}
 // UnmarshalText checks the signature type is correct.
 func (t *SignatureTypeCertificate) UnmarshalText(b []byte) error {
 	if string(b) != SignatureTypeCertificateJSON {
-		return common.NewBasicError(ErrInvalidSignatureType, nil, "input", string(b))
+		return serrors.WithCtx(ErrInvalidSignatureType, "input", string(b))
 	}
 	return nil
 }

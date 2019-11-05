@@ -83,7 +83,7 @@ func (c *scionConnReader) read(b []byte) (int, *Addr, error) {
 	// Copy data, extract address
 	n, err := pkt.Payload.WritePld(b)
 	if err != nil {
-		return 0, nil, common.NewBasicError("Unable to copy payload", err)
+		return 0, nil, serrors.WrapStr("Unable to copy payload", err)
 	}
 
 	var remote *Addr
@@ -98,8 +98,7 @@ func (c *scionConnReader) read(b []byte) (int, *Addr, error) {
 		if pkt.Path != nil {
 			remote.Path = pkt.Path.Copy()
 			if err = remote.Path.Reverse(); err != nil {
-				return 0, nil,
-					common.NewBasicError("Unable to reverse path on received packet", err)
+				return 0, nil, serrors.WrapStr("Unable to reverse path on received packet", err)
 			}
 		}
 
@@ -115,7 +114,7 @@ func (c *scionConnReader) read(b []byte) (int, *Addr, error) {
 		case *scmp.Hdr:
 			l4i = addr.NewL4SCMPInfo()
 		default:
-			err = common.NewBasicError("Unexpected SCION L4 protocol", nil,
+			err = serrors.New("Unexpected SCION L4 protocol",
 				"expected", "UDP or SCMP", "actual", pkt.L4Header.L4Type())
 		}
 		// Copy the address to prevent races. See
@@ -123,7 +122,7 @@ func (c *scionConnReader) read(b []byte) (int, *Addr, error) {
 		remote.Host = &addr.AppAddr{L3: pkt.Source.Host.Copy(), L4: l4i}
 		return n, remote, err
 	}
-	return 0, nil, common.NewBasicError("Unknown network", nil, "net", c.base.net)
+	return 0, nil, serrors.New("Unknown network", "net", c.base.net)
 }
 
 func (c *scionConnReader) SetReadDeadline(t time.Time) error {

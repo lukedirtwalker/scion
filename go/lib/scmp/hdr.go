@@ -22,6 +22,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/l4"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var _ l4.L4Header = (*Hdr)(nil)
@@ -53,14 +54,14 @@ func NewHdr(ct ClassType, len int) *Hdr {
 func HdrFromRaw(b common.RawBytes) (*Hdr, error) {
 	h := &Hdr{}
 	if err := restruct.Unpack(b, common.Order, h); err != nil {
-		return nil, common.NewBasicError(ErrSCMPHdrUnpack, err)
+		return nil, serrors.Wrap(ErrSCMPHdrUnpack, err)
 	}
 	return h, nil
 }
 
 func (h *Hdr) Validate(plen int) error {
 	if plen+HdrLen != int(h.TotalLen) || plen <= 0 {
-		return common.NewBasicError("SCMP header total length doesn't match", nil,
+		return serrors.New("SCMP header total length doesn't match",
 			"expected", h.TotalLen, "actual", plen)
 	}
 	return nil
@@ -73,10 +74,10 @@ func (h *Hdr) SetPldLen(l int) {
 func (h *Hdr) Write(b common.RawBytes) error {
 	out, err := restruct.Pack(common.Order, h)
 	if err != nil {
-		return common.NewBasicError("Error packing SCMP header", err)
+		return serrors.WrapStr("Error packing SCMP header", err)
 	}
 	if count := copy(b, out); count != HdrLen {
-		return common.NewBasicError("Partial write of SCMP header", nil,
+		return serrors.New("Partial write of SCMP header",
 			"expected(B)", HdrLen, "actual(B)", count)
 	}
 	return nil

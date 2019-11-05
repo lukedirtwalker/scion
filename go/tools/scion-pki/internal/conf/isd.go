@@ -117,7 +117,7 @@ func (t *Trc) validate() error {
 		t.IssuingTime = util.TimeToSecs(time.Now())
 	}
 	if t.Version == 0 {
-		return common.NewBasicError(ErrTrcVersionNotSet, nil)
+		return ErrTrcVersionNotSet
 	}
 	if t.RawValidity == "" {
 		t.RawValidity = "0s"
@@ -125,17 +125,17 @@ func (t *Trc) validate() error {
 	var err error
 	t.Validity, err = util.ParseDuration(t.RawValidity)
 	if err != nil {
-		return common.NewBasicError(ErrInvalidValidityDuration, nil, "duration", t.RawValidity)
+		return serrors.WithCtx(ErrInvalidValidityDuration, "duration", t.RawValidity)
 	}
 	if int64(t.Validity) == 0 {
-		return common.NewBasicError(ErrValidityDurationNotSet, nil)
+		return ErrValidityDurationNotSet
 	}
 	if len(t.CoreIAs) == 0 {
-		return common.NewBasicError(ErrCoreIANotSet, nil)
+		return ErrCoreIANotSet
 	} else {
 		for _, ia := range t.CoreIAs {
 			if ia.IsWildcard() {
-				return common.NewBasicError(ErrInvalidCoreIA, nil, "ia", ia)
+				return serrors.WithCtx(ErrInvalidCoreIA, "ia", ia)
 			}
 		}
 	}
@@ -144,13 +144,13 @@ func (t *Trc) validate() error {
 	}
 	t.GracePeriod, err = util.ParseDuration(t.RawGracePeriod)
 	if err != nil {
-		return common.NewBasicError(ErrInvalidGracePeriod, nil, "duration", t.RawGracePeriod)
+		return serrors.WithCtx(ErrInvalidGracePeriod, "duration", t.RawGracePeriod)
 	}
 	if t.QuorumTRC == 0 {
-		return common.NewBasicError(ErrQuorumTrcNotSet, nil)
+		return ErrQuorumTrcNotSet
 	}
 	if int(t.QuorumTRC) > len(t.CoreIAs) {
-		return common.NewBasicError(ErrQuorumTrcGreaterThanCoreIA, nil)
+		return ErrQuorumTrcGreaterThanCoreIA
 	}
 	return nil
 }

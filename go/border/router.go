@@ -27,11 +27,11 @@ import (
 	"github.com/scionproto/scion/go/border/rctx"
 	"github.com/scionproto/scion/go/border/rpkt"
 	"github.com/scionproto/scion/go/lib/assert"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/fatal"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
 	_ "github.com/scionproto/scion/go/lib/scrypto" // Make sure math/rand is seeded
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const processBufCnt = 128
@@ -74,7 +74,7 @@ func (r *Router) Start() {
 		rctrl.Control(r.sRevInfoQ, cfg.General.ReconnectToDispatcher)
 	}()
 	if err := r.startDiscovery(); err != nil {
-		fatal.Fatal(common.NewBasicError("Unable to start discovery", err))
+		fatal.Fatal(serrors.WrapStr("Unable to start discovery", err))
 	}
 }
 
@@ -83,10 +83,10 @@ func (r *Router) ReloadConfig() error {
 	var err error
 	var config *brconf.BRConf
 	if config, err = r.loadNewConfig(); err != nil {
-		return common.NewBasicError("Unable to load config", err)
+		return serrors.WrapStr("Unable to load config", err)
 	}
 	if err := r.setupCtxFromConfig(config); err != nil {
-		return common.NewBasicError("Unable to set up new context", err)
+		return serrors.WrapStr("Unable to set up new context", err)
 	}
 	return nil
 }

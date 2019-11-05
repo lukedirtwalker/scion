@@ -21,6 +21,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/overlay"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -69,7 +70,7 @@ func topoAddrFromRAM(s RawAddrMap, ot overlay.Type) (*TopoAddr, error) {
 	}
 	t := &TopoAddr{Overlay: ot}
 	if err := t.fromRaw(s); err != nil {
-		return nil, common.NewBasicError("Failed to parse raw topo address", err, "addr", s)
+		return nil, serrors.WrapStr("Failed to parse raw topo address", err, "addr", s)
 	}
 	return t, nil
 }
@@ -81,42 +82,42 @@ func (t *TopoAddr) fromRaw(s RawAddrMap) error {
 		switch k {
 		case "IPv4":
 			if !t.Overlay.IsIPv4() {
-				return common.NewBasicError(ErrMismatchOverlayAddr, nil, "Overlay", t.Overlay)
+				return serrors.WithCtx(ErrMismatchOverlayAddr, "Overlay", t.Overlay)
 			}
 			t.IPv4 = pbo
 			hostType = addr.HostTypeIPv4
 		case "IPv6":
 			if !t.Overlay.IsIPv6() {
-				return common.NewBasicError(ErrMismatchOverlayAddr, nil, "Overlay", t.Overlay)
+				return serrors.WithCtx(ErrMismatchOverlayAddr, "Overlay", t.Overlay)
 			}
 			t.IPv6 = pbo
 			hostType = addr.HostTypeIPv6
 		default:
-			return common.NewBasicError(ErrUnsupportedAddrType, nil, "Type", k)
+			return serrors.WithCtx(ErrUnsupportedAddrType, "Type", k)
 		}
 		if err := pbo.fromRaw(rpbo, t.Overlay.IsUDP()); err != nil {
 			return err
 		}
 		// Check parsed addresses match the expected address type
 		if pbo.pub.L3.Type() != hostType {
-			return common.NewBasicError(ErrMismatchPubAddrType, nil,
+			return serrors.WithCtx(ErrMismatchPubAddrType,
 				"AddrType", hostType, "Addr", pbo.pub)
 		}
 		if pbo.bind != nil {
 			if pbo.bind.L3.Type() != hostType {
-				return common.NewBasicError(ErrMismatchBindAddrType, nil,
+				return serrors.WithCtx(ErrMismatchBindAddrType,
 					"AddrType", hostType, "Addr", pbo.bind)
 			}
 			// Check pub and bind are not the same address
 			if pbo.pub.Equal(pbo.bind) {
-				return common.NewBasicError(ErrBindAddrEqPubAddr, nil,
+				return serrors.WithCtx(ErrBindAddrEqPubAddr,
 					"bindAddr", pbo.bind, "pubAddr", pbo.pub)
 			}
 		}
 	}
 	if t.IPv4 == nil && t.IPv6 == nil {
 		// Both are empty.
-		return common.NewBasicError(ErrAtLeastOnePub, nil)
+		return ErrAtLeastOnePub
 	}
 	return nil
 }
@@ -186,7 +187,7 @@ func (pbo *pubBindAddr) fromRaw(rpbo *RawPubBindOverlay, udpOverlay bool) error 
 	var err error
 	l3 := addr.HostFromIPStr(rpbo.Public.Addr)
 	if l3 == nil {
-		return common.NewBasicError(ErrInvalidPub, nil, "ip", rpbo.Public.Addr)
+		return serrors.WithCtx(ErrInvalidPub, "ip", rpbo.Public.Addr)
 	}
 	pbo.pub = &addr.AppAddr{
 		L3: l3,
@@ -199,7 +200,7 @@ func (pbo *pubBindAddr) fromRaw(rpbo *RawPubBindOverlay, udpOverlay bool) error 
 	if rpbo.Bind != nil {
 		l3 := addr.HostFromIPStr(rpbo.Bind.Addr)
 		if l3 == nil {
-			return common.NewBasicError(ErrInvalidBind, nil, "ip", rpbo.Bind.Addr)
+			return serrors.WithCtx(ErrInvalidBind, "ip", rpbo.Bind.Addr)
 		}
 		pbo.bind = &addr.AppAddr{
 			L3: l3,
@@ -263,7 +264,7 @@ func (a *pubBindAddr) String() string {
 func newOverlayAddr(udpOverlay bool, l3 addr.HostAddr, port int) (*overlay.OverlayAddr, error) {
 	var ol4 addr.L4Info
 	if !udpOverlay && port != 0 {
-		return nil, common.NewBasicError(ErrOverlayPort, nil)
+		return nil, ErrOverlayPort
 	} else if udpOverlay {
 		if port == 0 {
 			port = overlay.EndhostPort
@@ -278,7 +279,7 @@ func overlayCheck(ot overlay.Type) error {
 	case overlay.IPv4, overlay.IPv6, overlay.IPv46, overlay.UDPIPv4,
 		overlay.UDPIPv6, overlay.UDPIPv46:
 	default:
-		return common.NewBasicError(ErrUnsupportedOverlay, nil, "type", ot)
+		return serrors.WithCtx(ErrUnsupportedOverlay, "type", ot)
 	}
 	return nil
 }

@@ -21,7 +21,6 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
@@ -29,6 +28,7 @@ import (
 	"github.com/scionproto/scion/go/lib/pathdb"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
 	"github.com/scionproto/scion/go/lib/revcache"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -89,7 +89,7 @@ func (h *baseHandler) fetchSegsFromDB(ctx context.Context,
 		return noRevoked && time.Now().Before(s.MaxExpiry()), nil
 	})
 	if err != nil {
-		return nil, common.NewBasicError("Failed to filter segments", err)
+		return nil, serrors.WrapStr("Failed to filter segments", err)
 	}
 	return segs, nil
 }

@@ -92,7 +92,7 @@ func (p *Path) Reverse() error {
 		if origOff == len(p.Raw) {
 			break
 		} else if origOff > len(p.Raw) {
-			return common.NewBasicError("Unable to reverse corrupt path", nil,
+			return serrors.New("Unable to reverse corrupt path",
 				"currOff", origOff, "max", len(p.Raw))
 		}
 	}
@@ -177,7 +177,7 @@ func (path *Path) IncOffsets() error {
 		return path.InitOffsets()
 	}
 	if _, err = path.GetHopField(path.HopOff); err != nil {
-		return common.NewBasicError("Hop Field parse error", err, "offset", path.HopOff)
+		return serrors.WrapStr("Hop Field parse error", err, "offset", path.HopOff)
 	}
 	return path.incOffsets(HopFieldLength)
 }
@@ -193,7 +193,7 @@ func (path *Path) incOffsets(skip int) error {
 	var hopF *HopField
 	infoF, err := path.GetInfoField(path.InfOff)
 	if err != nil {
-		return common.NewBasicError("Info Field parse error", err, "offset", path.InfOff)
+		return serrors.WrapStr("Info Field parse error", err, "offset", path.InfOff)
 	}
 	path.HopOff += skip
 	for {
@@ -202,12 +202,12 @@ func (path *Path) incOffsets(skip int) error {
 			path.InfOff = path.HopOff
 			infoF, err = path.GetInfoField(path.InfOff)
 			if err != nil {
-				return common.NewBasicError("Info Field parse error", err, "offset", path.InfOff)
+				return serrors.WrapStr("Info Field parse error", err, "offset", path.InfOff)
 			}
 			path.HopOff += common.LineLen
 		}
 		if hopF, err = path.GetHopField(path.HopOff); err != nil {
-			return common.NewBasicError("Hop Field parse error", err, "offset", path.HopOff)
+			return serrors.WrapStr("Hop Field parse error", err, "offset", path.HopOff)
 		}
 		if !hopF.VerifyOnly {
 			break
@@ -219,28 +219,28 @@ func (path *Path) incOffsets(skip int) error {
 
 func (path *Path) GetInfoField(offset int) (*InfoField, error) {
 	if offset < 0 {
-		return nil, common.NewBasicError("Negative InfoF offset", nil, "offset", offset)
+		return nil, serrors.New("Negative InfoF offset", "offset", offset)
 	}
 	if path.IsEmpty() {
 		return nil, serrors.New("Unable to get infoField from empty path")
 	}
 	infoF, err := InfoFFromRaw(path.Raw[offset:])
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse Info Field", err, "offset", offset)
+		return nil, serrors.WrapStr("Unable to parse Info Field", err, "offset", offset)
 	}
 	return infoF, nil
 }
 
 func (path *Path) GetHopField(offset int) (*HopField, error) {
 	if offset < 0 {
-		return nil, common.NewBasicError("Negative HopF offset", nil, "offset", offset)
+		return nil, serrors.New("Negative HopF offset", "offset", offset)
 	}
 	if path.IsEmpty() {
 		return nil, serrors.New("Unable to get hopField from empty path")
 	}
 	hopF, err := HopFFromRaw(path.Raw[offset:])
 	if err != nil {
-		return nil, common.NewBasicError("Unable to parse Hop Field", err, "offset", offset)
+		return nil, serrors.WrapStr("Unable to parse Hop Field", err, "offset", offset)
 	}
 	return hopF, nil
 }

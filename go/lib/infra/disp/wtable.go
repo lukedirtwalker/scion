@@ -18,7 +18,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
@@ -47,7 +46,7 @@ func (wt *waitTable) addRequest(object proto.Cerealizable) error {
 	replyChannel := make(chan proto.Cerealizable, 1)
 	_, loaded := wt.replyMap.LoadOrStore(wt.keyF(object), replyChannel)
 	if loaded {
-		return common.NewBasicError("Duplicate key", nil, "key", wt.keyF(object))
+		return serrors.New("Duplicate key", "key", wt.keyF(object))
 	}
 
 	return nil
@@ -66,7 +65,7 @@ func (wt *waitTable) waitForReply(ctx context.Context,
 	}
 	replyChannel, loaded := wt.replyMap.Load(wt.keyF(object))
 	if !loaded {
-		return nil, common.NewBasicError("Key not found", nil, "key", wt.keyF(object))
+		return nil, serrors.New("Key not found", "key", wt.keyF(object))
 	}
 	select {
 	case reply := <-replyChannel:
@@ -102,7 +101,7 @@ func (wt *waitTable) reply(object proto.Cerealizable) (bool, error) {
 	default:
 		// Duplicate reply and the channel is already full. While this is not
 		// an error, it is useful to log.
-		return false, common.NewBasicError("Duplicate reply key", nil, "key", wt.keyF(object))
+		return false, serrors.New("Duplicate reply key", "key", wt.keyF(object))
 	}
 	return true, nil
 }

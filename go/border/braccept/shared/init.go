@@ -22,9 +22,9 @@ import (
 
 	"github.com/google/gopacket/afpacket"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/keyconf"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 type DevInfo struct {
@@ -62,7 +62,7 @@ func initDevices() error {
 
 	devs, err := net.Interfaces()
 	if err != nil {
-		return common.NewBasicError("Unable to list interfaces", err)
+		return serrors.WrapStr("Unable to list interfaces", err)
 	}
 	for i := range devs {
 		dev := devs[i]

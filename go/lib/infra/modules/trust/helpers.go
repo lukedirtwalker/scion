@@ -21,13 +21,13 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust/trustdb"
 	"github.com/scionproto/scion/go/lib/scrypto"
 	"github.com/scionproto/scion/go/lib/scrypto/cert"
 	"github.com/scionproto/scion/go/lib/scrypto/trc"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -41,11 +41,11 @@ func CreateSignMeta(ctx context.Context, ia addr.IA,
 	meta := infra.SignerMeta{}
 	c, err := trustDB.GetChainMaxVersion(ctx, ia)
 	if err != nil {
-		return meta, common.NewBasicError("Unable to find local certificate chain", err)
+		return meta, serrors.WrapStr("Unable to find local certificate chain", err)
 	}
 	t, err := trustDB.GetTRCMaxVersion(ctx, ia.I)
 	if err != nil {
-		return meta, common.NewBasicError("Unable to find local TRC", err)
+		return meta, serrors.WrapStr("Unable to find local TRC", err)
 	}
 	meta = infra.SignerMeta{
 		Algo: c.Leaf.SignAlgorithm,
@@ -65,10 +65,10 @@ func VerifyChain(ctx context.Context, subject addr.IA, chain *cert.Chain,
 
 	maxTrc, err := store.GetTRC(ctx, chain.Issuer.Issuer.I, scrypto.LatestVer, infra.TRCOpts{})
 	if err != nil {
-		return common.NewBasicError("Unable to find TRC", nil, "isd", chain.Issuer.Issuer.I)
+		return serrors.New("Unable to find TRC", "isd", chain.Issuer.Issuer.I)
 	}
 	if err := maxTrc.IsActive(maxTrc); err != nil {
-		return common.NewBasicError("Newest TRC not active", err)
+		return serrors.WrapStr("Newest TRC not active", err)
 	}
 	if err := chain.Verify(subject, maxTrc); err != nil {
 		var graceTrc *trc.TRC
@@ -80,16 +80,16 @@ func VerifyChain(ctx context.Context, subject addr.IA, chain *cert.Chain,
 			}
 		}
 		if graceTrc == nil || graceTrc.IsActive(maxTrc) != nil {
-			return common.NewBasicError("Unable to verify chain", err)
+			return serrors.WrapStr("Unable to verify chain", err)
 		}
 		if chain.Issuer.TRCVersion <= graceTrc.Version &&
 			xerrors.Is(err, cert.ErrIssCertInvalid) {
 
 			if errG := chain.Verify(subject, graceTrc); errG != nil {
-				return common.NewBasicError("Unable to verify chain", err, "errGraceTRC", errG)
+				return serrors.WrapStr("Unable to verify chain", err, "errGraceTRC", errG)
 			}
 		} else {
-			return common.NewBasicError("Unable to verify chain", err)
+			return serrors.WrapStr("Unable to verify chain", err)
 		}
 	}
 	return nil

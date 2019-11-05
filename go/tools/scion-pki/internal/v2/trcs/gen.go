@@ -17,7 +17,7 @@ package trcs
 
 import (
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/pkicmn"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/v2/conf"
 )
@@ -29,7 +29,7 @@ func runGenTrc(selector string) error {
 	}
 	for isd := range asMap {
 		if err = genAndWriteSignedTRC(isd); err != nil {
-			return common.NewBasicError("unable to generate TRC", err, "isd", isd)
+			return serrors.WrapStr("unable to generate TRC", err, "isd", isd)
 		}
 	}
 	return nil
@@ -38,19 +38,19 @@ func runGenTrc(selector string) error {
 func genAndWriteSignedTRC(isd addr.ISD) error {
 	isdCfg, err := conf.LoadISDCfg(pkicmn.GetIsdPath(pkicmn.RootDir, isd))
 	if err != nil {
-		return common.NewBasicError("error loading ISD config", err)
+		return serrors.WrapStr("error loading ISD config", err)
 	}
 	t, encoded, err := genProto(isd, isdCfg)
 	if err != nil {
-		return common.NewBasicError("unable to generate TRC", err)
+		return serrors.WrapStr("unable to generate TRC", err)
 	}
 	primaryASes, err := loadPrimaryASes(isd, isdCfg, nil)
 	if err != nil {
-		return common.NewBasicError("error loading AS configs", err)
+		return serrors.WrapStr("error loading AS configs", err)
 	}
 	signed, err := signTRC(t, encoded, primaryASes)
 	if err != nil {
-		return common.NewBasicError("unable to partially sign TRC", err)
+		return serrors.WrapStr("unable to partially sign TRC", err)
 	}
 	if err := validateAndWrite(t, signed); err != nil {
 		return err

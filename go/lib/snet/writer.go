@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/l4"
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/pathmgr"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet/internal/ctxmonitor"
 	"github.com/scionproto/scion/go/lib/snet/internal/pathsource"
 )
@@ -79,7 +80,7 @@ func (c *scionConnWriter) WriteToSCION(b []byte, raddr *Addr) (int, error) {
 func (c *scionConnWriter) WriteTo(b []byte, raddr net.Addr) (int, error) {
 	sraddr, ok := raddr.(*Addr)
 	if !ok {
-		return 0, common.NewBasicError("Unable to write to non-SCION address", nil, "addr", raddr)
+		return 0, serrors.New("Unable to write to non-SCION address", "addr", raddr)
 	}
 	return c.WriteToSCION(b, sraddr)
 }
@@ -147,9 +148,9 @@ type remoteAddressResolver struct {
 func (r *remoteAddressResolver) resolveAddrPair(connAddr, argAddr *Addr) (*Addr, error) {
 	switch {
 	case connAddr == nil && argAddr == nil:
-		return nil, common.NewBasicError(ErrNoAddr, nil)
+		return nil, ErrNoAddr
 	case connAddr != nil && argAddr != nil:
-		return nil, common.NewBasicError(ErrDuplicateAddr, nil)
+		return nil, ErrDuplicateAddr
 	case connAddr != nil:
 		return r.resolveAddr(connAddr)
 	default:
@@ -160,10 +161,10 @@ func (r *remoteAddressResolver) resolveAddrPair(connAddr, argAddr *Addr) (*Addr,
 
 func (r *remoteAddressResolver) resolveAddr(address *Addr) (*Addr, error) {
 	if address == nil {
-		return nil, common.NewBasicError(ErrAddressIsNil, nil)
+		return nil, ErrAddressIsNil
 	}
 	if address.Host == nil {
-		return nil, common.NewBasicError(ErrNoApplicationAddress, nil)
+		return nil, ErrNoApplicationAddress
 	}
 	if r.localIA.Equal(address.IA) {
 		return r.resolveLocalDestination(address)
@@ -173,7 +174,7 @@ func (r *remoteAddressResolver) resolveAddr(address *Addr) (*Addr, error) {
 
 func (r *remoteAddressResolver) resolveLocalDestination(address *Addr) (*Addr, error) {
 	if address.Path != nil {
-		return nil, common.NewBasicError(ErrExtraPath, nil)
+		return nil, ErrExtraPath
 	}
 	if address.NextHop == nil {
 		return addOverlayFromScionAddress(address)
@@ -184,9 +185,9 @@ func (r *remoteAddressResolver) resolveLocalDestination(address *Addr) (*Addr, e
 func (r *remoteAddressResolver) resolveRemoteDestination(address *Addr) (*Addr, error) {
 	switch {
 	case address.Path != nil && address.NextHop == nil:
-		return nil, common.NewBasicError(ErrBadOverlay, nil)
+		return nil, ErrBadOverlay
 	case address.Path == nil && address.NextHop != nil:
-		return nil, common.NewBasicError(ErrMustHavePath, nil)
+		return nil, ErrMustHavePath
 	case address.Path != nil:
 		return address, nil
 	default:
@@ -201,7 +202,7 @@ func (r *remoteAddressResolver) addPath(address *Addr) (*Addr, error) {
 	defer cancelF()
 	address.NextHop, address.Path, err = r.pathResolver.Get(ctx, r.localIA, address.IA)
 	if err != nil {
-		return nil, common.NewBasicError(ErrPath, nil)
+		return nil, ErrPath
 	}
 	return address, nil
 }
@@ -212,7 +213,7 @@ func addOverlayFromScionAddress(address *Addr) (*Addr, error) {
 	address.NextHop, err = overlay.NewOverlayAddr(address.Host.L3,
 		addr.NewL4UDPInfo(overlay.EndhostPort))
 	if err != nil {
-		return nil, common.NewBasicError(ErrBadOverlay, err)
+		return nil, serrors.Wrap(ErrBadOverlay, err)
 	}
 	return address, nil
 }

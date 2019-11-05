@@ -48,6 +48,7 @@ import (
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -107,23 +108,23 @@ func New(conn net.PacketConn, adapter MessageAdapter, logger log.Logger) *Dispat
 func (d *Dispatcher) Request(ctx context.Context, msg proto.Cerealizable,
 	address net.Addr) (proto.Cerealizable, error) {
 	if err := d.waitTable.addRequest(msg); err != nil {
-		return nil, common.NewBasicError(infra.ErrInternal, err, "op", "waitTable.AddRequest")
+		return nil, serrors.Wrap(infra.ErrInternal, err, "op", "waitTable.AddRequest")
 	}
 	// Delete request entry when we exit this context
 	defer d.waitTable.cancelRequest(msg)
 
 	b, err := d.adapter.MsgToRaw(msg)
 	if err != nil {
-		return nil, common.NewBasicError(infra.ErrAdapter, err, "op", "MsgToRaw")
+		return nil, serrors.Wrap(infra.ErrAdapter, err, "op", "MsgToRaw")
 	}
 	// FIXME(scrye): Writes rarely block on packet conns.
 	if _, err := d.conn.WriteTo(b, address); err != nil {
-		return nil, common.NewBasicError(infra.ErrTransport, err, "op", "WriteTo")
+		return nil, serrors.Wrap(infra.ErrTransport, err, "op", "WriteTo")
 	}
 
 	reply, err := d.waitTable.waitForReply(ctx, msg)
 	if err != nil {
-		return nil, common.NewBasicError(infra.ErrInternal, err,
+		return nil, serrors.Wrap(infra.ErrInternal, err,
 			"op", "waitTable.WaitForReply")
 	}
 	return reply, nil
@@ -135,10 +136,10 @@ func (d *Dispatcher) Request(ctx context.Context, msg proto.Cerealizable,
 func (d *Dispatcher) Notify(ctx context.Context, msg proto.Cerealizable, address net.Addr) error {
 	b, err := d.adapter.MsgToRaw(msg)
 	if err != nil {
-		return common.NewBasicError(infra.ErrAdapter, err, "op", "MsgToRaw")
+		return serrors.Wrap(infra.ErrAdapter, err, "op", "MsgToRaw")
 	}
 	if _, err := d.conn.WriteTo(b, address); err != nil {
-		return common.NewBasicError(infra.ErrTransport, err, "op", "WriteTo")
+		return serrors.Wrap(infra.ErrTransport, err, "op", "WriteTo")
 	}
 	return nil
 }
@@ -148,10 +149,10 @@ func (d *Dispatcher) NotifyUnreliable(ctx context.Context, msg proto.Cerealizabl
 	address net.Addr) error {
 	b, err := d.adapter.MsgToRaw(msg)
 	if err != nil {
-		return common.NewBasicError(infra.ErrAdapter, err, "op", "MsgToRaw")
+		return serrors.Wrap(infra.ErrAdapter, err, "op", "MsgToRaw")
 	}
 	if _, err := d.conn.WriteTo(b, address); err != nil {
-		return common.NewBasicError(infra.ErrTransport, err, "op", "WriteTo")
+		return serrors.Wrap(infra.ErrTransport, err, "op", "WriteTo")
 	}
 	return nil
 }
@@ -166,7 +167,7 @@ func (d *Dispatcher) RecvFrom(ctx context.Context) (proto.Cerealizable, int, net
 		return nil, 0, nil, ctx.Err()
 	case <-d.closedChan:
 		// Some other goroutine closed the dispatcher
-		return nil, 0, nil, common.NewBasicError(infra.ErrLayerClosed, nil)
+		return nil, 0, nil, infra.ErrLayerClosed
 	}
 }
 
@@ -201,23 +202,20 @@ func (d *Dispatcher) recvNext() bool {
 		if isCleanShutdownError(err) {
 			return true
 		} else {
-			d.log.Warn("error", "err",
-				common.NewBasicError(infra.ErrTransport, err, "op", "RecvFrom"))
+			d.log.Warn("error", "err", serrors.Wrap(infra.ErrTransport, err, "op", "RecvFrom"))
 		}
 		return false
 	}
 
 	msg, err := d.adapter.RawToMsg(b)
 	if err != nil {
-		d.log.Warn("error", "err",
-			common.NewBasicError(infra.ErrAdapter, err, "op", "RawToMsg"))
+		d.log.Warn("error", "err", serrors.Wrap(infra.ErrAdapter, err, "op", "RawToMsg"))
 		return false
 	}
 
 	found, err := d.waitTable.reply(msg)
 	if err != nil {
-		d.log.Warn("error", "err",
-			common.NewBasicError(infra.ErrInternal, err, "op", "waitTable.Reply"))
+		d.log.Warn("error", "err", serrors.Wrap(infra.ErrInternal, err, "op", "waitTable.Reply"))
 		return false
 	}
 	if found {
@@ -248,7 +246,7 @@ func (d *Dispatcher) Close(ctx context.Context) error {
 	}
 	err := d.conn.Close()
 	if err != nil {
-		return common.NewBasicError("Unable to close transport", err)
+		return serrors.WrapStr("Unable to close transport", err)
 	}
 	// Wait for background goroutine to finish
 	select {

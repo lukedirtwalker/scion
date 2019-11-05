@@ -20,6 +20,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -69,7 +70,7 @@ func (c *KeyChanges) insertModifications(as addr.AS, prev, next PrimaryAS) error
 		}
 		modified, err := ValidateKeyUpdate(prevMeta, meta)
 		if err != nil {
-			return common.NewBasicError(ErrInvalidKeyMeta, err, "as", as, "key_type", keyType)
+			return serrors.Wrap(ErrInvalidKeyMeta, err, "as", as, "key_type", keyType)
 		}
 		if modified {
 			c.Modified[keyType][as] = meta
@@ -86,10 +87,10 @@ func ValidateKeyUpdate(prev, next scrypto.KeyMeta) (bool, error) {
 	modified := next.Algorithm != prev.Algorithm || !bytes.Equal(next.Key, prev.Key)
 	switch {
 	case modified && next.KeyVersion != prev.KeyVersion+1:
-		return modified, common.NewBasicError(ErrInvalidKeyVersion, nil, "modified", modified,
+		return modified, serrors.WithCtx(ErrInvalidKeyVersion, "modified", modified,
 			"expected", prev.KeyVersion+1, "actual", next.KeyVersion)
 	case !modified && next.KeyVersion != prev.KeyVersion:
-		return modified, common.NewBasicError(ErrInvalidKeyVersion, nil, "modified", modified,
+		return modified, serrors.WithCtx(ErrInvalidKeyVersion, "modified", modified,
 			"expected", prev.KeyVersion, "actual", next.KeyVersion)
 	}
 	return modified, nil

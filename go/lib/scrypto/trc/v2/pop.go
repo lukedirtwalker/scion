@@ -18,6 +18,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -52,7 +53,7 @@ func (v *popValidator) checkProofOfPossession() error {
 	}
 	for as, types := range v.pops {
 		if len(types) > 0 {
-			return common.NewBasicError(ErrUnexpectedProofOfPossession, nil,
+			return serrors.WithCtx(ErrUnexpectedProofOfPossession,
 				"as", as, "key_types", types)
 		}
 	}
@@ -73,7 +74,7 @@ func (v *popValidator) popForModType(changes map[KeyType]ASToKeyMeta) error {
 func (v *popValidator) popForKeyType(keyType KeyType, m map[addr.AS]scrypto.KeyMeta) error {
 	for as := range m {
 		if !v.hasPop(v.TRC.ProofOfPossession[as], keyType) {
-			return common.NewBasicError(ErrMissingProofOfPossession, nil,
+			return serrors.WithCtx(ErrMissingProofOfPossession,
 				"as", as, "key_type", keyType)
 		}
 		delete(v.pops[as], keyType)

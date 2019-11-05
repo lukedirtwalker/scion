@@ -22,6 +22,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
 
@@ -52,21 +53,21 @@ func (ase *ASEntry) IA() addr.IA {
 
 func (ase *ASEntry) Validate(prevIA addr.IA, nextIA addr.IA, ignoreNext bool) error {
 	if ase.IA().IsWildcard() {
-		return common.NewBasicError("ASEntry has wildcard IA", nil, "ia", ase.IA())
+		return serrors.New("ASEntry has wildcard IA", "ia", ase.IA())
 	}
 	if len(ase.HopEntries) == 0 {
-		return common.NewBasicError("ASEntry has no HopEntries", nil, "ia", ase.IA())
+		return serrors.New("ASEntry has no HopEntries", "ia", ase.IA())
 	}
 	for i := range ase.HopEntries {
 		h := ase.HopEntries[i]
 		if i == 0 && !prevIA.Equal(h.InIA()) {
 			// Only perform this checks for the first HopEntry, as we can't validate
 			// peering HopEntries from the available information.
-			return common.NewBasicError("HopEntry InIA mismatch", nil,
+			return serrors.New("HopEntry InIA mismatch",
 				"hopIdx", i, "expected", h.InIA(), "actual", prevIA)
 		}
 		if !ignoreNext && !nextIA.Equal(h.OutIA()) {
-			return common.NewBasicError("HopEntry OutIA mismatch", nil,
+			return serrors.New("HopEntry OutIA mismatch",
 				"hopIdx", i, "expected", h.OutIA(), "actual", prevIA)
 		}
 	}

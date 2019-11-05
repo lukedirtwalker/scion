@@ -169,7 +169,7 @@ func (o *beaconOriginator) originateBeacon(ctx context.Context) error {
 	bseg, err := o.createBeacon()
 	if err != nil {
 		metrics.Originator.Beacons(labels.WithResult(metrics.ErrCreate)).Inc()
-		return common.NewBasicError("Unable to create beacon", err, "ifid", o.ifID)
+		return serrors.WrapStr("Unable to create beacon", err, "ifid", o.ifID)
 	}
 
 	err = o.beaconSender.Send(
@@ -182,7 +182,7 @@ func (o *beaconOriginator) originateBeacon(ctx context.Context) error {
 	)
 	if err != nil {
 		metrics.Originator.Beacons(labels.WithResult(metrics.ErrSend)).Inc()
-		return common.NewBasicError("Unable to send packet", err)
+		return serrors.WrapStr("Unable to send packet", err)
 	}
 	o.onSuccess(intf)
 	metrics.Originator.Beacons(labels).Inc()
@@ -192,10 +192,10 @@ func (o *beaconOriginator) originateBeacon(ctx context.Context) error {
 func (o *beaconOriginator) createBeacon() (*seg.Beacon, error) {
 	bseg, err := seg.NewSeg(&o.infoF)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to create segment", err)
+		return nil, serrors.WrapStr("Unable to create segment", err)
 	}
 	if err := o.extend(bseg, 0, o.ifID, nil); err != nil {
-		return nil, common.NewBasicError("Unable to extend segment", err)
+		return nil, serrors.WrapStr("Unable to extend segment", err)
 	}
 	return &seg.Beacon{Segment: bseg}, nil
 }

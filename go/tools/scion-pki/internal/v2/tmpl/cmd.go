@@ -19,7 +19,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/tools/scion-pki/internal/v2/conf"
@@ -39,7 +38,7 @@ var topo = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runGenTopoTmpl(args[0]); err != nil {
-			return common.NewBasicError("unable to generate templates from topo", err,
+			return serrors.WrapStr("unable to generate templates from topo", err,
 				"file", args[0])
 		}
 		return nil
@@ -59,7 +58,7 @@ Selector:
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runGenISDTmpl(args[0]); err != nil {
-			return common.NewBasicError("unable to generate ISD templates", err,
+			return serrors.WrapStr("unable to generate ISD templates", err,
 				"selector", args[0])
 		}
 		return nil
@@ -81,7 +80,7 @@ Selector:
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if err := runGenASTmpl(args[0]); err != nil {
-			return common.NewBasicError("unable to generate AS templates", err, "selector", args[0])
+			return serrors.WrapStr("unable to generate AS templates", err, "selector", args[0])
 		}
 		return nil
 	},

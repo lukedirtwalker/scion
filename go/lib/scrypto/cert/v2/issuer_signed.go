@@ -22,6 +22,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var (
@@ -153,7 +154,7 @@ type SignatureTypeTRC struct{}
 // UnmarshalText checks the signature type is correct.
 func (t *SignatureTypeTRC) UnmarshalText(b []byte) error {
 	if string(b) != SignatureTypeTRCJSON {
-		return common.NewBasicError(ErrInvalidSignatureType, nil, "input", string(b))
+		return serrors.WithCtx(ErrInvalidSignatureType, "input", string(b))
 	}
 	return nil
 }

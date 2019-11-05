@@ -17,7 +17,6 @@ package itopo
 import (
 	"github.com/google/go-cmp/cmp"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 	"github.com/scionproto/scion/go/proto"
@@ -100,19 +99,19 @@ func (v *generalValidator) Immutable(topo, oldTopo *topology.Topo) error {
 		return nil
 	}
 	if !topo.ISD_AS.Equal(oldTopo.ISD_AS) {
-		return common.NewBasicError("IA is immutable", nil,
+		return serrors.New("IA is immutable",
 			"expected", oldTopo.ISD_AS, "actual", topo.ISD_AS)
 	}
 	if topo.Core != oldTopo.Core {
-		return common.NewBasicError("Core is immutable", nil,
+		return serrors.New("Core is immutable",
 			"expected", oldTopo.Core, "actual", topo.Core)
 	}
 	if topo.Overlay != oldTopo.Overlay {
-		return common.NewBasicError("Overlay is immutable", nil,
+		return serrors.New("Overlay is immutable",
 			"expected", oldTopo.Overlay, "actual", topo.Overlay)
 	}
 	if topo.MTU != oldTopo.MTU {
-		return common.NewBasicError("MTU is immutable", nil,
+		return serrors.New("MTU is immutable",
 			"expected", oldTopo.MTU, "actual", topo.MTU)
 	}
 	return nil
@@ -141,7 +140,7 @@ func (v *svcValidator) General(topo *topology.Topo) error {
 		return err
 	}
 	if _, err := topo.GetTopoAddr(v.id, v.svc); err != nil {
-		return common.NewBasicError("Topo must contain service", nil, "id", v.id, "svc", v.svc)
+		return serrors.New("Topo must contain service", "id", v.id, "svc", v.svc)
 	}
 	return nil
 }
@@ -157,7 +156,7 @@ func (v *svcValidator) Immutable(topo, oldTopo *topology.Topo) error {
 	nAddr, _ := topo.GetTopoAddr(v.id, v.svc)
 	oAddr, _ := oldTopo.GetTopoAddr(v.id, v.svc)
 	if !nAddr.Equal(oAddr) {
-		return common.NewBasicError("Local service entry must not change", nil,
+		return serrors.New("Local service entry must not change",
 			"id", v.id, "svc", v.svc, "expected", oAddr, "actual", nAddr)
 	}
 	return nil
@@ -178,7 +177,7 @@ func (v *brValidator) General(topo *topology.Topo) error {
 		return err
 	}
 	if _, ok := topo.BR[v.id]; !ok {
-		return common.NewBasicError("Topo must contain border router", nil, "id", v.id)
+		return serrors.New("Topo must contain border router", "id", v.id)
 	}
 	return nil
 }
@@ -191,11 +190,11 @@ func (v *brValidator) Immutable(topo, oldTopo *topology.Topo) error {
 		return err
 	}
 	if !topo.BR[v.id].InternalAddrs.Equal(oldTopo.BR[v.id].InternalAddrs) {
-		return common.NewBasicError("InternalAddrs is immutable", nil, "expected",
+		return serrors.New("InternalAddrs is immutable", "expected",
 			oldTopo.BR[v.id].InternalAddrs, "actual", topo.BR[v.id].InternalAddrs)
 	}
 	if !topo.BR[v.id].CtrlAddrs.Equal(oldTopo.BR[v.id].CtrlAddrs) {
-		return common.NewBasicError("CtrlAddrs is immutable", nil, "expected",
+		return serrors.New("CtrlAddrs is immutable", "expected",
 			oldTopo.BR[v.id].CtrlAddrs, "actual", topo.BR[v.id].CtrlAddrs)
 	}
 	return nil
@@ -206,7 +205,7 @@ func (v *brValidator) SemiMutable(topo, oldTopo *topology.Topo, allowed bool) er
 		return nil
 	}
 	if !allowed && v.interfacesChanged(topo, oldTopo) {
-		return common.NewBasicError("IFID set changed", nil, "expected",
+		return serrors.New("IFID set changed", "expected",
 			oldTopo.BR[v.id].IFIDs, "actual", topo.BR[v.id].IFIDs)
 	}
 	return nil

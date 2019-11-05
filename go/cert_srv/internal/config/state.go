@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/trust"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust/trustdb"
 	"github.com/scionproto/scion/go/lib/keyconf"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 type State struct {
@@ -62,7 +63,7 @@ func (s *State) loadKeyConf(confDir string, isCore bool) error {
 	var err error
 	s.keyConf, err = keyconf.Load(filepath.Join(confDir, "keys"), isCore, isCore, false, true)
 	if err != nil {
-		return common.NewBasicError(ErrKeyConf, err)
+		return serrors.Wrap(ErrKeyConf, err)
 	}
 	return nil
 }

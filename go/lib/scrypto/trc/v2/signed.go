@@ -23,6 +23,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -202,7 +203,7 @@ func (t *SignatureType) UnmarshalText(b []byte) error {
 	case VoteSignature:
 		*t = VoteSignature
 	default:
-		return common.NewBasicError(ErrInvalidSignatureType, nil, "input", string(b))
+		return serrors.WithCtx(ErrInvalidSignatureType, "input", string(b))
 	}
 	return nil
 }
@@ -225,11 +226,11 @@ func (c Crit) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if len(list) != len(allCritFields) {
-		return common.NewBasicError(ErrInvalidCrit, nil, "len", len(list))
+		return serrors.WithCtx(ErrInvalidCrit, "len", len(list))
 	}
 	for i, expected := range allCritFields {
 		if list[i] != expected {
-			return common.NewBasicError(ErrInvalidCrit, nil, "idx", i,
+			return serrors.WithCtx(ErrInvalidCrit, "idx", i,
 				"expected", expected, "actual", list[i])
 		}
 	}

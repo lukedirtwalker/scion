@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/pathmgr"
 	"github.com/scionproto/scion/go/lib/pathpol"
@@ -91,7 +90,7 @@ func (r *BaseRouter) AllRoutes(ctx context.Context, dst addr.IA) ([]Path, error)
 		aps = r.PathResolver.QueryFilter(ctx, r.IA, dst, r.PathPolicy)
 	}
 	if len(aps) == 0 {
-		return nil, common.NewBasicError("unable to find paths", nil)
+		return nil, serrors.New("unable to find paths")
 	}
 	paths := make([]Path, 0, len(aps))
 	for _, ap := range aps {
@@ -108,11 +107,11 @@ func (r *BaseRouter) appPathToPath(ap *spathmeta.AppPath) (Path, error) {
 	p := spath.New(ap.Entry.Path.FwdPath)
 	// Preinitialize offsets, we don't want to propagate unusable paths
 	if err := p.InitOffsets(); err != nil {
-		return nil, common.NewBasicError("path error", err)
+		return nil, serrors.WrapStr("path error", err)
 	}
 	overlayAddr, err := ap.Entry.HostInfo.Overlay()
 	if err != nil {
-		return nil, common.NewBasicError("path error", err)
+		return nil, serrors.WrapStr("path error", err)
 	}
 	return &path{
 		sciondPath: ap.Entry,

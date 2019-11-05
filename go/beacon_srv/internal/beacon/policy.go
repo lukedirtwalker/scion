@@ -21,6 +21,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/spath"
 )
 
@@ -69,15 +70,15 @@ func (p *Policies) InitDefaults() {
 // Validate checks that each policy is of the correct type.
 func (p *Policies) Validate() error {
 	if p.Prop.Type != PropPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", PropPolicy, "actual", p.Prop.Type)
 	}
 	if p.UpReg.Type != UpRegPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", UpRegPolicy, "actual", p.UpReg.Type)
 	}
 	if p.DownReg.Type != DownRegPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", DownRegPolicy, "actual", p.DownReg.Type)
 	}
 	return nil
@@ -97,7 +98,7 @@ func (p *Policies) Filter(beacon Beacon) error {
 		errors = append(errors, err)
 	}
 	if len(errors) == 3 {
-		return common.NewBasicError("Filtered by all policies", nil, "errs", errors)
+		return serrors.New("Filtered by all policies", "errs", errors)
 	}
 	return nil
 }
@@ -135,11 +136,11 @@ func (p *CorePolicies) InitDefaults() {
 // Validate checks that each policy is of the correct type.
 func (p *CorePolicies) Validate() error {
 	if p.Prop.Type != PropPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", PropPolicy, "actual", p.Prop.Type)
 	}
 	if p.CoreReg.Type != CoreRegPolicy {
-		return common.NewBasicError("Invalid policy type", nil,
+		return serrors.New("Invalid policy type",
 			"expected", CoreRegPolicy, "actual", p.CoreReg.Type)
 	}
 	return nil
@@ -156,7 +157,7 @@ func (p *CorePolicies) Filter(beacon Beacon) error {
 		errors = append(errors, err)
 	}
 	if len(errors) == 2 {
-		return common.NewBasicError("Filtered by all policies", nil, "errs", errors)
+		return serrors.New("Filtered by all policies", "errs", errors)
 	}
 	return nil
 }
@@ -208,7 +209,7 @@ func (p *Policy) InitDefaults() {
 func (p *Policy) initDefaults(t PolicyType) error {
 	p.InitDefaults()
 	if p.Type != "" && p.Type != t {
-		return common.NewBasicError("Specified policy type does not match", nil,
+		return serrors.New("Specified policy type does not match",
 			"expected", t, "actual", p.Type)
 	}
 	p.Type = t
@@ -219,7 +220,7 @@ func (p *Policy) initDefaults(t PolicyType) error {
 func ParsePolicyYaml(b common.RawBytes, t PolicyType) (*Policy, error) {
 	p := &Policy{}
 	if err := yaml.Unmarshal(b, p); err != nil {
-		return nil, common.NewBasicError("Unable to parse policy", err)
+		return nil, serrors.WrapStr("Unable to parse policy", err)
 	}
 	if err := p.initDefaults(t); err != nil {
 		return nil, err
@@ -232,7 +233,7 @@ func ParsePolicyYaml(b common.RawBytes, t PolicyType) (*Policy, error) {
 func LoadPolicyFromYaml(path string, t PolicyType) (*Policy, error) {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, common.NewBasicError("Unable to read policy file", err, "path", path)
+		return nil, serrors.WrapStr("Unable to read policy file", err, "path", path)
 	}
 	return ParsePolicyYaml(b, t)
 }
@@ -263,7 +264,7 @@ func (f *Filter) InitDefaults() {
 // Apply returns an error if the beacon is filtered.
 func (f Filter) Apply(beacon Beacon) error {
 	if len(beacon.Segment.ASEntries) > f.MaxHopsLength {
-		return common.NewBasicError("MaxHopsLength exceeded", nil, "max", f.MaxHopsLength,
+		return serrors.New("MaxHopsLength exceeded", "max", f.MaxHopsLength,
 			"actual", len(beacon.Segment.ASEntries))
 	}
 	hops := buildHops(beacon)
@@ -273,12 +274,12 @@ func (f Filter) Apply(beacon Beacon) error {
 	for _, ia := range hops {
 		for _, as := range f.AsBlackList {
 			if ia.A == as {
-				return common.NewBasicError("Contains blacklisted AS", nil, "ia", ia)
+				return serrors.New("Contains blacklisted AS", "ia", ia)
 			}
 		}
 		for _, isd := range f.IsdBlackList {
 			if ia.I == isd {
-				return common.NewBasicError("Contains blacklisted ISD", nil, "isd", ia)
+				return serrors.New("Contains blacklisted ISD", "isd", ia)
 			}
 		}
 	}
@@ -305,13 +306,13 @@ func buildHops(beacon Beacon) []addr.IA {
 
 func filterLoops(hops []addr.IA, allowIsdLoop bool) error {
 	if ia := filterAsLoop(hops); !ia.IsZero() {
-		return common.NewBasicError("AS loop", nil, "ia", ia)
+		return serrors.New("AS loop", "ia", ia)
 	}
 	if allowIsdLoop {
 		return nil
 	}
 	if isd := filterIsdLoop(hops); isd != 0 {
-		return common.NewBasicError("ISD loop", nil, "isd", isd)
+		return serrors.New("ISD loop", "isd", isd)
 	}
 	return nil
 }

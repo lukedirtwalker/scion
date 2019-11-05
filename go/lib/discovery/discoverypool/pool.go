@@ -18,7 +18,6 @@ import (
 	"math"
 	"sync"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/discovery"
 	"github.com/scionproto/scion/go/lib/discovery/discoveryinfo"
 	"github.com/scionproto/scion/go/lib/serrors"
@@ -37,8 +36,7 @@ type Pool struct {
 // in svcInfo. At least one instance must be present.
 func New(svcInfo topology.IDAddrMap) (*Pool, error) {
 	if len(svcInfo) <= 0 {
-		return nil, common.NewBasicError(
-			"SvcInfo must contain at least one discovery service instance", nil)
+		return nil, serrors.New("SvcInfo must contain at least one discovery service instance")
 	}
 	p := &Pool{
 		m: make(map[string]discovery.InstanceInfo, len(svcInfo)),

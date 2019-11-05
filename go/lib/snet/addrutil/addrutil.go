@@ -19,9 +19,9 @@ import (
 	"net"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/spath"
 )
@@ -30,24 +30,24 @@ import (
 func GetPath(svc addr.HostSVC, ps *seg.PathSegment, topoProv itopo.ProviderI) (net.Addr, error) {
 	x := &bytes.Buffer{}
 	if _, err := ps.RawWriteTo(x); err != nil {
-		return nil, common.NewBasicError("failed to write segment to buffer", err)
+		return nil, serrors.WrapStr("failed to write segment to buffer", err)
 	}
 	p := spath.New(x.Bytes())
 	if err := p.Reverse(); err != nil {
-		return nil, common.NewBasicError("failed to reverse path", err)
+		return nil, serrors.WrapStr("failed to reverse path", err)
 	}
 	if err := p.InitOffsets(); err != nil {
-		return nil, common.NewBasicError("failed to init offsets", err)
+		return nil, serrors.WrapStr("failed to init offsets", err)
 	}
 	hopF, err := p.GetHopField(p.HopOff)
 	if err != nil {
-		return nil, common.NewBasicError("failed to extract first HopField", err, "p", p)
+		return nil, serrors.WrapStr("failed to extract first HopField", err, "p", p)
 	}
 	topo := topoProv.Get()
 	ifID := hopF.ConsIngress
 	overlayNextHop, ok := topo.OverlayNextHop2(ifID)
 	if !ok {
-		return nil, common.NewBasicError("unable to find first-hop BR for path", nil, "ifID", ifID)
+		return nil, serrors.New("unable to find first-hop BR for path", "ifID", ifID)
 	}
 	return &snet.Addr{
 		IA:      ps.FirstIA(),

@@ -14,7 +14,10 @@
 
 package cert
 
-import "github.com/scionproto/scion/go/lib/common"
+import (
+	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
+)
 
 const (
 	ErrInvalidNumFields common.ErrMsg = "Invalid number of fields"
@@ -31,11 +34,11 @@ var chainFields = []string{"0", "1"}
 func validateFields(m map[string]interface{}, fields []string) error {
 	for _, field := range fields {
 		if _, ok := m[field]; !ok {
-			return common.NewBasicError(ErrMissingField, nil, "field", field)
+			return serrors.WithCtx(ErrMissingField, "field", field)
 		}
 	}
 	if len(m) != len(fields) {
-		return common.NewBasicError(ErrInvalidNumFields, nil,
+		return serrors.WithCtx(ErrInvalidNumFields,
 			"expected", len(fields), "actual", len(m))
 	}
 	return nil

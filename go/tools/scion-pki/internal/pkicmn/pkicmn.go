@@ -25,6 +25,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 const (
@@ -71,7 +72,7 @@ func GetDirs() Dirs {
 func ParseSelector(selector string) (string, string, error) {
 	toks := strings.Split(selector, "-")
 	if len(toks) > 2 {
-		return "", "", common.NewBasicError(ErrInvalidSelector, nil, "selector", selector)
+		return "", "", serrors.WithCtx(ErrInvalidSelector, "selector", selector)
 	}
 	isdTok := toks[0]
 	asTok := "*"
@@ -80,17 +81,17 @@ func ParseSelector(selector string) (string, string, error) {
 	}
 	// Validate selectors.
 	if isdTok == "*" && asTok != "*" {
-		return "", "", common.NewBasicError(ErrInvalidSelector, nil, "selector", selector)
+		return "", "", serrors.WithCtx(ErrInvalidSelector, "selector", selector)
 	}
 	if isdTok != "*" {
 		if _, err := addr.ISDFromString(isdTok); err != nil {
-			return "", "", common.NewBasicError(ErrInvalidSelector, err, "selector", selector)
+			return "", "", serrors.Wrap(ErrInvalidSelector, err, "selector", selector)
 		}
 	}
 	if asTok != "*" {
 		as, err := addr.ASFromString(asTok)
 		if err != nil {
-			return "", "", common.NewBasicError(ErrInvalidSelector, err, "selector", selector)
+			return "", "", serrors.Wrap(ErrInvalidSelector, err, "selector", selector)
 		}
 		asTok = as.FileFmt()
 	}
@@ -110,7 +111,7 @@ func ProcessSelector(selector string) (map[addr.ISD][]addr.IA, error) {
 		return nil, err
 	}
 	if len(isdDirs) == 0 {
-		return nil, common.NewBasicError(ErrNoISDDirFound, nil, "selector", selector)
+		return nil, serrors.WithCtx(ErrNoISDDirFound, "selector", selector)
 	}
 	res := make(map[addr.ISD][]addr.IA)
 	for _, dir := range isdDirs {
@@ -123,7 +124,7 @@ func ProcessSelector(selector string) (map[addr.ISD][]addr.IA, error) {
 			return nil, err
 		}
 		if len(dirs) == 0 {
-			return nil, common.NewBasicError(ErrNoASDirFound, nil, "selector", selector)
+			return nil, serrors.WithCtx(ErrNoASDirFound, "selector", selector)
 		}
 		ases := make([]addr.IA, len(dirs))
 		for i, asDir := range dirs {
@@ -141,7 +142,7 @@ func ProcessSelector(selector string) (map[addr.ISD][]addr.IA, error) {
 func isdFromDir(dir string) (addr.ISD, error) {
 	isd, err := addr.ISDFromFileFmt(filepath.Base(dir), true)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to parse ISD number from dir", err, "dir", dir)
+		return 0, serrors.WrapStr("Unable to parse ISD number from dir", err, "dir", dir)
 	}
 	return isd, nil
 }
@@ -149,7 +150,7 @@ func isdFromDir(dir string) (addr.ISD, error) {
 func asFromDir(dir string) (addr.AS, error) {
 	as, err := addr.ASFromFileFmt(filepath.Base(dir), true)
 	if err != nil {
-		return 0, common.NewBasicError("Unable to parse AS number from dir", err, "dir", dir)
+		return 0, serrors.WrapStr("Unable to parse AS number from dir", err, "dir", dir)
 	}
 	return as, nil
 }

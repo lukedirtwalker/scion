@@ -52,7 +52,7 @@ func (rp *RtrPkt) Route() error {
 		}
 	}
 	if len(rp.Egress) == 0 {
-		return common.NewBasicError("No routing information found", nil,
+		return serrors.New("No routing information found",
 			"egress", rp.Egress, "dirFrom", rp.DirFrom, "raw", rp.Raw)
 	}
 	l := metrics.ProcessLabels{
@@ -73,7 +73,7 @@ func (rp *RtrPkt) Route() error {
 func (rp *RtrPkt) RouteResolveSVC() (HookResult, error) {
 	svc, ok := rp.dstHost.(addr.HostSVC)
 	if !ok {
-		return HookError, common.NewBasicError("Destination host is NOT an SVC address", nil,
+		return HookError, serrors.New("Destination host is NOT an SVC address",
 			"actual", rp.dstHost, "type", fmt.Sprintf("%T", rp.dstHost))
 	}
 	addrs, err := rp.Ctx.ResolveSVC(svc)
@@ -94,7 +94,7 @@ func (rp *RtrPkt) forward() (HookResult, error) {
 	case rcmn.DirLocal:
 		return rp.forwardFromLocal()
 	default:
-		return HookError, common.NewBasicError("Unsupported forwarding DirFrom", nil,
+		return HookError, serrors.New("Unsupported forwarding DirFrom",
 			"dirFrom", rp.DirFrom)
 	}
 }

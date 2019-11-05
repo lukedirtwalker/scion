@@ -19,8 +19,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 var (
@@ -124,7 +124,7 @@ type TypeIssuer struct{}
 // UnmarshalText checks that the certificate type matches.
 func (TypeIssuer) UnmarshalText(b []byte) error {
 	if TypeIssuerJSON != string(b) {
-		return common.NewBasicError(ErrInvalidCertificateType, nil,
+		return serrors.WithCtx(ErrInvalidCertificateType,
 			"expected", TypeIssuerJSON, "actual", string(b))
 	}
 	return nil

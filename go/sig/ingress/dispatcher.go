@@ -21,9 +21,9 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/ringbuf"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 	"github.com/scionproto/scion/go/sig/metrics"
@@ -62,7 +62,7 @@ func (d *Dispatcher) Run() error {
 	var err error
 	d.extConn, err = snet.ListenSCION("udp4", d.laddr)
 	if err != nil {
-		return common.NewBasicError("Unable to initialize extConn", err)
+		return serrors.WrapStr("Unable to initialize extConn", err)
 	}
 	return d.read()
 }
@@ -78,7 +78,7 @@ func (d *Dispatcher) read() error {
 			if err != nil {
 				log.Error("IngressDispatcher: Unable to read from external ingress", "err", err)
 				if reliable.IsDispatcherError(err) {
-					return common.NewBasicError("Problems speaking to dispatcher", err)
+					return serrors.WrapStr("Problems speaking to dispatcher", err)
 				}
 				frame.Release()
 			} else {

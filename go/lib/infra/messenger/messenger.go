@@ -100,6 +100,7 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/messenger/internal/metrics"
 	"github.com/scionproto/scion/go/lib/infra/rpc"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/util"
 	"github.com/scionproto/scion/go/proto"
@@ -266,12 +267,12 @@ func (m *Messenger) GetTRC(ctx context.Context, msg *cert_mgmt.TRCReq,
 		"msg_id", id, "request", msg, "peer", a)
 	replyCtrlPld, err := m.getFallbackRequester(infra.TRCRequest).Request(ctx, pld, a, false)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Request error", err,
+		return nil, serrors.WrapStr("[Messenger] Request error", err,
 			"req_type", infra.TRCRequest)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Reply validation failed", err)
+		return nil, serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch reply := replyMsg.(type) {
 	case *cert_mgmt.TRC:
@@ -281,7 +282,7 @@ func (m *Messenger) GetTRC(ctx context.Context, msg *cert_mgmt.TRCReq,
 		return nil, &infra.Error{Message: reply}
 	default:
 		err := newTypeAssertErr("*cert_mgmt.TRC", replyMsg)
-		return nil, common.NewBasicError("[Messenger] Type assertion failed", err)
+		return nil, serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -305,12 +306,12 @@ func (m *Messenger) GetCertChain(ctx context.Context, msg *cert_mgmt.ChainReq,
 		"msg_id", id, "request", msg, "peer", a)
 	replyCtrlPld, err := m.getFallbackRequester(infra.ChainRequest).Request(ctx, pld, a, false)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Request error", err,
+		return nil, serrors.WrapStr("[Messenger] Request error", err,
 			"req_type", infra.ChainRequest)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Reply validation failed", err)
+		return nil, serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch reply := replyMsg.(type) {
 	case *cert_mgmt.Chain:
@@ -320,7 +321,7 @@ func (m *Messenger) GetCertChain(ctx context.Context, msg *cert_mgmt.ChainReq,
 		return nil, &infra.Error{Message: reply}
 	default:
 		err := newTypeAssertErr("*cert_mgmt.Chain", replyMsg)
-		return nil, common.NewBasicError("[Messenger] Type assertion failed", err)
+		return nil, serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -397,17 +398,17 @@ func (m *Messenger) GetSegs(ctx context.Context, msg *path_mgmt.SegReq,
 		"msg_id", id, "request", msg, "peer", a)
 	replyCtrlPld, err := m.getFallbackRequester(infra.SegRequest).Request(ctx, pld, a, false)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Request error", err,
+		return nil, serrors.WrapStr("[Messenger] Request error", err,
 			"req_type", infra.SegRequest)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Reply validation failed", err)
+		return nil, serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch reply := replyMsg.(type) {
 	case *path_mgmt.SegReply:
 		if err := reply.ParseRaw(); err != nil {
-			return nil, common.NewBasicError("[Messenger] Failed to parse reply", err)
+			return nil, serrors.WrapStr("[Messenger] Failed to parse reply", err)
 		}
 		logger.Trace("[Messenger] Received reply", "req_id", id)
 		return reply, nil
@@ -415,7 +416,7 @@ func (m *Messenger) GetSegs(ctx context.Context, msg *path_mgmt.SegReq,
 		return nil, &infra.Error{Message: reply}
 	default:
 		err := newTypeAssertErr("*path_mgmt.SegReply", replyMsg)
-		return nil, common.NewBasicError("[Messenger] Type assertion failed", err)
+		return nil, serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -453,12 +454,12 @@ func (m *Messenger) GetSegChangesIds(ctx context.Context, msg *path_mgmt.SegChan
 		"msg_id", id, "request", msg, "peer", a)
 	replyCtrlPld, err := m.getFallbackRequester(infra.SegChangesIdReq).Request(ctx, pld, a, false)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Request error", err,
+		return nil, serrors.WrapStr("[Messenger] Request error", err,
 			"req_type", infra.SegChangesIdReq)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Reply validation failed", err)
+		return nil, serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch reply := replyMsg.(type) {
 	case *path_mgmt.SegChangesIdReply:
@@ -468,7 +469,7 @@ func (m *Messenger) GetSegChangesIds(ctx context.Context, msg *path_mgmt.SegChan
 		return nil, &infra.Error{Message: reply}
 	default:
 		err := newTypeAssertErr("*path_mgmt.SegChangesIdReply", replyMsg)
-		return nil, common.NewBasicError("[Messenger] Type assertion failed", err)
+		return nil, serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -497,17 +498,17 @@ func (m *Messenger) GetSegChanges(ctx context.Context, msg *path_mgmt.SegChanges
 		"msg_id", id, "request", msg, "peer", a)
 	replyCtrlPld, err := m.getFallbackRequester(infra.SegChangesReq).Request(ctx, pld, a, false)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Request error", err,
+		return nil, serrors.WrapStr("[Messenger] Request error", err,
 			"req_type", infra.SegChangesReq)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Reply validation failed", err)
+		return nil, serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch reply := replyMsg.(type) {
 	case *path_mgmt.SegChangesReply:
 		if err := reply.ParseRaw(); err != nil {
-			return nil, common.NewBasicError("[Messenger] Failed to parse reply", err)
+			return nil, serrors.WrapStr("[Messenger] Failed to parse reply", err)
 		}
 		logger.Trace("[Messenger] Received reply", "req_id", id)
 		return reply, nil
@@ -515,7 +516,7 @@ func (m *Messenger) GetSegChanges(ctx context.Context, msg *path_mgmt.SegChanges
 		return nil, &infra.Error{Message: reply}
 	default:
 		err := newTypeAssertErr("*path_mgmt.SegChangesReply", replyMsg)
-		return nil, common.NewBasicError("[Messenger] Type assertion failed", err)
+		return nil, serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -554,17 +555,17 @@ func (m *Messenger) GetHPSegs(ctx context.Context, msg *path_mgmt.HPSegReq, a ne
 		"msg_id", id, "request", msg, "peer", a)
 	replyCtrlPld, err := m.getFallbackRequester(infra.HPSegRequest).Request(ctx, pld, a, false)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Request error", err,
+		return nil, serrors.WrapStr("[Messenger] Request error", err,
 			"req_type", infra.HPSegRequest)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Reply validation failed", err)
+		return nil, serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch reply := replyMsg.(type) {
 	case *path_mgmt.HPSegReply:
 		if err := reply.ParseRaw(); err != nil {
-			return nil, common.NewBasicError("[Messenger] Failed to parse reply", err)
+			return nil, serrors.WrapStr("[Messenger] Failed to parse reply", err)
 		}
 		logger.Trace("[Messenger] Received reply", "req_id", id)
 		return reply, nil
@@ -572,7 +573,7 @@ func (m *Messenger) GetHPSegs(ctx context.Context, msg *path_mgmt.HPSegReq, a ne
 		return nil, &infra.Error{Message: reply}
 	default:
 		err := newTypeAssertErr("*path_mgmt.HPSegReply", replyMsg)
-		return nil, common.NewBasicError("[Messenger] Type assertion failed", err)
+		return nil, serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -600,12 +601,12 @@ func (m *Messenger) GetHPCfgs(ctx context.Context, msg *path_mgmt.HPCfgReq, a ne
 		"msg_id", id, "request", msg, "peer", a)
 	replyCtrlPld, err := m.getFallbackRequester(infra.HPCfgRequest).Request(ctx, pld, a, false)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Request error", err,
+		return nil, serrors.WrapStr("[Messenger] Request error", err,
 			"req_type", infra.HPCfgRequest)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Reply validation failed", err)
+		return nil, serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch reply := replyMsg.(type) {
 	case *path_mgmt.HPCfgReply:
@@ -615,7 +616,7 @@ func (m *Messenger) GetHPCfgs(ctx context.Context, msg *path_mgmt.HPCfgReq, a ne
 		return nil, &infra.Error{Message: reply}
 	default:
 		err := newTypeAssertErr("*path_mgmt.HPCfgReply", replyMsg)
-		return nil, common.NewBasicError("[Messenger] Type assertion failed", err)
+		return nil, serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -643,12 +644,12 @@ func (m *Messenger) RequestChainIssue(ctx context.Context, msg *cert_mgmt.ChainI
 		"msg_id", id, "request", msg, "peer", a)
 	replyCtrlPld, err := m.getFallbackRequester(infra.ChainIssueRequest).Request(ctx, pld, a, false)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Request error", err,
+		return nil, serrors.WrapStr("[Messenger] Request error", err,
 			"req_type", infra.ChainIssueRequest)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return nil, common.NewBasicError("[Messenger] Reply validation failed", err)
+		return nil, serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch reply := replyMsg.(type) {
 	case *cert_mgmt.ChainIssRep:
@@ -658,7 +659,7 @@ func (m *Messenger) RequestChainIssue(ctx context.Context, msg *cert_mgmt.ChainI
 		return nil, &infra.Error{Message: reply}
 	default:
 		err := newTypeAssertErr("*cert_mgmt.ChainIssRep", replyMsg)
-		return nil, common.NewBasicError("[Messenger] Type assertion failed", err)
+		return nil, serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -676,7 +677,7 @@ func (m *Messenger) SendChainIssueReply(ctx context.Context, msg *cert_mgmt.Chai
 
 func (m *Messenger) SendBeacon(ctx context.Context, msg *seg.Beacon, a net.Addr, id uint64) error {
 	if svc, ok := a.(*snet.Addr).Host.L3.(addr.HostSVC); ok {
-		return common.NewBasicError("[Messenger] Cannot send to SVC address on QUIC-only RPC", nil,
+		return serrors.New("[Messenger] Cannot send to SVC address on QUIC-only RPC",
 			"svc", svc)
 	}
 
@@ -690,19 +691,19 @@ func (m *Messenger) SendBeacon(ctx context.Context, msg *seg.Beacon, a net.Addr,
 
 	replyCtrlPld, err := m.getQUICRequester(m.getSigner(infra.Seg)).Request(ctx, pld, a)
 	if err != nil {
-		return common.NewBasicError("[Messenger] Beaconing error", err,
+		return serrors.WrapStr("[Messenger] Beaconing error", err,
 			"req_type", infra.Seg)
 	}
 	_, replyMsg, err := validate(replyCtrlPld)
 	if err != nil {
-		return common.NewBasicError("[Messenger] Reply validation failed", err)
+		return serrors.WrapStr("[Messenger] Reply validation failed", err)
 	}
 	switch replyMsg.(type) {
 	case *ack.Ack:
 		return nil
 	default:
 		err := newTypeAssertErr("*ack.Ack", replyMsg)
-		return common.NewBasicError("[Messenger] Type assertion failed", err)
+		return serrors.WrapStr("[Messenger] Type assertion failed", err)
 	}
 }
 
@@ -964,7 +965,7 @@ func (m *Messenger) getQUICRequester(signer ctrl.Signer) *QUICRequester {
 }
 
 func newTypeAssertErr(typeStr string, msg interface{}) error {
-	return common.NewBasicError("Unable to type assert disp.Message", nil,
+	return serrors.New("Unable to type assert disp.Message",
 		"msg", msg, "type", typeStr)
 }
 
@@ -1084,9 +1085,8 @@ func validate(pld *ctrl.Pld) (infra.MessageType, proto.Cerealizable, error) {
 		case proto.CertMgmt_Which_certChainIssRep:
 			return infra.ChainIssueReply, pld.CertMgmt.ChainIssRep, nil
 		default:
-			return infra.None, nil,
-				common.NewBasicError("Unsupported SignedPld.CtrlPld.CertMgmt.Xxx message type",
-					nil, "capnp_which", pld.CertMgmt.Which)
+			return infra.None, nil, serrors.New("Unsupported SignedPld.CtrlPld.CertMgmt.Xxx message type",
+				"capnp_which", pld.CertMgmt.Which)
 		}
 	case proto.CtrlPld_Which_pathMgmt:
 		switch pld.PathMgmt.Which {
@@ -1123,14 +1123,13 @@ func validate(pld *ctrl.Pld) (infra.MessageType, proto.Cerealizable, error) {
 		case proto.PathMgmt_Which_hpCfgReply:
 			return infra.HPCfgReply, pld.PathMgmt.HPCfgReply, nil
 		default:
-			return infra.None, nil,
-				common.NewBasicError("Unsupported SignedPld.CtrlPld.PathMgmt.Xxx message type",
-					nil, "capnp_which", pld.PathMgmt.Which)
+			return infra.None, nil, serrors.New("Unsupported SignedPld.CtrlPld.PathMgmt.Xxx message type",
+				"capnp_which", pld.PathMgmt.Which)
 		}
 	case proto.CtrlPld_Which_ack:
 		return infra.Ack, pld.Ack, nil
 	default:
-		return infra.None, nil, common.NewBasicError("Unsupported SignedPld.Pld.Xxx message type",
-			nil, "capnp_which", pld.Which)
+		return infra.None, nil, serrors.New("Unsupported SignedPld.Pld.Xxx message type",
+			"capnp_which", pld.Which)
 	}
 }

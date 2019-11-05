@@ -83,12 +83,12 @@ func ChainFromRaw(raw common.RawBytes, lz4_ bool) (*Chain, error) {
 		// endian, unsigned integer. We need to make sure that a malformed message does
 		// not exhaust the available memory.
 		if len(raw) < 4 {
-			return nil, common.NewBasicError("Certificate chain raw input too small", nil,
+			return nil, serrors.New("Certificate chain raw input too small",
 				"min", 4, "actual", len(raw))
 		}
 		byteLen := binary.LittleEndian.Uint32(raw[:4])
 		if byteLen > MaxChainByteLength {
-			return nil, common.NewBasicError("Certificate chain LZ4 block too large", nil,
+			return nil, serrors.New("Certificate chain LZ4 block too large",
 				"max", MaxChainByteLength, "actual", byteLen)
 		}
 		buf := make([]byte, byteLen)
@@ -130,11 +130,11 @@ func ChainFromDir(dir string, ia addr.IA, f func(err error)) (*Chain, error) {
 	for _, file := range files {
 		chain, err := ChainFromFile(file, false)
 		if err != nil {
-			f(common.NewBasicError("Unable to read Chain file", err))
+			f(serrors.WrapStr("Unable to read Chain file", err))
 			continue
 		}
 		if !chain.Leaf.Subject.Equal(ia) {
-			return nil, common.NewBasicError("IA mismatch", nil, "expected", ia,
+			return nil, serrors.New("IA mismatch", "expected", ia,
 				"found", chain.Leaf.Subject)
 		}
 		if chain.Leaf.Version > bestVersion {
@@ -150,14 +150,14 @@ func ChainFromDir(dir string, ia addr.IA, f func(err error)) (*Chain, error) {
 // of two are supported.
 func ChainFromSlice(certs []*Certificate) (*Chain, error) {
 	if len(certs) != 2 {
-		return nil, common.NewBasicError("Unsupported chain length", nil, "len", len(certs))
+		return nil, serrors.New("Unsupported chain length", "len", len(certs))
 	}
 	if certs[0] == nil || certs[1] == nil {
-		return nil, common.NewBasicError("Certificates must not be nil", nil, "leaf", certs[0],
+		return nil, serrors.New("Certificates must not be nil", "leaf", certs[0],
 			"iss", certs[1])
 	}
 	if !certs[0].Issuer.Equal(certs[1].Subject) {
-		return nil, common.NewBasicError("Leaf not signed by issuer", nil, "expected",
+		return nil, serrors.New("Leaf not signed by issuer", "expected",
 			certs[0].Issuer, "actual", certs[1].Subject)
 	}
 	return &Chain{Leaf: certs[0], Issuer: certs[1]}, nil
@@ -239,7 +239,7 @@ func (c *Chain) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if err = validateFields(m, chainFields); err != nil {
-		return common.NewBasicError(ErrValidatingFields, err)
+		return serrors.Wrap(ErrValidatingFields, err)
 	}
 	// XXX(roosd): Unmarshalling twice might affect performance.
 	// After switching to go 1.10 we might make use of

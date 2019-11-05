@@ -32,6 +32,7 @@ import (
 	"github.com/scionproto/scion/go/lib/layers"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/overlay"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 	"github.com/scionproto/scion/go/lib/spath"
 )
@@ -75,7 +76,7 @@ type Sender struct {
 func (s *Sender) Send(msg *Msg, nextHop *overlay.OverlayAddr) error {
 	pkt, err := s.CreatePkt(msg)
 	if err != nil {
-		return common.NewBasicError("Unable to create packet", err)
+		return serrors.WrapStr("Unable to create packet", err)
 	}
 	return s.Conn.WriteTo(pkt, nextHop)
 }
@@ -144,15 +145,15 @@ func (s *BeaconSender) Send(ctx context.Context, bseg *seg.Beacon, ia addr.IA,
 
 	pld, err := ctrl.NewPld(bseg, nil)
 	if err != nil {
-		return common.NewBasicError("Unable to create payload", err)
+		return serrors.WrapStr("Unable to create payload", err)
 	}
 	spld, err := pld.SignedPld(signer)
 	if err != nil {
-		return common.NewBasicError("Unable to sign payload", err)
+		return serrors.WrapStr("Unable to sign payload", err)
 	}
 	packed, err := spld.PackPld()
 	if err != nil {
-		return common.NewBasicError("Unable to pack payload", err)
+		return serrors.WrapStr("Unable to pack payload", err)
 	}
 	msg := &Msg{
 		Dst: snet.SCIONAddress{

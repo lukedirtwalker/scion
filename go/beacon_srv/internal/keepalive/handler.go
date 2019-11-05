@@ -25,6 +25,7 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/ifid"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/log"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
 )
 
@@ -94,8 +95,7 @@ func (h *handler) handle(logger log.Logger) (*infra.HandlerResult, error) {
 	keepalive, ok := h.request.Message.(*ifid.IFID)
 	if !ok {
 		metrics.Keepalive.Receives(labels).Inc()
-		return infra.MetricsErrInternal, common.NewBasicError(
-			"Wrong message type, expected ifid.IFID", nil,
+		return infra.MetricsErrInternal, serrors.New("Wrong message type, expected ifid.IFID",
 			"msg", h.request.Message, "type", common.TypeOf(h.request.Message))
 	}
 	logger.Trace("[KeepaliveHandler] Received", "ifidKeepalive", keepalive)
@@ -110,7 +110,7 @@ func (h *handler) handle(logger log.Logger) (*infra.HandlerResult, error) {
 		h.startPush(ifid)
 		if err := h.dropRevs(ifid, keepalive.OrigIfID, info.TopoInfo().ISD_AS); err != nil {
 			metrics.Keepalive.Receives(labels).Inc()
-			return infra.MetricsErrInternal, common.NewBasicError("Unable to drop revocations", err)
+			return infra.MetricsErrInternal, serrors.WrapStr("Unable to drop revocations", err)
 		}
 	}
 	logger.Trace("[KeepaliveHandler] Successfully handled", "keepalive", keepalive)
@@ -122,21 +122,21 @@ func (h *handler) handle(logger log.Logger) (*infra.HandlerResult, error) {
 func (h *handler) getIntfInfo() (common.IFIDType, *ifstate.Interface, error) {
 	peer, ok := h.request.Peer.(*snet.Addr)
 	if !ok {
-		return 0, nil, common.NewBasicError("Invalid peer address type, expected *snet.Addr", nil,
+		return 0, nil, serrors.New("Invalid peer address type, expected *snet.Addr",
 			"peer", h.request.Peer, "type", common.TypeOf(h.request.Peer))
 	}
 	hopF, err := peer.Path.GetHopField(peer.Path.HopOff)
 	if err != nil {
-		return 0, nil, common.NewBasicError("Unable to extract hop field", err)
+		return 0, nil, serrors.WrapStr("Unable to extract hop field", err)
 	}
 	info := h.intfs.Get(hopF.ConsIngress)
 	if info == nil {
-		return 0, nil, common.NewBasicError("Received keepalive for non-existent ifid", nil,
+		return 0, nil, serrors.New("Received keepalive for non-existent ifid",
 			"ifid", hopF.ConsIngress)
 	}
 	originIA := info.TopoInfo().ISD_AS
 	if !info.TopoInfo().ISD_AS.Equal(peer.IA) {
-		return 0, nil, common.NewBasicError("Keepalive origin IA does not match", nil,
+		return 0, nil, serrors.New("Keepalive origin IA does not match",
 			"ifid", hopF.ConsIngress, "expected", originIA, "actual", peer.IA)
 	}
 	return hopF.ConsIngress, info, nil

@@ -30,6 +30,7 @@ import (
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -157,12 +158,12 @@ func TRCFromRaw(raw common.RawBytes, lz4_ bool) (*TRC, error) {
 		// endian, unsigned integer. We need to make sure that a malformed message does
 		// not exhaust the available memory.
 		if len(raw) < 4 {
-			return nil, common.NewBasicError("TRC raw input too small", nil,
+			return nil, serrors.New("TRC raw input too small",
 				"min", 4, "actual", len(raw))
 		}
 		bLen := binary.LittleEndian.Uint32(raw[:4])
 		if bLen > MaxTRCByteLength {
-			return nil, common.NewBasicError("TRC LZ4 block too large", nil,
+			return nil, serrors.New("TRC LZ4 block too large",
 				"max", MaxTRCByteLength, "actual", bLen)
 		}
 		buf := make([]byte, bLen)
@@ -177,7 +178,7 @@ func TRCFromRaw(raw common.RawBytes, lz4_ bool) (*TRC, error) {
 		return nil, err
 	}
 	if t.Version.IsLatest() {
-		return nil, common.NewBasicError(ErrReservedVersion, nil)
+		return nil, ErrReservedVersion
 	}
 	return t, nil
 }
@@ -207,12 +208,12 @@ func TRCFromDir(dir string, isd addr.ISD, f func(err error)) (*TRC, error) {
 	for _, file := range files {
 		trcObj, err := TRCFromFile(file, false)
 		if err != nil {
-			f(common.NewBasicError("Unable to read TRC file", err))
+			f(serrors.WrapStr("Unable to read TRC file", err))
 			continue
 		}
 		fileISD, version := trcObj.IsdVer()
 		if fileISD != isd {
-			return nil, common.NewBasicError("ISD mismatch", nil, "expected", isd, "found", fileISD)
+			return nil, serrors.New("ISD mismatch", "expected", isd, "found", fileISD)
 		}
 		if version > bestVersion {
 			bestTRC = trcObj
@@ -234,27 +235,26 @@ func (t *TRC) Key() *Key {
 // the newest active TRC of the same ISD which we know of.
 func (t *TRC) IsActive(maxTRC *TRC) error {
 	if t.Quarantine {
-		return common.NewBasicError(ErrEarlyAnnouncement, nil)
+		return ErrEarlyAnnouncement
 	}
 	currTime := util.TimeToSecs(time.Now())
 	if currTime < t.CreationTime {
-		return common.NewBasicError(ErrEarlyUsage, nil,
+		return serrors.WithCtx(ErrEarlyUsage,
 			"now", util.SecsToCompact(currTime),
 			"creation", util.SecsToCompact(t.CreationTime))
 	} else if currTime > t.ExpirationTime {
-		return common.NewBasicError(ErrExpired, nil,
+		return serrors.WithCtx(ErrExpired,
 			"now", util.SecsToCompact(currTime),
 			"expiration", util.SecsToCompact(t.ExpirationTime))
 	} else if t.Version == maxTRC.Version {
 		return nil
 	} else if t.Version+1 != maxTRC.Version {
-		return common.NewBasicError(
-			ErrInactiveVersion, nil,
+		return serrors.WithCtx(ErrInactiveVersion,
 			"expected", fmt.Sprintf("%d or %d", maxTRC.Version-1, maxTRC.Version),
-			"actual", t.Version,
-		)
+			"actual", t.Version)
+
 	} else if currTime > maxTRC.CreationTime+maxTRC.GracePeriod {
-		return common.NewBasicError(ErrGracePeriodPassed, nil, "now", util.SecsToCompact(currTime),
+		return serrors.WithCtx(ErrGracePeriodPassed, "now", util.SecsToCompact(currTime),
 			"expiration", util.SecsToCompact(maxTRC.CreationTime+maxTRC.GracePeriod))
 	}
 	return nil
@@ -264,11 +264,11 @@ func (t *TRC) IsActive(maxTRC *TRC) error {
 func (t *TRC) Sign(name string, signKey common.RawBytes, signAlgo string) error {
 	sigInput, err := t.sigPack()
 	if err != nil {
-		return common.NewBasicError("Unable to pack TRC for signing", err)
+		return serrors.WrapStr("Unable to pack TRC for signing", err)
 	}
 	sig, err := scrypto.Sign(sigInput, signKey, signAlgo)
 	if err != nil {
-		return common.NewBasicError("Unable to create signature", err)
+		return serrors.WrapStr("Unable to create signature", err)
 	}
 	t.Signatures[name] = sig
 	return nil
@@ -286,21 +286,20 @@ func (t *TRC) Verify(trust *TRC) (*TRCVerResult, error) {
 // verifyUpdate checks the validity of a updated TRC.
 func (t *TRC) verifyUpdate(old *TRC) (*TRCVerResult, error) {
 	if old.ISD != t.ISD {
-		return nil, common.NewBasicError(ErrInvalidISD, nil, "expected", old.ISD, "actual", t.ISD)
+		return nil, serrors.WithCtx(ErrInvalidISD, "expected", old.ISD, "actual", t.ISD)
 	}
 	if old.Version+1 != t.Version {
-		return nil, common.NewBasicError(ErrInvalidVersion, nil,
+		return nil, serrors.WithCtx(ErrInvalidVersion,
 			"expected", old.Version+1, "actual", t.Version)
 	}
 	if t.CreationTime < old.CreationTime+old.GracePeriod {
-		return nil, common.NewBasicError(
-			ErrInvalidCreationTime, nil,
+		return nil, serrors.WithCtx(ErrInvalidCreationTime,
 			"expected >", util.SecsToCompact(old.CreationTime+old.GracePeriod),
-			"actual", util.SecsToCompact(t.CreationTime),
-		)
+			"actual", util.SecsToCompact(t.CreationTime))
+
 	}
 	if t.Quarantine || old.Quarantine {
-		return nil, common.NewBasicError(ErrEarlyAnnouncement, nil)
+		return nil, ErrEarlyAnnouncement
 	}
 	return t.verifySignatures(old)
 }
@@ -316,7 +315,7 @@ func (t *TRC) verifySignatures(old *TRC) (*TRCVerResult, error) {
 	for signer, coreAS := range old.CoreASes {
 		sig, ok := t.Signatures[signer.String()]
 		if !ok {
-			tvr.Failed[signer] = common.NewBasicError(ErrSignatureMissing, nil, "as", signer)
+			tvr.Failed[signer] = serrors.WithCtx(ErrSignatureMissing, "as", signer)
 			continue
 		}
 		err = scrypto.Verify(sigInput, sig, coreAS.OnlineKey, coreAS.OnlineKeyAlg)
@@ -327,7 +326,7 @@ func (t *TRC) verifySignatures(old *TRC) (*TRCVerResult, error) {
 		}
 	}
 	if !tvr.QuorumOk() {
-		return tvr, common.NewBasicError(ErrInvalidQuorum, nil,
+		return tvr, serrors.WithCtx(ErrInvalidQuorum,
 			"expected", old.QuorumTRC, "actual", len(tvr.Verified))
 	}
 	return tvr, nil
@@ -342,7 +341,7 @@ func (t *TRC) verifyXSig(trust *TRC) error {
 // sigPack creates a sorted json object of all fields, except for the signature map.
 func (t *TRC) sigPack() (common.RawBytes, error) {
 	if t.Version.IsLatest() {
-		return nil, common.NewBasicError(ErrReservedVersion, nil)
+		return nil, ErrReservedVersion
 	}
 	m := make(map[string]interface{})
 	m[certLogs] = t.CertLogs
@@ -361,7 +360,7 @@ func (t *TRC) sigPack() (common.RawBytes, error) {
 	m[coreASes] = t.CoreASes
 	sigInput, err := json.Marshal(m)
 	if err != nil {
-		return nil, common.NewBasicError(ErrUnableSigPack, err)
+		return nil, serrors.Wrap(ErrUnableSigPack, err)
 	}
 	return sigInput, nil
 }
@@ -395,11 +394,11 @@ func (t *TRC) JSON(indent bool) ([]byte, error) {
 func (t *TRC) JSONEquals(other *TRC) (bool, error) {
 	tj, err := t.JSON(false)
 	if err != nil {
-		return false, common.NewBasicError("Unable to build JSON", err)
+		return false, serrors.WrapStr("Unable to build JSON", err)
 	}
 	oj, err := other.JSON(false)
 	if err != nil {
-		return false, common.NewBasicError("Unable to build JSON", err)
+		return false, serrors.WrapStr("Unable to build JSON", err)
 	}
 	return bytes.Compare(tj, oj) == 0, nil
 }
@@ -412,7 +411,7 @@ func (t *TRC) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	if err = validateFields(m, trcFields); err != nil {
-		return common.NewBasicError(ErrValidatingFields, err)
+		return serrors.Wrap(ErrValidatingFields, err)
 	}
 	// XXX(roosd): Unmarshalling twice might affect performance.
 	// After switching to go 1.10 we might make use of

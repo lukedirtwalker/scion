@@ -24,6 +24,7 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/overlay"
 	"github.com/scionproto/scion/go/lib/scmp"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet/internal/metrics"
 	"github.com/scionproto/scion/go/lib/sock/reliable"
 )
@@ -103,7 +104,7 @@ type scmpHandler struct {
 func (h *scmpHandler) Handle(pkt *SCIONPacket) error {
 	hdr, ok := pkt.L4Header.(*scmp.Hdr)
 	if !ok {
-		return common.NewBasicError("scmp handler invoked with non-scmp packet", nil, "pkt", pkt)
+		return serrors.New("scmp handler invoked with non-scmp packet", "pkt", pkt)
 	}
 	if hdr.Class != scmp.C_General {
 		metrics.M.SCMPErrors().Inc()
@@ -124,12 +125,12 @@ func (h *scmpHandler) Handle(pkt *SCIONPacket) error {
 func (h *scmpHandler) handleSCMPRev(hdr *scmp.Hdr, pkt *SCIONPacket) error {
 	scmpPayload, ok := pkt.Payload.(*scmp.Payload)
 	if !ok {
-		return common.NewBasicError("Unable to type assert payload to SCMP payload", nil,
+		return serrors.New("Unable to type assert payload to SCMP payload",
 			"type", common.TypeOf(pkt.Payload))
 	}
 	info, ok := scmpPayload.Info.(*scmp.InfoRevocation)
 	if !ok {
-		return common.NewBasicError("Unable to type assert SCMP Info to SCMP Revocation Info", nil,
+		return serrors.New("Unable to type assert SCMP Info to SCMP Revocation Info",
 			"type", common.TypeOf(scmpPayload.Info))
 	}
 	log.Info("Received SCMP revocation", "header", hdr.String(), "payload", scmpPayload.String(),

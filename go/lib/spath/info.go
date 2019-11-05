@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -55,7 +56,7 @@ type InfoField struct {
 
 func InfoFFromRaw(b []byte) (*InfoField, error) {
 	if len(b) < InfoFieldLength {
-		return nil, common.NewBasicError(ErrInfoFTooShort, nil,
+		return nil, serrors.WithCtx(ErrInfoFTooShort,
 			"min", InfoFieldLength, "actual", len(b))
 	}
 	inf := &InfoField{}

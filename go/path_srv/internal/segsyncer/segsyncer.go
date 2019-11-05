@@ -24,7 +24,6 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/infra"
@@ -70,7 +69,7 @@ func StartAll(args handlers.HandlerArgs, msger infra.Messenger) ([]*periodic.Run
 	}
 	coreASes, err := args.ASInspector.ByAttributes(ctx, args.IA.I, primaryArgs)
 	if err != nil {
-		return nil, common.NewBasicError("Failed to get local core ASes", err)
+		return nil, serrors.WrapStr("Failed to get local core ASes", err)
 	}
 
 	segSyncers := make([]*periodic.Runner, 0, len(coreASes)-1)

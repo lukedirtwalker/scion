@@ -25,6 +25,7 @@ import (
 
 	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/scrypto"
+	"github.com/scionproto/scion/go/lib/serrors"
 )
 
 type Conf struct {
@@ -125,12 +126,12 @@ func loadMasterCond(path string, load bool) (Master, error) {
 func LoadKey(file string, algo string) (common.RawBytes, error) {
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, common.NewBasicError(ErrOpen, err)
+		return nil, serrors.Wrap(ErrOpen, err)
 	}
 	dbuf := make([]byte, base64.StdEncoding.DecodedLen(len(b)))
 	n, err := base64.StdEncoding.Decode(dbuf, b)
 	if err != nil {
-		return nil, common.NewBasicError(ErrParse, err)
+		return nil, serrors.Wrap(ErrParse, err)
 	}
 	dbuf = dbuf[:n]
 	switch strings.ToLower(algo) {
@@ -139,7 +140,7 @@ func LoadKey(file string, algo string) (common.RawBytes, error) {
 	case scrypto.Ed25519:
 		return common.RawBytes(ed25519.NewKeyFromSeed(dbuf)), nil
 	default:
-		return nil, common.NewBasicError(ErrUnknown, nil, "algo", algo)
+		return nil, serrors.WithCtx(ErrUnknown, "algo", algo)
 	}
 }
 

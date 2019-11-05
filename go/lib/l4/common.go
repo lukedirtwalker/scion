@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	"github.com/scionproto/scion/go/lib/common"
+	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
 
@@ -65,7 +66,7 @@ func CheckCSum(h L4Header, addr, pld common.RawBytes) error {
 	}
 	exp := h.GetCSum()
 	if bytes.Compare(exp, calc) != 0 {
-		return common.NewBasicError(ErrInvalidChksum, nil,
+		return serrors.WithCtx(ErrInvalidChksum,
 			"expected", exp, "actual", calc, "proto", h.L4Type())
 	}
 	return nil
