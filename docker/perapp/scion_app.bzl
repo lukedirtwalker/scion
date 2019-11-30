@@ -8,7 +8,6 @@ load("@package_bundle//file:packages.bzl", "packages")
 
 # Defines a common base image for all app images.
 def scion_app_base():
-
     # Debian packages to install.
     debs = [
         packages["libc6"],

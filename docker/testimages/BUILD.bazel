@@ -1,5 +1,5 @@
 load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
-load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_bundle")
+load("@io_bazel_rules_docker//container:container.bzl", "container_bundle", "container_image")
 load("@package_bundle//file:packages.bzl", "packages")
 
 pkg_tar(
@@ -7,15 +7,15 @@ pkg_tar(
     srcs = [
         "@com_github_anapaya_su_exec//:su-exec",
     ],
+    mode = "0755",
     remap_paths = {
         "": "sbin",
     },
-    mode = "0755",
 )
 
 pkg_tar(
     name = "sig_docker_files",
-    srcs = ["//go/sig:sig"],
+    srcs = ["//go/sig"],
     package_dir = "/app",
 )
 
@@ -33,7 +33,6 @@ pkg_tar(
 container_image(
     name = "scion_sig_acceptance_nocap",
     base = "@ubuntu16//image",
-    env = {"TZ": "UTC"},
     debs = [
         packages["libc6"],
         # needed by su-exec
@@ -49,15 +48,15 @@ container_image(
         packages["libelf1"],
         packages["libmnl0"],
     ],
+    entrypoint = ["./sig.sh"],
+    env = {"TZ": "UTC"},
+    stamp = True,
     tars = [
         ":app_base_files",
         ":sig_docker_files",
         ":sig_entrypoint",
-
     ],
-    stamp = True,
     workdir = "/share",
-    entrypoint = ["./sig.sh"],
 )
 
 filegroup(
@@ -84,19 +83,19 @@ pkg_tar(
 pkg_tar(
     name = "tester_binaries",
     srcs = [
-        "//go/integration/cert_req:cert_req",
-        "//go/integration/end2end:end2end",
-        "//go/examples/pingpong:pingpong",
-        "//go/tools/scmp:scmp",
-        "//go/tools/showpaths:showpaths",
+        "//go/examples/pingpong",
+        "//go/integration/cert_req",
+        "//go/integration/end2end",
+        "//go/tools/scmp",
+        "//go/tools/showpaths",
     ],
-    package_dir="/share/bin",
+    package_dir = "/share/bin",
 )
 
 container_image(
     name = "scion_tester",
     base = "@ubuntu16//image",
-    env = {"TZ": "UTC"},
+    cmd = "tail -f /dev/null",
     debs = [
         packages["libc6"],
         # needed by su-exec
@@ -112,15 +111,15 @@ container_image(
         packages["libelf1"],
         packages["libmnl0"],
     ],
+    env = {"TZ": "UTC"},
+    stamp = True,
     tars = [
         ":app_base_files",
         ":tester_shared_scripts",
         ":tester_integration_scripts",
         ":tester_binaries",
     ],
-    stamp = True,
     workdir = "/share",
-    cmd = "tail -f /dev/null"
 )
 
 container_bundle(

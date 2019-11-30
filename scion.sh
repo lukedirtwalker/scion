@@ -270,6 +270,7 @@ cmd_lint() {
     py_lint || ret=1
     go_lint || ret=1
     md_lint || ret=1
+    bazel_lint || ret=1
     return $ret
 }
 
@@ -330,6 +331,11 @@ md_lint() {
     lint_header "markdown"
     lint_step "mdlint"
     ./tools/mdlint
+}
+
+bazel_lint() {
+    lint_header "bazel"
+    bazel run //:buildifier_diff
 }
 
 lint_header() {

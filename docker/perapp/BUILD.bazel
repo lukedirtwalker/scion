@@ -5,64 +5,83 @@ scion_app_base()
 
 scion_app_images(
     name = "border",
-    binary = "//go/border:border",
     appdir = "/app",
+    binary = "//go/border:border",
+    entrypoint = [
+        "/app/border",
+        "-config",
+        "/share/conf/br.toml",
+    ],
     workdir = "/share",
-    entrypoint = ["/app/border", "-config", "/share/conf/br.toml"],
 )
-
 
 scion_app_images(
     name = "cs",
-    binary = "//go/cs:cs",
     appdir = "/app",
+    binary = "//go/cs:cs",
+    entrypoint = [
+        "/app/cs",
+        "-config",
+        "/share/conf/cs.toml",
+    ],
     workdir = "/share",
-    entrypoint = ["/app/cs", "-config", "/share/conf/cs.toml"],
 )
 
 scion_app_images(
     name = "dispatcher_go",
-    binary = "//go/godispatcher:godispatcher",
     appdir = "/app",
+    binary = "//go/godispatcher:godispatcher",
+    entrypoint = [
+        "/app/godispatcher",
+        "-config",
+        "/share/conf/disp.toml",
+    ],
     workdir = "/share",
-    entrypoint = ["/app/godispatcher", "-config", "/share/conf/disp.toml"],
 )
 
 scion_app_images(
     name = "sciond",
-    binary = "//go/sciond:sciond",
     appdir = "/app",
+    binary = "//go/sciond:sciond",
+    entrypoint = [
+        "/app/sciond",
+        "-config",
+        "/share/conf/sd.toml",
+    ],
     workdir = "/share",
-    entrypoint = ["/app/sciond", "-config", "/share/conf/sd.toml"],
 )
 
 scion_app_images(
     name = "sig",
-    binary = "//go/sig:sig",
     appdir = "/app",
+    binary = "//go/sig:sig",
+    entrypoint = [
+        "/app/sig",
+        "-config",
+        "/share/conf/sig.toml",
+    ],
     workdir = "/share",
-    entrypoint = ["/app/sig", "-config", "/share/conf/sig.toml"],
 )
 
 # To generate the images: bazel run //docker/perapp:prod
 container_bundle(
     name = "prod",
     images = {
-        "scion_border:latest":        ":border_prod",
-        "scion_cs:latest":            ":cs_prod",
+        "scion_border:latest": ":border_prod",
+        "scion_cs:latest": ":cs_prod",
         "scion_dispatcher_go:latest": ":dispatcher_go_prod",
-        "scion_sciond:latest":        ":sciond_prod",
-        "scion_sig_nocap:latest":     ":sig_prod",
+        "scion_sciond:latest": ":sciond_prod",
+        "scion_sig_nocap:latest": ":sig_prod",
     },
 )
 
 container_bundle(
     name = "debug",
     images = {
-        "scion_border_debug:latest":        ":border_debug",
-        "scion_cs_debug:latest":            ":cs_debug",
+        "scion_border_debug:latest": ":border_debug",
+        "scion_cs_debug:latest": ":cs_debug",
         "scion_dispatcher_go_debug:latest": ":dispatcher_go_debug",
-        "scion_sciond_debug:latest":        ":sciond_debug",
-        "scion_sig_nocap_debug:latest":     ":sig_debug",
+        "scion_sciond_debug:latest": ":sciond_debug",
+        "scion_sig_nocap_debug:latest": ":sig_debug",
     },
 )

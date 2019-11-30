@@ -61,6 +61,7 @@ go_test(
     ],
     data = [
         "//go/lib/infra/modules/trust/testdata:crypto_tar",
+        "//go/lib/infra/modules/trust/testdata:data",
     ],
     embed = [":go_default_library"],
     deps = [
