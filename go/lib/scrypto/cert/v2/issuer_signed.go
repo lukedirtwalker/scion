@@ -187,7 +187,7 @@ type CritIssuer struct{}
 
 // UnmarshalJSON checks that all expected elements and no other are in the array.
 func (CritIssuer) UnmarshalJSON(b []byte) error {
-	return checkCrit(b, critIssuerFields)
+	return scrypto.CheckCrit(b, critIssuerFields)
 }
 
 // MarshalJSON returns a json array with the expected crit elements.
