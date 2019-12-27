@@ -7,7 +7,6 @@ package mock_seghandler
 import (
 	context "context"
 	gomock "github.com/golang/mock/gomock"
-	path_mgmt "github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	seghandler "github.com/scionproto/scion/go/lib/infra/modules/seghandler"
 	segverifier "github.com/scionproto/scion/go/lib/infra/modules/segverifier"
 	net "net"
@@ -35,20 +34,6 @@ func NewMockStorage(ctrl *gomock.Controller) *MockStorage {
 // EXPECT returns an object that allows the caller to indicate expected use
 func (m *MockStorage) EXPECT() *MockStorageMockRecorder {
 	return m.recorder
-}
-
-// StoreRevs mocks base method
-func (m *MockStorage) StoreRevs(arg0 context.Context, arg1 []*path_mgmt.SignedRevInfo) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "StoreRevs", arg0, arg1)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// StoreRevs indicates an expected call of StoreRevs
-func (mr *MockStorageMockRecorder) StoreRevs(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StoreRevs", reflect.TypeOf((*MockStorage)(nil).StoreRevs), arg0, arg1)
 }
 
 // StoreSegs mocks base method

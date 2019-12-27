@@ -16,24 +16,18 @@ package segfetcher_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/scionproto/scion/go/lib/addr"
 	"github.com/scionproto/scion/go/lib/common"
-	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
-	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher"
 	"github.com/scionproto/scion/go/lib/pathdb/mock_pathdb"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
-	"github.com/scionproto/scion/go/lib/revcache"
-	"github.com/scionproto/scion/go/lib/revcache/mock_revcache"
 	"github.com/scionproto/scion/go/lib/xtest/graph"
 	"github.com/scionproto/scion/go/lib/xtest/matchers"
 	"github.com/scionproto/scion/go/proto"
@@ -77,7 +71,6 @@ type resolverTest struct {
 	Req              segfetcher.RequestSet
 	Segs             segfetcher.Segments
 	ExpectCalls      func(db *mock_pathdb.MockPathDB)
-	ExpectRevcache   func(t *testing.T, revCache *mock_revcache.MockRevCache)
 	ExpectedSegments segfetcher.Segments
 	ExpectedReqSet   segfetcher.RequestSet
 }
@@ -88,13 +81,7 @@ func (rt resolverTest) run(t *testing.T) {
 
 	db := mock_pathdb.NewMockPathDB(ctrl)
 	rt.ExpectCalls(db)
-	revCache := mock_revcache.NewMockRevCache(ctrl)
-	if rt.ExpectRevcache != nil {
-		rt.ExpectRevcache(t, revCache)
-	} else {
-		revCache.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes()
-	}
-	resolver := segfetcher.NewResolver(db, revCache, neverLocal{})
+	resolver := segfetcher.NewResolver(db, neverLocal{})
 	segs, remainingReqs, err := resolver.Resolve(context.Background(), rt.Segs, rt.Req)
 	assert.Equal(t, rt.ExpectedSegments, segs)
 	assert.Equal(t, rt.ExpectedReqSet, remainingReqs)
@@ -754,96 +741,6 @@ func TestResolverCacheBypass(t *testing.T) {
 	}
 }
 
-func TestResolverWithRevocations(t *testing.T) {
-	rootCtrl := gomock.NewController(t)
-	defer rootCtrl.Finish()
-	tg := newTestGraph(rootCtrl)
-	futureT := time.Now().Add(2 * time.Minute)
-
-	revoke := func(t *testing.T, revCache *mock_revcache.MockRevCache, key revcache.Key) {
-		ksMatcher := keySetContains{keys: []revcache.Key{key}}
-		srev, err := path_mgmt.NewSignedRevInfo(&path_mgmt.RevInfo{}, infra.NullSigner)
-		require.NoError(t, err)
-		revCache.EXPECT().Get(gomock.Any(), ksMatcher).
-			Return(revcache.Revocations{key: srev}, nil)
-	}
-	tests := map[string]resolverTest{
-		"Up wildcard (cached)": {
-			Req: segfetcher.RequestSet{
-				Up: segfetcher.Request{Src: non_core_111, Dst: isd1},
-			},
-			ExpectCalls: func(db *mock_pathdb.MockPathDB) {
-				// cached up segments
-				db.EXPECT().GetNextQuery(gomock.Any(), gomock.Eq(non_core_111),
-					gomock.Eq(isd1), gomock.Any()).Return(futureT, nil)
-				db.EXPECT().Get(gomock.Any(), matchers.EqParams(&query.Params{
-					SegTypes: []proto.PathSegType{proto.PathSegType_up},
-					StartsAt: []addr.IA{isd1}, EndsAt: []addr.IA{non_core_111},
-				})).Return(resultsFromSegs(tg.seg120_111, tg.seg130_111), nil)
-			},
-			ExpectRevcache: func(t *testing.T, revCache *mock_revcache.MockRevCache) {
-				key111_120 := revcache.Key{IA: non_core_111, IfId: graph.If_111_B_120_X}
-				key111_130 := revcache.Key{IA: non_core_111, IfId: graph.If_111_A_130_B}
-				revoke(t, revCache, key111_120)
-				revoke(t, revCache, key111_130)
-				revCache.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes()
-			},
-			// On the initial fetch, if everything is revoked, just try again
-			// and fetch it.
-			ExpectedSegments: segfetcher.Segments{},
-			ExpectedReqSet: segfetcher.RequestSet{
-				Up: segfetcher.Request{Src: non_core_111, Dst: isd1, State: segfetcher.Fetch},
-			},
-		},
-		"Core (cached) with revocations returns full result": {
-			Req: segfetcher.RequestSet{
-				Cores: []segfetcher.Request{
-					{Src: core_210, Dst: core_110},
-					{Src: core_210, Dst: core_120},
-					{Src: core_210, Dst: core_130},
-				},
-			},
-			ExpectCalls: func(db *mock_pathdb.MockPathDB) {
-				db.EXPECT().GetNextQuery(gomock.Any(), gomock.Eq(core_210),
-					gomock.Eq(core_110), gomock.Any()).Return(futureT, nil)
-				db.EXPECT().GetNextQuery(gomock.Any(), gomock.Eq(core_210),
-					gomock.Eq(core_120), gomock.Any()).Return(futureT, nil)
-				db.EXPECT().GetNextQuery(gomock.Any(), gomock.Eq(core_210),
-					gomock.Eq(core_130), gomock.Any()).Return(futureT, nil)
-				db.EXPECT().Get(gomock.Any(), matchers.EqParams(&query.Params{
-					SegTypes: []proto.PathSegType{proto.PathSegType_core},
-					StartsAt: []addr.IA{core_130}, EndsAt: []addr.IA{core_210},
-				})).Return(resultsFromSegs(tg.seg210_130, tg.seg210_130_2), nil)
-				// Other calls return 0
-				db.EXPECT().Get(gomock.Any(), gomock.Any()).Times(2)
-			},
-			ExpectRevcache: func(t *testing.T, revCache *mock_revcache.MockRevCache) {
-				key110 := revcache.Key{IA: core_110, IfId: graph.If_110_X_130_A}
-				ksMatcher := keySetContains{keys: []revcache.Key{key110}}
-				srev, err := path_mgmt.NewSignedRevInfo(&path_mgmt.RevInfo{}, infra.NullSigner)
-				require.NoError(t, err)
-				revCache.EXPECT().Get(gomock.Any(), ksMatcher).Return(revcache.Revocations{
-					key110: srev,
-				}, nil)
-				revCache.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes()
-			},
-			ExpectedSegments: segfetcher.Segments{
-				Core: seg.Segments{tg.seg210_130, tg.seg210_130_2},
-			},
-			ExpectedReqSet: segfetcher.RequestSet{
-				Cores: []segfetcher.Request{
-					{Src: core_210, Dst: core_110, State: segfetcher.Loaded},
-					{Src: core_210, Dst: core_120, State: segfetcher.Loaded},
-					{Src: core_210, Dst: core_130, State: segfetcher.Loaded},
-				},
-			},
-		},
-	}
-	for name, test := range tests {
-		t.Run(name, test.run)
-	}
-}
-
 func resultsFromSegs(segs ...*seg.PathSegment) query.Results {
 	results := make(query.Results, 0, len(segs))
 	for _, seg := range segs {
@@ -853,27 +750,6 @@ func resultsFromSegs(segs ...*seg.PathSegment) query.Results {
 		})
 	}
 	return results
-}
-
-type keySetContains struct {
-	keys []revcache.Key
-}
-
-func (m keySetContains) Matches(other interface{}) bool {
-	ks, ok := other.(revcache.KeySet)
-	if !ok {
-		return false
-	}
-	for _, k := range m.keys {
-		if _, ok := ks[k]; !ok {
-			return false
-		}
-	}
-	return true
-}
-
-func (m keySetContains) String() string {
-	return fmt.Sprintf("revcache.KeySet containing %v", m.keys)
 }
 
 type neverLocal struct{}

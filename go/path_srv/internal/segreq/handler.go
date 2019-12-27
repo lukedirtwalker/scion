@@ -24,15 +24,13 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathdb"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/path_srv/internal/handlers"
 	"github.com/scionproto/scion/go/path_srv/internal/metrics"
 	"github.com/scionproto/scion/go/proto"
 )
 
 type handler struct {
-	fetcher  *segfetcher.Fetcher
-	revCache revcache.RevCache
+	fetcher *segfetcher.Fetcher
 }
 
 func NewHandler(args handlers.HandlerArgs) infra.Handler {
@@ -46,14 +44,12 @@ func NewHandler(args handlers.HandlerArgs) infra.Handler {
 			ASInspector:         args.ASInspector,
 			VerificationFactory: args.VerifierFactory,
 			PathDB:              args.PathDB,
-			RevCache:            args.RevCache,
 			RequestAPI:          args.SegRequestAPI,
 			DstProvider:         createDstProvider(args, core),
 			Splitter:            &Splitter{ASInspector: args.ASInspector},
 			MetricsNamespace:    metrics.Namespace,
 			LocalInfo:           localInfo,
 		}.New(),
-		revCache: args.RevCache,
 	}
 }
 
@@ -92,16 +88,10 @@ func (h *handler) Handle(request *infra.Request) *infra.HandlerResult {
 		return infra.MetricsErrInternal
 	}
 	labels.SegType = metrics.DetermineReplyType(segs)
-	revs, err := revcache.RelevantRevInfos(ctx, h.revCache, segs.Up, segs.Core, segs.Down)
-	if err != nil {
-		logger.Warn("[segReqHandler] Failed to find relevant revocations for reply", "err", err)
-		// the client might still be able to use the segments so continue here.
-	}
 	reply := &path_mgmt.SegReply{
 		Req: segReq,
 		Recs: &path_mgmt.SegRecs{
-			Recs:      segsToRecs(ctx, segs),
-			SRevInfos: revs,
+			Recs: segsToRecs(ctx, segs),
 		},
 	}
 	if err = rw.SendSegReply(ctx, reply); err != nil {
@@ -149,8 +139,7 @@ func createPathDB(db pathdb.PathDB, localInfo LocalInfo) pathdb.PathDB {
 
 func createDstProvider(args handlers.HandlerArgs, core bool) segfetcher.DstProvider {
 	selector := SegSelector{
-		PathDB:   args.PathDB,
-		RevCache: args.RevCache,
+		PathDB: args.PathDB,
 	}
 	if core {
 		return &coreDstProvider{

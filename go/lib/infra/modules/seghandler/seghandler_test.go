@@ -169,8 +169,6 @@ func TestReplyHandlerNoErrors(t *testing.T) {
 		gomock.Eq([]*seghandler.SegWithHP{seg2, seg3})).
 		Return(seghandler.SegStats{InsertedSegs: []string{"seg2", "seg3"}}, nil).
 		After(seg1Store)
-	storage.EXPECT().StoreRevs(gomock.Any(),
-		gomock.Eq([]*path_mgmt.SignedRevInfo{rev1})).After(seg1Store)
 
 	r := handler.Handle(ctx, segs, nil, earlyTrigger)
 	verified <- segverifier.UnitResult{
@@ -200,7 +198,6 @@ func TestReplyHandlerNoErrors(t *testing.T) {
 	assert.Zero(t, stats.SegsUpdated())
 	expectedRevs := []*path_mgmt.SignedRevInfo{rev1}
 	assert.ElementsMatch(t, expectedRevs, stats.VerifiedRevs)
-	assert.ElementsMatch(t, expectedRevs, stats.StoredRevs)
 }
 
 func TestReplyHandlerAllVerifiedInEarlyInterval(t *testing.T) {
@@ -231,8 +228,6 @@ func TestReplyHandlerAllVerifiedInEarlyInterval(t *testing.T) {
 	storage.EXPECT().StoreSegs(gomock.Any(),
 		gomock.Eq([]*seghandler.SegWithHP{seg1, seg2})).
 		Return(seghandler.SegStats{InsertedSegs: []string{"seg1", "seg2"}}, nil)
-	storage.EXPECT().StoreRevs(gomock.Any(),
-		gomock.Eq([]*path_mgmt.SignedRevInfo{rev1}))
 
 	r := handler.Handle(ctx, segs, nil, earlyTrigger)
 	verified <- segverifier.UnitResult{
@@ -256,7 +251,6 @@ func TestReplyHandlerAllVerifiedInEarlyInterval(t *testing.T) {
 	assert.Zero(t, stats.SegsUpdated())
 	expectedRevs := []*path_mgmt.SignedRevInfo{rev1}
 	assert.ElementsMatch(t, expectedRevs, stats.VerifiedRevs)
-	assert.ElementsMatch(t, expectedRevs, stats.StoredRevs)
 }
 
 func TestReplyHandlerEarlyTriggerStorageError(t *testing.T) {
@@ -291,8 +285,6 @@ func TestReplyHandlerEarlyTriggerStorageError(t *testing.T) {
 		gomock.Eq([]*seghandler.SegWithHP{seg1, seg2})).
 		Return(seghandler.SegStats{InsertedSegs: []string{"seg1", "seg2"}}, nil).
 		After(seg1Store)
-	storage.EXPECT().StoreRevs(gomock.Any(),
-		gomock.Eq([]*path_mgmt.SignedRevInfo{rev1}))
 
 	r := handler.Handle(ctx, segs, nil, earlyTrigger)
 	verified <- segverifier.UnitResult{
@@ -318,7 +310,6 @@ func TestReplyHandlerEarlyTriggerStorageError(t *testing.T) {
 	assert.Zero(t, stats.SegsUpdated())
 	expectedRevs := []*path_mgmt.SignedRevInfo{rev1}
 	assert.ElementsMatch(t, expectedRevs, stats.VerifiedRevs)
-	assert.ElementsMatch(t, expectedRevs, stats.StoredRevs)
 }
 
 func TestReplyHandlerStorageError(t *testing.T) {

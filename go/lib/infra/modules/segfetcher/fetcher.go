@@ -27,7 +27,6 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/seghandler"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathdb"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/serrors"
 )
 
@@ -62,8 +61,6 @@ type FetcherConfig struct {
 	ASInspector infra.ASInspector
 	// PathDB is the path db to use.
 	PathDB pathdb.PathDB
-	// RevCache is the revocation cache to use.
-	RevCache revcache.RevCache
 	// RequestAPI is the request api to use.
 	RequestAPI RequestAPI
 	// DstProvider provides destinations to fetch segments from
@@ -86,15 +83,14 @@ func (cfg FetcherConfig) New() *Fetcher {
 	return &Fetcher{
 		Validator: cfg.Validator,
 		Splitter:  cfg.Splitter,
-		Resolver:  NewResolver(cfg.PathDB, cfg.RevCache, cfg.LocalInfo),
+		Resolver:  NewResolver(cfg.PathDB, cfg.LocalInfo),
 		Requester: &DefaultRequester{API: cfg.RequestAPI, DstProvider: cfg.DstProvider},
 		ReplyHandler: &seghandler.Handler{
 			Verifier: &seghandler.DefaultVerifier{Verifier: cfg.VerificationFactory.NewVerifier()},
-			Storage:  &seghandler.DefaultStorage{PathDB: cfg.PathDB, RevCache: cfg.RevCache},
+			Storage:  &seghandler.DefaultStorage{PathDB: cfg.PathDB},
 		},
 		PathDB:                cfg.PathDB,
 		QueryInterval:         cfg.QueryInterval,
-		NextQueryCleaner:      NextQueryCleaner{PathDB: cfg.PathDB},
 		CryptoLookupAtLocalCS: cfg.SciondMode,
 		metrics:               metrics.NewFetcher(cfg.MetricsNamespace),
 	}
@@ -109,7 +105,6 @@ type Fetcher struct {
 	ReplyHandler          ReplyHandler
 	PathDB                pathdb.PathDB
 	QueryInterval         time.Duration
-	NextQueryCleaner      NextQueryCleaner
 	CryptoLookupAtLocalCS bool
 	metrics               metrics.Fetcher
 }

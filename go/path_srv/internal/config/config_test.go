@@ -49,7 +49,6 @@ func InitTestConfig(cfg *Config) {
 func InitTestPSConfig(cfg *PSConfig) {
 	cfg.SegSync = true
 	pathstoragetest.InitTestPathDBConf(&cfg.PathDB)
-	pathstoragetest.InitTestRevCacheConf(&cfg.RevCache)
 }
 
 func CheckTestConfig(t *testing.T, cfg *Config, id string) {
@@ -61,7 +60,6 @@ func CheckTestConfig(t *testing.T, cfg *Config, id string) {
 
 func CheckTestPSConfig(t *testing.T, cfg *PSConfig, id string) {
 	pathstoragetest.CheckTestPathDBConf(t, &cfg.PathDB, id)
-	pathstoragetest.CheckTestRevCacheConf(t, &cfg.RevCache)
 	assert.False(t, cfg.SegSync)
 	assert.Equal(t, DefaultQueryInterval, cfg.QueryInterval.Duration)
 	assert.Equal(t, DefaultCryptoSyncInterval, cfg.CryptoSyncInterval.Duration)

@@ -37,14 +37,12 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/messenger"
 	"github.com/scionproto/scion/go/lib/infra/modules/idiscovery"
 	"github.com/scionproto/scion/go/lib/infra/modules/itopo"
-	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher"
 	"github.com/scionproto/scion/go/lib/infra/modules/trust/v2"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathdb"
 	"github.com/scionproto/scion/go/lib/pathstorage"
 	"github.com/scionproto/scion/go/lib/periodic"
 	"github.com/scionproto/scion/go/lib/prom"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 	"github.com/scionproto/scion/go/proto"
@@ -92,13 +90,12 @@ func realMain() int {
 		log.Crit("Unable to start topology fetcher", "err", err)
 		return 1
 	}
-	pathDB, revCache, err := pathstorage.NewPathStorage(cfg.SD.PathDB, cfg.SD.RevCache)
+	pathDB, err := pathstorage.NewPathStorage(cfg.SD.PathDB)
 	if err != nil {
 		log.Crit("Unable to initialize path storage", "err", err)
 		return 1
 	}
 	defer pathDB.Close()
-	defer revCache.Close()
 	tracer, trCloser, err := cfg.Tracing.NewTracer(cfg.General.ID)
 	if err != nil {
 		log.Crit("Unable to create tracer", "err", err)
@@ -173,7 +170,6 @@ func realMain() int {
 				pathDB,
 				trustStore,
 				verificationFactory{Provider: trustStore},
-				revCache,
 				cfg.SD,
 				itopo.Provider(),
 			),
@@ -184,17 +180,12 @@ func realMain() int {
 		proto.SCIONDMsg_Which_ifInfoRequest:      &servers.IFInfoRequestHandler{},
 		proto.SCIONDMsg_Which_serviceInfoRequest: &servers.SVCInfoRequestHandler{},
 		proto.SCIONDMsg_Which_revNotification: &servers.RevNotificationHandler{
-			RevCache:         revCache,
-			VerifierFactory:  verificationFactory{Provider: trustStore},
-			NextQueryCleaner: segfetcher.NextQueryCleaner{PathDB: pathDB},
+			VerifierFactory: verificationFactory{Provider: trustStore},
 		},
 	}
 	cleaner := periodic.Start(pathdb.NewCleaner(pathDB, "sd_segments"),
 		300*time.Second, 295*time.Second)
 	defer cleaner.Stop()
-	rcCleaner := periodic.Start(revcache.NewCleaner(revCache, "sd_revocation"),
-		10*time.Second, 10*time.Second)
-	defer rcCleaner.Stop()
 	// Start servers
 	rsockServer, shutdownF := NewServer("rsock", cfg.SD.Reliable, handlers)
 	defer shutdownF()

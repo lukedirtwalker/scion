@@ -43,8 +43,7 @@ func NewSyncHandler(args HandlerArgs) infra.Handler {
 					Verifier: args.VerifierFactory.NewVerifier(),
 				},
 				Storage: &seghandler.DefaultStorage{
-					PathDB:   args.PathDB,
-					RevCache: args.RevCache,
+					PathDB: args.PathDB,
 				},
 			},
 		}

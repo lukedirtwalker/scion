@@ -31,7 +31,6 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathdb"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/sciond"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet"
@@ -52,30 +51,27 @@ type TrustStore interface {
 }
 
 type Fetcher struct {
-	pathDB          pathdb.PathDB
-	revocationCache revcache.RevCache
-	topoProvider    topology.Provider
-	config          config.SDConfig
-	segfetcher      *segfetcher.Fetcher
+	pathDB       pathdb.PathDB
+	topoProvider topology.Provider
+	config       config.SDConfig
+	segfetcher   *segfetcher.Fetcher
 }
 
 func NewFetcher(messenger infra.Messenger, pathDB pathdb.PathDB, inspector infra.ASInspector,
-	verificationFactory infra.VerificationFactory, revCache revcache.RevCache, cfg config.SDConfig,
+	verificationFactory infra.VerificationFactory, cfg config.SDConfig,
 	topoProvider topology.Provider) *Fetcher {
 
 	localIA := topoProvider.Get().IA()
 	return &Fetcher{
-		pathDB:          pathDB,
-		revocationCache: revCache,
-		topoProvider:    topoProvider,
-		config:          cfg,
+		pathDB:       pathDB,
+		topoProvider: topoProvider,
+		config:       cfg,
 		segfetcher: segfetcher.FetcherConfig{
 			QueryInterval:       cfg.QueryInterval.Duration,
 			LocalIA:             localIA,
 			ASInspector:         inspector,
 			VerificationFactory: verificationFactory,
 			PathDB:              pathDB,
-			RevCache:            revCache,
 			RequestAPI:          messenger,
 			DstProvider:         &dstProvider{IA: localIA},
 			Splitter:            NewRequestSplitter(localIA, inspector),
@@ -153,10 +149,6 @@ func (f *fetcherHandler) GetPaths(ctx context.Context, req *sciond.PathReq,
 		return f.buildSCIONDReply(nil, 0, sciond.ErrorInternal), err
 	}
 	paths := f.buildPathsToAllDsts(req, segs.Up, segs.Core, segs.Down)
-	paths, err = f.filterRevokedPaths(ctx, paths)
-	if err != nil {
-		return f.buildSCIONDReply(nil, 0, sciond.ErrorInternal), err
-	}
 	if len(paths) == 0 {
 		return f.buildSCIONDReply(nil, req.MaxPaths, sciond.ErrorNoPaths), nil
 	}
@@ -241,35 +233,6 @@ func (f *fetcherHandler) buildSCIONDReplyEntries(paths []*combinator.Path,
 		}
 	}
 	return entries
-}
-
-// filterRevokedPaths returns a new slice containing only those paths that do
-// not have revoked interfaces in their forwarding path. Only the interfaces
-// that have traffic going through them are checked.
-func (f *fetcherHandler) filterRevokedPaths(ctx context.Context,
-	paths []*combinator.Path) ([]*combinator.Path, error) {
-
-	prevPaths := len(paths)
-	var newPaths []*combinator.Path
-	for _, path := range paths {
-		revoked := false
-		for _, iface := range path.Interfaces {
-			// cache automatically expires outdated revocations every second,
-			// so a cache hit implies revocation is still active.
-			revs, err := f.revocationCache.Get(ctx, revcache.SingleKey(iface.IA(), iface.IfID))
-			if err != nil {
-				f.logger.Error("Failed to get revocation", "err", err)
-				// continue, the client might still get some usable paths like this.
-			}
-			revoked = revoked || len(revs) > 0
-		}
-		if !revoked {
-			newPaths = append(newPaths, path)
-		}
-	}
-	f.logger.Trace("Filtered paths with revocations",
-		"paths", prevPaths, "nonrevoked", len(newPaths))
-	return newPaths, nil
 }
 
 func (f *fetcherHandler) buildPathsToAllDsts(req *sciond.PathReq,

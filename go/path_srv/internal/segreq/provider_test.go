@@ -23,46 +23,28 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/pathdb/mock_pathdb"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
-	"github.com/scionproto/scion/go/lib/revcache"
-	"github.com/scionproto/scion/go/lib/revcache/mock_revcache"
 	"github.com/scionproto/scion/go/path_srv/internal/segreq"
 )
 
 func TestSegSelector(t *testing.T) {
 	tests := map[string]struct {
-		PrepareMocks func(db *mock_pathdb.MockPathDB,
-			c *mock_revcache.MockRevCache) []*seg.PathSegment
+		PrepareMocks   func(db *mock_pathdb.MockPathDB) []*seg.PathSegment
 		ErrorAssertion require.ErrorAssertionFunc
 	}{
 		"PathDB error": {
-			PrepareMocks: func(db *mock_pathdb.MockPathDB,
-				c *mock_revcache.MockRevCache) []*seg.PathSegment {
+			PrepareMocks: func(db *mock_pathdb.MockPathDB) []*seg.PathSegment {
 
 				db.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, errors.New("test err"))
 				return nil
 			},
 			ErrorAssertion: require.Error,
 		},
-		"RevCacheError": {
-			PrepareMocks: func(db *mock_pathdb.MockPathDB,
-				c *mock_revcache.MockRevCache) []*seg.PathSegment {
-
-				results := query.Results{
-					&query.Result{Seg: &seg.PathSegment{}},
-				}
-				db.EXPECT().Get(gomock.Any(), gomock.Any()).Return(results, nil)
-				c.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, errors.New("test err"))
-				return nil
-			},
-			ErrorAssertion: require.Error,
-		},
 		"No segments": {
 			PrepareMocks: func(db *mock_pathdb.MockPathDB,
-				c *mock_revcache.MockRevCache) []*seg.PathSegment {
+			) []*seg.PathSegment {
 				db.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, nil)
 				return nil
 			},
@@ -70,7 +52,7 @@ func TestSegSelector(t *testing.T) {
 		},
 		"Segments": {
 			PrepareMocks: func(db *mock_pathdb.MockPathDB,
-				c *mock_revcache.MockRevCache) []*seg.PathSegment {
+			) []*seg.PathSegment {
 
 				seg1 := &seg.PathSegment{RawSData: []byte{1}}
 				seg2 := &seg.PathSegment{RawSData: []byte{2}}
@@ -81,11 +63,7 @@ func TestSegSelector(t *testing.T) {
 					&query.Result{Seg: seg3},
 				}
 				db.EXPECT().Get(gomock.Any(), gomock.Any()).Return(results, nil)
-				r1 := c.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, nil)
-				r2 := c.EXPECT().Get(gomock.Any(), gomock.Any()).Return(nil, nil).After(r1)
-				c.EXPECT().Get(gomock.Any(), gomock.Any()).Return(
-					revcache.Revocations{revcache.Key{}: &path_mgmt.SignedRevInfo{}}, nil).After(r2)
-				return []*seg.PathSegment{seg1, seg2}
+				return []*seg.PathSegment{seg1, seg2, seg3}
 			},
 			ErrorAssertion: require.NoError,
 		},
@@ -95,11 +73,9 @@ func TestSegSelector(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			db := mock_pathdb.NewMockPathDB(ctrl)
-			c := mock_revcache.NewMockRevCache(ctrl)
-			possibleSegs := test.PrepareMocks(db, c)
+			possibleSegs := test.PrepareMocks(db)
 			s := segreq.SegSelector{
-				PathDB:   db,
-				RevCache: c,
+				PathDB: db,
 			}
 			seg, err := s.SelectSeg(context.Background(), &query.Params{})
 			test.ErrorAssertion(t, err)

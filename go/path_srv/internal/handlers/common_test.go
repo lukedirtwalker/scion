@@ -26,10 +26,6 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/pathdb/mock_pathdb"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
-	"github.com/scionproto/scion/go/lib/revcache"
-	"github.com/scionproto/scion/go/lib/revcache/memrevcache"
-	"github.com/scionproto/scion/go/lib/revcache/mock_revcache"
-	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/xtest"
 	"github.com/scionproto/scion/go/lib/xtest/graph"
 )
@@ -79,46 +75,16 @@ func TestFetchDB(t *testing.T) {
 		defer ctrl.Finish()
 		g := newTestGraph(ctrl)
 		mPathDB := mock_pathdb.NewMockPathDB(ctrl)
-		mRevCache := mock_revcache.NewMockRevCache(ctrl)
 		h := baseHandler{
-			pathDB:   mPathDB,
-			revCache: mRevCache,
+			pathDB: mPathDB,
 		}
 		Convey("Segment returned if not expired or revoked", func() {
 			mPathDB.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]*query.Result{{
 				Seg: g.seg130_132,
 			}}, nil)
-			mRevCache.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes()
 			res, err := h.fetchSegsFromDB(context.Background(), nil)
 			xtest.FailOnErr(t, err)
 			SoMsg("Segments", res, ShouldResemble, []*seg.PathSegment{g.seg130_132})
-		})
-		Convey("No segments with on hop revocations returned", func() {
-			mPathDB.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]*query.Result{{
-				Seg: g.seg130_132,
-			}}, nil)
-			mRevCache.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes().Return(
-				revcache.Revocations{
-					revcache.Key{}: {}, // non empty map is enough.
-				},
-				nil,
-			)
-			res, err := h.fetchSegsFromDB(context.Background(), nil)
-			xtest.FailOnErr(t, err)
-			SoMsg("No segments expected", res, ShouldBeEmpty)
-		})
-		Convey("Error of revCache is handled", func() {
-			mPathDB.EXPECT().Get(gomock.Any(), gomock.Any()).Return([]*query.Result{{
-				Seg: g.seg130_132,
-			}}, nil)
-			expErr := serrors.New("TestError")
-			mRevCache.EXPECT().Get(gomock.Any(), gomock.Any()).AnyTimes().Return(
-				nil,
-				expErr,
-			)
-			res, err := h.fetchSegsFromDB(context.Background(), nil)
-			SoMsg("Error from revcache expected", err, ShouldNotBeNil)
-			SoMsg("No segments expected", res, ShouldBeEmpty)
 		})
 		// TODO(lukedirtwalker): Test for expired segs, and revoked peer ifaces
 	})
@@ -159,7 +125,6 @@ func TestFetchDBRetry(t *testing.T) {
 			h := baseHandler{
 				pathDB:   m,
 				retryInt: 100 * time.Microsecond,
-				revCache: memrevcache.New(),
 			}
 			_, err := h.fetchSegsFromDBRetry(context.Background(), nil)
 			SoMsg("Expect no err", err, ShouldBeNil)

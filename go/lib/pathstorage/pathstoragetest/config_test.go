@@ -35,14 +35,3 @@ func TestPathDBConfSample(t *testing.T) {
 	assert.Empty(t, meta.Undecoded())
 	CheckTestPathDBConf(t, &cfg, "test")
 }
-
-func TestRevCacheConfSample(t *testing.T) {
-	var sample bytes.Buffer
-	var cfg pathstorage.RevCacheConf
-	cfg.Sample(&sample, nil, map[string]string{config.ID: "test"})
-	InitTestRevCacheConf(&cfg)
-	meta, err := toml.Decode(sample.String(), &cfg)
-	assert.NoError(t, err)
-	assert.Empty(t, meta.Undecoded())
-	CheckTestRevCacheConf(t, &cfg)
-}

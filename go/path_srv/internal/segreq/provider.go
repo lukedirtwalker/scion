@@ -27,7 +27,6 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher"
 	"github.com/scionproto/scion/go/lib/pathdb"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet/addrutil"
 	"github.com/scionproto/scion/go/lib/topology"
@@ -41,7 +40,6 @@ const ErrNoConnectivity common.ErrMsg = "no connectivity to remote PS"
 // SegSelector selects segments to use for a connection to a remote server.
 type SegSelector struct {
 	PathDB   pathdb.PathDB
-	RevCache revcache.RevCache
 }
 
 // SelectSeg selects a suitable segment for the given path db query.
@@ -53,12 +51,6 @@ func (s *SegSelector) SelectSeg(ctx context.Context,
 		return nil, err
 	}
 	segs := query.Results(res).Segs()
-	_, err = segs.FilterSegsErr(func(ps *seg.PathSegment) (bool, error) {
-		return revcache.NoRevokedHopIntf(ctx, s.RevCache, ps)
-	})
-	if err != nil {
-		return nil, common.NewBasicError("failed to filter segments", err)
-	}
 	if len(segs) < 1 {
 		return nil, serrors.New("no segments found")
 	}

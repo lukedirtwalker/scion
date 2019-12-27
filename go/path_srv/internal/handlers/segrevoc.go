@@ -19,7 +19,6 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/messenger"
-	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher"
 	"github.com/scionproto/scion/go/lib/infra/modules/segverifier"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/path_srv/internal/metrics"
@@ -28,16 +27,12 @@ import (
 
 type revocHandler struct {
 	*baseHandler
-	NextQueryCleaner segfetcher.NextQueryCleaner
 }
 
 func NewRevocHandler(args HandlerArgs) infra.Handler {
 	f := func(r *infra.Request) *infra.HandlerResult {
 		handler := &revocHandler{
 			baseHandler: newBaseHandler(r, args),
-			NextQueryCleaner: segfetcher.NextQueryCleaner{
-				PathDB: args.PathDB,
-			},
 		}
 		return handler.Handle()
 	}
@@ -83,13 +78,6 @@ func (h *revocHandler) Handle() *infra.HandlerResult {
 		sendAck(proto.Ack_ErrCode_reject, messenger.AckRejectFailedToVerify)
 		metrics.Revocation.Count(labels.WithResult(metrics.ErrCrypto)).Inc()
 		return infra.MetricsErrInvalid
-	}
-	_, err = h.revCache.Insert(ctx, revocation)
-	if err != nil {
-		logger.Error("Failed to insert revInfo", "err", err)
-		sendAck(proto.Ack_ErrCode_retry, messenger.AckRetryDBError)
-		metrics.Revocation.Count(labels.WithResult(metrics.ErrDB)).Inc()
-		return infra.MetricsErrRevCache(err)
 	}
 	sendAck(proto.Ack_ErrCode_ok, "")
 	metrics.Revocation.Count(labels.WithResult(metrics.OkSuccess)).Inc()

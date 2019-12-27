@@ -18,7 +18,6 @@ go_library(
         "//go/lib/infra/modules/segfetcher:go_default_library",
         "//go/lib/infra/modules/segverifier:go_default_library",
         "//go/lib/log:go_default_library",
-        "//go/lib/revcache:go_default_library",
         "//go/lib/sciond:go_default_library",
         "//go/lib/serrors:go_default_library",
         "//go/lib/sock/reliable:go_default_library",

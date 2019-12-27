@@ -156,12 +156,6 @@ func (h *Handler) storeResults(ctx context.Context, verifiedUnits []segverifier.
 		}
 		stats.addStoredSegs(storeSegStats)
 	}
-	if len(revs) > 0 {
-		if err := h.Storage.StoreRevs(ctx, revs); err != nil {
-			return verifyErrs, err
-		}
-		stats.StoredRevs = append(stats.StoredRevs, revs...)
-	}
 	return verifyErrs, nil
 }
 

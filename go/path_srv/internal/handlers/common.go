@@ -21,13 +21,11 @@ import (
 	"github.com/opentracing/opentracing-go"
 
 	"github.com/scionproto/scion/go/lib/addr"
-	"github.com/scionproto/scion/go/lib/common"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/infra"
 	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher"
 	"github.com/scionproto/scion/go/lib/pathdb"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/topology"
 )
 
@@ -38,7 +36,6 @@ const (
 // HandlerArgs are the values required to create the path server's handlers.
 type HandlerArgs struct {
 	PathDB          pathdb.PathDB
-	RevCache        revcache.RevCache
 	ASInspector     infra.ASInspector
 	VerifierFactory infra.VerificationFactory
 	QueryInterval   time.Duration
@@ -50,7 +47,6 @@ type HandlerArgs struct {
 type baseHandler struct {
 	request         *infra.Request
 	pathDB          pathdb.PathDB
-	revCache        revcache.RevCache
 	inspector       infra.ASInspector
 	verifierFactory infra.VerificationFactory
 	topoProvider    topology.Provider
@@ -62,7 +58,6 @@ func newBaseHandler(request *infra.Request, args HandlerArgs) *baseHandler {
 	return &baseHandler{
 		request:         request,
 		pathDB:          args.PathDB,
-		revCache:        args.RevCache,
 		inspector:       args.ASInspector,
 		verifierFactory: args.VerifierFactory,
 		retryInt:        500 * time.Millisecond,
@@ -80,17 +75,6 @@ func (h *baseHandler) fetchSegsFromDB(ctx context.Context,
 		return nil, err
 	}
 	segs := query.Results(res).Segs()
-	// XXX(lukedirtwalker): Consider cases where segment with revoked interfaces should be returned.
-	_, err = segs.FilterSegsErr(func(s *seg.PathSegment) (bool, error) {
-		noRevoked, err := revcache.NoRevokedHopIntf(ctx, h.revCache, s)
-		if err != nil {
-			return false, err
-		}
-		return noRevoked && time.Now().Before(s.MaxExpiry()), nil
-	})
-	if err != nil {
-		return nil, common.NewBasicError("Failed to filter segments", err)
-	}
 	return segs, nil
 }
 

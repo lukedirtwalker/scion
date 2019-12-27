@@ -24,8 +24,6 @@ import (
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathdb"
 	sqlitepathdb "github.com/scionproto/scion/go/lib/pathdb/sqlite"
-	"github.com/scionproto/scion/go/lib/revcache"
-	"github.com/scionproto/scion/go/lib/revcache/memrevcache"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/util"
 )
@@ -115,112 +113,19 @@ func (cfg *PathDBConf) validateConnection() error {
 	return nil
 }
 
-var _ config.Config = (*RevCacheConf)(nil)
-
-// RevCacheConf is the configuration for the connection to the revocation cache.
-type RevCacheConf map[string]string
-
-// InitDefaults chooses the in-memory backend if no backend is set.
-func (cfg *RevCacheConf) InitDefaults() {
-	if *cfg == nil {
-		*cfg = make(RevCacheConf)
-	}
-	m := *cfg
-	util.LowerKeys(m)
-	if cfg.Backend() == BackendNone {
-		m[BackendKey] = string(BackendMem)
-	}
-}
-
-func (cfg *RevCacheConf) Backend() Backend {
-	return Backend((*cfg)[BackendKey])
-}
-
-func (cfg *RevCacheConf) Connection() string {
-	return (*cfg)[ConnectionKey]
-}
-
-func (cfg *RevCacheConf) MaxOpenConns() (int, bool) {
-	return db.ConfiguredMaxOpenConns(*cfg)
-}
-
-func (cfg *RevCacheConf) MaxIdleConns() (int, bool) {
-	return db.ConfiguredMaxIdleConns(*cfg)
-}
-
-// Validate validates the configuration, should be called after InitDefaults.
-func (cfg *RevCacheConf) Validate() error {
-	if err := db.ValidateConfigLimits(*cfg); err != nil {
-		return err
-	}
-	if err := cfg.validateBackend(); err != nil {
-		return err
-	}
-	if err := cfg.validateConnection(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (cfg *RevCacheConf) Sample(dst io.Writer, _ config.Path, _ config.CtxMap) {
-	config.WriteString(dst, revSample)
-}
-
-func (cfg *RevCacheConf) ConfigName() string {
-	return "revCache"
-}
-
-func (cfg *RevCacheConf) validateBackend() error {
-	switch cfg.Backend() {
-	case BackendSqlite, BackendMem:
-		return nil
-	case BackendNone:
-		return serrors.New("No backend set")
-	}
-	return common.NewBasicError("Unsupported backend", nil, "backend", cfg.Backend())
-}
-
-func (cfg *RevCacheConf) validateConnection() error {
-	if cfg.Backend() != BackendMem && cfg.Connection() == "" {
-		return serrors.New("Empty connection not allowed")
-	}
-	return nil
-}
-
 // NewPathStorage creates a PathStorage from the given configs. Periodic
 // cleaners for the given databases have to be manually created and started
 // (see cleaner package).
-func NewPathStorage(pdbConf PathDBConf,
-	rcConf RevCacheConf) (pathdb.PathDB, revcache.RevCache, error) {
+func NewPathStorage(pdbConf PathDBConf) (pathdb.PathDB,  error) {
 
-	if sameBackend(pdbConf, rcConf) {
-		return newCombinedBackend(pdbConf, rcConf)
-	}
 	if err := pdbConf.Validate(); err != nil {
-		return nil, nil, common.NewBasicError("Invalid pathdb config", err)
-	}
-	if err := rcConf.Validate(); err != nil {
-		return nil, nil, common.NewBasicError("Invalid revcache config", err)
+		return nil,  common.NewBasicError("Invalid pathdb config", err)
 	}
 	pdb, err := newPathDB(pdbConf)
 	if err != nil {
-		return nil, nil, err
+		return nil,  err
 	}
-	rc, err := newRevCache(rcConf)
-	if err != nil {
-		return nil, nil, err
-	}
-	return pdb, rc, nil
-}
-
-func sameBackend(pdbConf PathDBConf, rcConf RevCacheConf) bool {
-	return pdbConf.Backend() == rcConf.Backend() && pdbConf.Backend() != BackendNone
-}
-
-func newCombinedBackend(pdbConf PathDBConf,
-	rcConf RevCacheConf) (pathdb.PathDB, revcache.RevCache, error) {
-
-	panic("Combined backend not supported")
+	return pdb,  nil
 }
 
 func newPathDB(conf PathDBConf) (pathdb.PathDB, error) {
@@ -242,16 +147,4 @@ func newPathDB(conf PathDBConf) (pathdb.PathDB, error) {
 	}
 	db.SetConnLimits(&conf, pdb)
 	return pdb, nil
-}
-
-func newRevCache(conf RevCacheConf) (revcache.RevCache, error) {
-	log.Info("Connecting RevCache", "backend", conf.Backend(), "connection", conf.Connection())
-	switch conf.Backend() {
-	case BackendMem:
-		return memrevcache.New(), nil
-	case BackendNone:
-		return nil, nil
-	default:
-		return nil, common.NewBasicError("Unsupported backend", nil, "backend", conf.Backend())
-	}
 }

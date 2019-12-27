@@ -33,27 +33,12 @@ func InitTestPathDBConf(cfg *pathstorage.PathDBConf) {
 	(*cfg)[db.MaxIdleConnsKey] = "maxIdleConns"
 }
 
-func InitTestRevCacheConf(cfg *pathstorage.RevCacheConf) {
-	if *cfg == nil {
-		*cfg = make(pathstorage.RevCacheConf)
-	}
-	(*cfg)[db.MaxOpenConnsKey] = "maxOpenConns"
-	(*cfg)[db.MaxIdleConnsKey] = "maxIdleConns"
-}
-
 func CheckTestPathDBConf(t *testing.T, cfg *pathstorage.PathDBConf, id string) {
 	util.LowerKeys(*cfg)
 	assert.False(t, isSet(cfg.MaxOpenConns()))
 	assert.False(t, isSet(cfg.MaxIdleConns()))
 	assert.Equal(t, pathstorage.BackendSqlite, cfg.Backend())
 	assert.Equal(t, fmt.Sprintf("/var/lib/scion/pathdb/%s.path.db", id), cfg.Connection())
-}
-
-func CheckTestRevCacheConf(t *testing.T, cfg *pathstorage.RevCacheConf) {
-	util.LowerKeys(*cfg)
-	assert.False(t, isSet(cfg.MaxOpenConns()))
-	assert.False(t, isSet(cfg.MaxIdleConns()))
-	assert.Equal(t, pathstorage.BackendMem, cfg.Backend())
 }
 
 func isSet(_ int, set bool) bool {

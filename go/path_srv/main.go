@@ -43,7 +43,6 @@ import (
 	"github.com/scionproto/scion/go/lib/pathstorage"
 	"github.com/scionproto/scion/go/lib/periodic"
 	"github.com/scionproto/scion/go/lib/prom"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/topology"
 	"github.com/scionproto/scion/go/path_srv/internal/config"
@@ -85,12 +84,11 @@ func realMain() int {
 		log.Crit("Setup failed", "err", err)
 		return 1
 	}
-	pathDB, revCache, err := pathstorage.NewPathStorage(cfg.PS.PathDB, cfg.PS.RevCache)
+	pathDB, err := pathstorage.NewPathStorage(cfg.PS.PathDB)
 	if err != nil {
 		log.Crit("Unable to initialize path storage", "err", err)
 		return 1
 	}
-	defer revCache.Close()
 	pathDB = pathdb.WithMetrics("std", pathDB)
 	defer pathDB.Close()
 
@@ -166,7 +164,6 @@ func realMain() int {
 	msger.AddHandler(infra.TRCRequest, trustStore.NewTRCReqHandler())
 	args := handlers.HandlerArgs{
 		PathDB:          pathDB,
-		RevCache:        revCache,
 		ASInspector:     trustStore,
 		VerifierFactory: verificationFactory{Provider: trustStore},
 		QueryInterval:   cfg.PS.QueryInterval.Duration,
@@ -222,7 +219,6 @@ type periodicTasks struct {
 	segSyncers    []*periodic.Runner
 	pathDBCleaner *periodic.Runner
 	cryptosyncer  *periodic.Runner
-	rcCleaner     *periodic.Runner
 }
 
 func (t *periodicTasks) Start() error {
@@ -248,8 +244,6 @@ func (t *periodicTasks) Start() error {
 	// 	Msger: t.msger,
 	// 	IA:    t.args.IA,
 	// }, cfg.PS.CryptoSyncInterval.Duration, cfg.PS.CryptoSyncInterval.Duration)
-	t.rcCleaner = periodic.Start(revcache.NewCleaner(t.args.RevCache, "ps_revocation"),
-		10*time.Second, 10*time.Second)
 	return nil
 }
 
@@ -266,7 +260,6 @@ func (t *periodicTasks) Kill() {
 	}
 	t.pathDBCleaner.Kill()
 	t.cryptosyncer.Kill()
-	t.rcCleaner.Kill()
 	t.running = false
 }
 

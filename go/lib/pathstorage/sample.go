@@ -29,16 +29,3 @@ MaxOpenConns = ""
 # empty string, the limit is not set and uses the go default. (default "")
 MaxIdleConns = ""
 `
-
-const revSample = `
-# The type of RevCache backend.
-Backend = "mem"
-
-# The maximum number of open connections to the database. In case of the
-# empty string, the limit is not set and uses the go default. (default "")
-MaxOpenConns = ""
-
-# The maximum number of idle connections to the database. In case of the
-# empty string, the limit is not set and uses the go default. (default "")
-MaxIdleConns = ""
-`

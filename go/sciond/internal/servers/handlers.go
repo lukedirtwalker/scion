@@ -27,7 +27,6 @@ import (
 	"github.com/scionproto/scion/go/lib/infra/modules/segfetcher"
 	"github.com/scionproto/scion/go/lib/infra/modules/segverifier"
 	"github.com/scionproto/scion/go/lib/log"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/sciond"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
@@ -248,9 +247,7 @@ func (h *SVCInfoRequestHandler) Handle(ctx context.Context, conn net.PacketConn,
 // RevNotification announcements. The SCIOND API spawns a goroutine with method Handle
 // for each RevNotification it receives.
 type RevNotificationHandler struct {
-	RevCache         revcache.RevCache
-	VerifierFactory  infra.VerificationFactory
-	NextQueryCleaner segfetcher.NextQueryCleaner
+	VerifierFactory infra.VerificationFactory
 }
 
 func (h *RevNotificationHandler) Handle(ctx context.Context, conn net.PacketConn,
@@ -269,12 +266,6 @@ func (h *RevNotificationHandler) Handle(ctx context.Context, conn net.PacketConn
 	revNotification := pld.RevNotification
 	revReply := &sciond.RevReply{}
 	revInfo, err := h.verifySRevInfo(workCtx, revNotification.SRevInfo)
-	if err == nil {
-		_, err = h.RevCache.Insert(workCtx, revNotification.SRevInfo)
-		if err != nil {
-			logger.Error("Failed to insert revocations", "err", err)
-		}
-	}
 	switch {
 	case isValid(err):
 		revReply.Result = sciond.RevValid

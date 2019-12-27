@@ -19,12 +19,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/scionproto/scion/go/lib/ctrl/path_mgmt"
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/hiddenpath"
 	"github.com/scionproto/scion/go/lib/log"
 	"github.com/scionproto/scion/go/lib/pathdb"
-	"github.com/scionproto/scion/go/lib/revcache"
 )
 
 // SegWithHP is a segment with hidden path cfg ids.
@@ -60,17 +58,15 @@ func (s *SegStats) Log(logger log.Logger) {
 	}
 }
 
-// Storage is used to store segments and revocations.
+// Storage is used to store segments.
 type Storage interface {
 	StoreSegs(context.Context, []*SegWithHP) (SegStats, error)
-	StoreRevs(context.Context, []*path_mgmt.SignedRevInfo) error
 }
 
-// DefaultStorage wraps path DB and revocation cache and offers
-// convenience methods that implement the Storage interface.
+// DefaultStorage wraps path DB and offers convenience methods that implement
+// the Storage interface.
 type DefaultStorage struct {
-	PathDB   pathdb.PathDB
-	RevCache revcache.RevCache
+	PathDB pathdb.PathDB
 }
 
 // StoreSegs stores the given segments in the pathdb in a transaction.
@@ -101,16 +97,4 @@ func (s *DefaultStorage) StoreSegs(ctx context.Context, segs []*SegWithHP) (SegS
 	}
 	segStats.Log(log.FromCtx(ctx))
 	return segStats, nil
-}
-
-// StoreRevs stores the given revocations in the revocation cache.
-func (s *DefaultStorage) StoreRevs(ctx context.Context,
-	revs []*path_mgmt.SignedRevInfo) error {
-
-	for _, rev := range revs {
-		if _, err := s.RevCache.Insert(ctx, rev); err != nil {
-			return err
-		}
-	}
-	return nil
 }

@@ -95,9 +95,8 @@ var _ config.Config = (*PSConfig)(nil)
 type PSConfig struct {
 	// SegSync enables the "old" replication of down segments between cores,
 	// using SegSync messages.
-	SegSync  bool
-	PathDB   pathstorage.PathDBConf
-	RevCache pathstorage.RevCacheConf
+	SegSync bool
+	PathDB  pathstorage.PathDBConf
 	// QueryInterval specifies after how much time segments
 	// for a destination should be refetched.
 	QueryInterval util.DurWrap
@@ -113,19 +112,19 @@ func (cfg *PSConfig) InitDefaults() {
 	if cfg.CryptoSyncInterval.Duration == 0 {
 		cfg.CryptoSyncInterval.Duration = DefaultCryptoSyncInterval
 	}
-	config.InitAll(&cfg.PathDB, &cfg.RevCache)
+	config.InitAll(&cfg.PathDB)
 }
 
 func (cfg *PSConfig) Validate() error {
 	if cfg.QueryInterval.Duration == 0 {
 		return serrors.New("QueryInterval must not be zero")
 	}
-	return config.ValidateAll(&cfg.PathDB, &cfg.RevCache)
+	return config.ValidateAll(&cfg.PathDB)
 }
 
 func (cfg *PSConfig) Sample(dst io.Writer, path config.Path, ctx config.CtxMap) {
 	config.WriteString(dst, psSample)
-	config.WriteSample(dst, path, ctx, &cfg.PathDB, &cfg.RevCache)
+	config.WriteSample(dst, path, ctx, &cfg.PathDB)
 }
 
 func (cfg *PSConfig) ConfigName() string {

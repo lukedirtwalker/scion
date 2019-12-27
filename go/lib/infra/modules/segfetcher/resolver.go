@@ -22,7 +22,6 @@ import (
 	"github.com/scionproto/scion/go/lib/ctrl/seg"
 	"github.com/scionproto/scion/go/lib/pathdb"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/proto"
 )
@@ -48,10 +47,9 @@ type LocalInfo interface {
 // customized. E.g. a PS could inject a wrapper around GetNextQuery so that it
 // always returns that the cache is up to date for segments that should be
 // available local.
-func NewResolver(DB pathdb.Read, revCache revcache.RevCache, localInfo LocalInfo) *DefaultResolver {
+func NewResolver(DB pathdb.Read, localInfo LocalInfo) *DefaultResolver {
 	return &DefaultResolver{
 		DB:        DB,
-		RevCache:  revCache,
 		LocalInfo: localInfo,
 	}
 }
@@ -59,7 +57,6 @@ func NewResolver(DB pathdb.Read, revCache revcache.RevCache, localInfo LocalInfo
 // DefaultResolver is the default resolver implementation.
 type DefaultResolver struct {
 	DB        pathdb.Read
-	RevCache  revcache.RevCache
 	LocalInfo LocalInfo
 }
 
@@ -118,15 +115,11 @@ func (r *DefaultResolver) Resolve(ctx context.Context, segs Segments,
 		if err != nil {
 			return segs, req, err
 		}
-		allRev, err := r.allRevoked(ctx, coreRes)
-		if err != nil {
-			return segs, req, err
-		}
-		if allRev && coreReq.State != Fetched {
-			req.Cores[i].State = Fetch
-		} else {
-			req.Cores[i].State = Loaded
-		}
+		// if coreReq.State != Fetched {
+		// 	req.Cores[i].State = Fetch
+		// } else {
+		req.Cores[i].State = Loaded
+		// }
 		segs.Core = append(segs.Core, coreRes.Segs()...)
 	}
 	return segs, req, nil
@@ -185,15 +178,11 @@ func (r *DefaultResolver) resolveSegment(ctx context.Context,
 	if err != nil {
 		return nil, req, err
 	}
-	allRev, err := r.allRevoked(ctx, res)
-	if err != nil {
-		return res.Segs(), req, err
-	}
 	// because of revocations our cache is empty, so refetch
-	if allRev && req.State == Unresolved {
-		req.State = Fetch
-		return nil, req, err
-	}
+	// if req.State == Unresolved {
+	// 	req.State = Fetch
+	// 	return nil, req, err
+	// }
 	req.State = Loaded
 	return res.Segs(), req, err
 }
@@ -337,19 +326,6 @@ func (r *DefaultResolver) resolveCores(ctx context.Context,
 		}
 	}
 	return req.Cores, nil
-}
-
-func (r *DefaultResolver) allRevoked(ctx context.Context,
-	results query.Results) (bool, error) {
-
-	segs := results.Segs()
-	filtered, err := segs.FilterSegsErr(func(ps *seg.PathSegment) (bool, error) {
-		return revcache.NoRevokedHopIntf(ctx, r.RevCache, ps)
-	})
-	if err != nil {
-		return false, err
-	}
-	return len(segs) == 0 && filtered > 0, nil
 }
 
 func zeroUpDownSegsCached(r RequestSet, segs Segments) bool {

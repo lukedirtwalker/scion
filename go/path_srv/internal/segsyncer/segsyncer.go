@@ -32,7 +32,6 @@ import (
 	"github.com/scionproto/scion/go/lib/pathdb"
 	"github.com/scionproto/scion/go/lib/pathdb/query"
 	"github.com/scionproto/scion/go/lib/periodic"
-	"github.com/scionproto/scion/go/lib/revcache"
 	"github.com/scionproto/scion/go/lib/serrors"
 	"github.com/scionproto/scion/go/lib/snet/addrutil"
 	"github.com/scionproto/scion/go/lib/topology"
@@ -44,16 +43,14 @@ import (
 var _ periodic.Task = (*SegSyncer)(nil)
 
 var (
-	errPathDB   = serrors.New("pathdb error")
-	errRevcache = serrors.New("revcache error")
-	errNoPaths  = serrors.New("no paths")
-	errNet      = serrors.New("network error")
+	errPathDB  = serrors.New("pathdb error")
+	errNoPaths = serrors.New("no paths")
+	errNet     = serrors.New("network error")
 )
 
 type SegSyncer struct {
 	latestUpdate *time.Time
 	pathDB       pathdb.PathDB
-	revCache     revcache.RevCache
 	msger        infra.Messenger
 	dstIA        addr.IA
 	localIA      addr.IA
@@ -79,7 +76,6 @@ func StartAll(args handlers.HandlerArgs, msger infra.Messenger) ([]*periodic.Run
 		}
 		syncer := &SegSyncer{
 			pathDB:       args.PathDB,
-			revCache:     args.RevCache,
 			msger:        msger,
 			dstIA:        coreAS,
 			localIA:      args.IA,
@@ -158,13 +154,6 @@ func (s *SegSyncer) fetchCoreSegsFromDB(ctx context.Context) ([]*seg.PathSegment
 		return nil, serrors.Wrap(errPathDB, err)
 	}
 	segs := query.Results(res).Segs()
-	_, err = segs.FilterSegsErr(func(ps *seg.PathSegment) (bool, error) {
-		return revcache.NoRevokedHopIntf(ctx, s.revCache, ps)
-	})
-	if err != nil {
-		return nil, serrors.WrapStr("Failed to filter segments",
-			serrors.Wrap(errRevcache, err))
-	}
 	// Sort by number of hops, i.e. AS entries.
 	sort.Slice(segs, func(i, j int) bool {
 		return len(segs[i].ASEntries) < len(segs[j].ASEntries)
@@ -209,14 +198,9 @@ func (s *SegSyncer) createMessages(ctx context.Context,
 
 	msgs := make([]*msgWithTimestamp, 0, len(qrs))
 	for _, qr := range qrs {
-		revs, err := revcache.RelevantRevInfos(ctx, s.revCache, []*seg.PathSegment{qr.Seg})
-		if err != nil {
-			return nil, serrors.Wrap(errRevcache, err)
-		}
 		msg := &path_mgmt.SegSync{
 			SegRecs: &path_mgmt.SegRecs{
-				Recs:      []*seg.Meta{seg.NewMeta(qr.Seg, proto.PathSegType_down)},
-				SRevInfos: revs,
+				Recs: []*seg.Meta{seg.NewMeta(qr.Seg, proto.PathSegType_down)},
 			},
 		}
 		msgs = append(msgs, &msgWithTimestamp{
@@ -232,8 +216,6 @@ func errToMetricsLabel(err error) string {
 	case serrors.IsTimeout(err):
 		return metrics.ErrTimeout
 	case errors.Is(err, errPathDB):
-		return metrics.ErrDB
-	case errors.Is(err, errRevcache):
 		return metrics.ErrDB
 	case errors.Is(err, errNoPaths):
 		return metrics.ErrNoPath
