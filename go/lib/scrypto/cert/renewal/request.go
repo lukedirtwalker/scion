@@ -36,13 +36,34 @@ var (
 // KeyMeta is the meta information about a key.
 type KeyMeta struct {
 	// Key is the public key.
-	Key []byte `json:"key"`
+	Key Key `json:"key"`
+}
+
+// Key is a public key.
+type Key []byte
+
+// UnmarshalText parses the base64url encoded bytes.
+func (k *Key) UnmarshalText(b []byte) error {
+	buf := make([]byte, scrypto.Base64.DecodedLen(len(b)))
+	n, err := scrypto.Base64.Decode(buf, b)
+	if err != nil {
+		return err
+	}
+	*k = buf[:n]
+	return nil
+}
+
+// MarshalText returns the base64url encoded bytes
+func (k Key) MarshalText() ([]byte, error) {
+	b := make([]byte, scrypto.Base64.EncodedLen(len(k)))
+	scrypto.Base64.Encode(b, k)
+	return b, nil
 }
 
 // Keys contains the public keys.
 type Keys struct {
-	Signing    KeyMeta `json:"signing"`
-	Revocation KeyMeta `json:"revocation"`
+	Signing    KeyMeta  `json:"signing"`
+	Revocation *KeyMeta `json:"revocation,omitempty"`
 }
 
 // RequestInfo is the information of the renewal request.
@@ -57,7 +78,7 @@ type RequestInfo struct {
 	Description string `json:"description"`
 	// OptionalDistributionPoints contains optional certificate revocation
 	// distribution points.
-	OptionalDistributionPoints []addr.IA `json:"optional_distribution_points"`
+	OptionalDistributionPoints []addr.IA `json:"optional_distribution_points,omitempty"`
 	// Validity defines the requested validity period of the certificate.
 	Validity *scrypto.Validity `json:"validity"`
 	// Keys holds all keys authenticated by this certificate.

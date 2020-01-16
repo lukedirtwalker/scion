@@ -248,11 +248,11 @@ func newRequestInfo(now time.Time) renewal.RequestInfo {
 		Description:   "This is a base request",
 		Validity: &scrypto.Validity{
 			NotBefore: util.UnixTime{Time: now},
-			NotAfter:  util.UnixTime{Time: now.Add(8760 * time.Hour)},
+			NotAfter:  util.UnixTime{Time: now.Add(72 * time.Hour)},
 		},
 		Keys: renewal.Keys{
 			Signing:    renewal.KeyMeta{Key: []byte("signKey1")},
-			Revocation: renewal.KeyMeta{Key: []byte("revKey1")},
+			Revocation: &renewal.KeyMeta{Key: []byte("revKey1")},
 		},
 		Issuer:      xtest.MustParseIA("1-ff00:0:110"),
 		RequestTime: util.UnixTime{Time: now},
