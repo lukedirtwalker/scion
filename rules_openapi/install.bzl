@@ -1,20 +1,16 @@
-load(
-    "@build_bazel_rules_nodejs//:index.bzl",
-    "node_repositories",
-    "yarn_install",
-)
-
-PACKAGE_JSON = "@com_github_scionproto_scion//rules_openapi/tools:package.json"
+load("@aspect_rules_js//js:repositories.bzl", "rules_js_dependencies")
+load("@rules_nodejs//nodejs:repositories.bzl", "DEFAULT_NODE_VERSION", "nodejs_register_toolchains")
+load("@aspect_rules_js//npm:npm_import.bzl", "npm_translate_lock")
 
 def rules_openapi_install_yarn_dependencies():
-    node_repositories(
-        package_json = [PACKAGE_JSON],
+    rules_js_dependencies()
+
+    nodejs_register_toolchains(
+        name = "nodejs",
+        node_version = DEFAULT_NODE_VERSION,
     )
-    yarn_install(
-        name = "rules_openapi_npm",
-        # Opt out of directory artifacts, we rely on ts_library which needs
-        # to see labels for all third-party files.
-        exports_directories_only = False,
-        package_json = PACKAGE_JSON,
-        yarn_lock = "@com_github_scionproto_scion//rules_openapi/tools:yarn.lock",
+
+    npm_translate_lock(
+        name = "npm",
+        pnpm_lock = "@com_github_scionproto_scion//rules_openapi//tools:pnpm-lock.yaml",
     )

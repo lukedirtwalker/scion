@@ -267,9 +267,30 @@ load("//rules_openapi:dependencies.bzl", "rules_openapi_dependencies")
 
 rules_openapi_dependencies()
 
-load("//rules_openapi:install.bzl", "rules_openapi_install_yarn_dependencies")
+load("@aspect_rules_js//js:repositories.bzl", "rules_js_dependencies")
 
-rules_openapi_install_yarn_dependencies()
+rules_js_dependencies()
+
+load("@rules_nodejs//nodejs:repositories.bzl", "DEFAULT_NODE_VERSION", "nodejs_register_toolchains")
+
+nodejs_register_toolchains(
+    name = "nodejs",
+    node_version = DEFAULT_NODE_VERSION,
+)
+
+load("@aspect_rules_js//npm:npm_import.bzl", "npm_translate_lock")
+
+npm_translate_lock(
+    name = "npm",
+    pnpm_lock = "@com_github_scionproto_scion//rules_openapi/tools:pnpm-lock.yaml",
+)
+
+load("@npm//:repositories.bzl", "npm_repositories")
+npm_repositories()
+# 
+# load("//rules_openapi:install.bzl", "rules_openapi_install_yarn_dependencies")
+
+# rules_openapi_install_yarn_dependencies()
 
 # TODO(lukedirtwalker): can that be integrated in the rules_openapi_dependencies
 # call above somehow?

@@ -4,9 +4,10 @@ load("@bazel_tools//tools/build_defs/repo:utils.bzl", "maybe")
 def rules_openapi_dependencies():
     maybe(
         http_archive,
-        name = "build_bazel_rules_nodejs",
-        sha256 = "b32a4713b45095e9e1921a7fcb1adf584bc05959f3336e7351bcf77f015a2d7c",
-        urls = ["https://github.com/bazelbuild/rules_nodejs/releases/download/4.1.0/rules_nodejs-4.1.0.tar.gz"],
+        name = "aspect_rules_js",
+        sha256 = "6b218d2ab2e365807d1d403580b2c865a771e7fda9449171b2abd9765d0299b3",
+        strip_prefix = "rules_js-0.12.1",
+        url = "https://github.com/aspect-build/rules_js/archive/refs/tags/v0.12.1.tar.gz",
     )
 
     maybe(

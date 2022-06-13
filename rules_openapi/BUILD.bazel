@@ -1,1 +1,10 @@
+load("@cgrindel_bazel_starlib//updatesrc:defs.bzl", "updatesrc_update")
+
 exports_files(glob(["*.bzl"]))
+
+
+updatesrc_update(
+    name = "repos-update",
+    outs = ["@npm//:repositories.bzl"],
+    srcs = ["repositories.bzl"],
+)
