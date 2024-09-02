@@ -86,16 +86,15 @@ func testInsertGet(t *testing.T, revCache TestableRevCache) {
 	assert.True(t, inserted, "Insert should return true for a new entry")
 	assert.NoError(t, err, "Insert a new entry should not err")
 	key1 := revcache.NewKey(ia110, ifId15)
-	revs, err := revCache.Get(ctx, revcache.KeySet{key1: {}})
+	aRev, err := revCache.Get(ctx, key1)
 	assert.NoError(t, err, "Get should not err for existing entry")
-	assert.NotEmpty(t, revs, "Get should return existing entry")
-	assert.Equal(t, rev, revs[key1], "Get should return previously inserted value")
+	assert.Equal(t, rev, aRev, "Get should return previously inserted value")
 	inserted, err = revCache.Insert(ctx, rev)
 	assert.False(t, inserted, "Insert should return false for already existing entry")
 	assert.NoError(t, err, "Insert should not err")
-	revs, err = revCache.Get(ctx, revcache.SingleKey(ia110, ifId19))
+	aRev, err = revCache.Get(ctx, revcache.NewKey(ia110, ifId19))
 	assert.NoError(t, err, "Get should not err")
-	assert.Empty(t, revs, "Get should return empty result for not present value")
+	assert.Nil(t, aRev, "Get should return empty result for not present value")
 }
 
 func testGetMultikey(t *testing.T, revCache TestableRevCache) {
@@ -106,12 +105,7 @@ func testGetMultikey(t *testing.T, revCache TestableRevCache) {
 	ctx, cancelF := context.WithTimeout(context.Background(), TimeOut)
 	defer cancelF()
 
-	// First test the empty cache
-	revs, err := revCache.Get(ctx, revcache.KeySet{})
-	assert.NoError(t, err, "Get should not err")
-	assert.Empty(t, revs, "Should return no revs")
-
-	_, err = revCache.Insert(ctx, rev1)
+	_, err := revCache.Insert(ctx, rev1)
 	require.NoError(t, err)
 	_, err = revCache.Insert(ctx, rev2)
 	require.NoError(t, err)
@@ -121,22 +115,19 @@ func testGetMultikey(t *testing.T, revCache TestableRevCache) {
 	require.NoError(t, err)
 
 	key1 := revcache.NewKey(ia110, ifId15)
-	revs, err = revCache.Get(ctx, revcache.KeySet{key1: {}})
+	aRev1, err := revCache.Get(ctx, key1)
 	assert.NoError(t, err, "Get should not err")
-	assert.Equal(t, len(revs), 1, "Should contain one rev")
-	assert.Equal(t, revcache.Revocations{key1: rev1}, revs,
-		"Get should return revs for the given keys")
+	assert.Equal(t, rev1, aRev1, "Get should return rev for the given keys")
 
 	key2 := revcache.NewKey(ia110, ifId19)
 	key3 := revcache.NewKey(ia120, ifId15)
 	key4 := revcache.NewKey(ia120, ifId19) // not the key of sr4
-	searchKeys := revcache.KeySet{key1: {}, key2: {}, key3: {}, key4: {}}
-	revs, err = revCache.Get(ctx, searchKeys)
-	assert.NoError(t, err, "Get should not err")
-	expectedResult := revcache.Revocations{
-		key1: rev1, key2: rev2, key3: rev3,
+	searchKeys := map[revcache.Key]*path_mgmt.RevInfo{key1: rev1, key2: rev2, key3: rev3, key4: nil}
+	for key, eRev := range searchKeys {
+		aRev, err := revCache.Get(ctx, key)
+		assert.NoError(t, err, "Get should not err")
+		assert.Equal(t, eRev, aRev, "Get should return the requested revocation for key %s", key)
 	}
-	assert.Equal(t, expectedResult, revs, "Get should return the requested revocations")
 }
 
 func testGetAll(t *testing.T, revCache TestableRevCache) {
@@ -236,10 +227,9 @@ func testInsertNewer(t *testing.T, revCache TestableRevCache) {
 	assert.True(t, inserted, "Insert should return true for a new entry")
 	assert.NoError(t, err, "Insert a new entry should not err")
 	key1 := revcache.NewKey(ia110, ifId15)
-	revs, err := revCache.Get(ctx, revcache.KeySet{key1: {}})
+	aRev, err := revCache.Get(ctx, key1)
 	assert.NoError(t, err, "Get should not err for existing entry")
-	assert.NotEmpty(t, revs, "Get should return non empty map for inserted value")
-	assert.Equal(t, revNew, revs[key1], "Get should return previously inserted value")
+	assert.Equal(t, revNew, aRev, "Get should return previously inserted value")
 }
 
 func testGetExpired(t *testing.T, revCache TestableRevCache) {
@@ -253,8 +243,8 @@ func testGetExpired(t *testing.T, revCache TestableRevCache) {
 		RawTTL:       1,
 	}
 	revCache.InsertExpired(t, ctx, revNew)
-	revs, err := revCache.Get(ctx, revcache.SingleKey(ia110, ifId15))
-	assert.Empty(t, revs, "Expired entry should not be returned")
+	aRev, err := revCache.Get(ctx, revcache.NewKey(ia110, ifId15))
+	assert.Nil(t, aRev, "Expired entry should not be returned")
 	assert.NoError(t, err, "Should not error for expired entry")
 }
 
@@ -273,13 +263,12 @@ func testGetMuliKeysExpired(t *testing.T, revCache TestableRevCache) {
 	_, err := revCache.Insert(ctx, rev110_19)
 	assert.NoError(t, err)
 	validKey := revcache.NewKey(ia110, ifId19)
-	srCache, err := revCache.Get(ctx, revcache.KeySet{
-		revcache.NewKey(ia110, ifId15): {},
-		validKey:                       {},
-	})
+	aRev, err := revCache.Get(ctx, validKey)
+	assert.NoError(t, err, "Should not error for valid entry")
+	assert.Equal(t, rev110_19, aRev, "Valid entry should be returned")
+	aRev, err = revCache.Get(ctx, revcache.NewKey(ia110, ifId15))
+	assert.Nil(t, aRev, "Expired entry should not be returned")
 	assert.NoError(t, err, "Should not error for expired entry")
-	assert.Equal(t, revcache.Revocations{validKey: rev110_19}, srCache,
-		"Expired entry should not be returned")
 }
 
 func testDeleteExpired(t *testing.T, revCache TestableRevCache) {
