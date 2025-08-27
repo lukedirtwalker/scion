@@ -357,8 +357,8 @@ func (c *acceptingConn) Close() error {
 	if err := c.session.CloseWithError(errNoError, ""); err != nil {
 		errs = append(errs, err)
 	}
-	if errs != nil {
-		return fmt.Errorf("closing connection: %w", errors.Join(errs...))
+	if err := errors.Join(errs...); err != nil {
+		return fmt.Errorf("closing connection: %w", err)
 	}
 	return nil
 }
@@ -587,8 +587,8 @@ func (c *acceptedConn) Close() error {
 	if err := c.session.CloseWithError(errNoError, ""); err != nil {
 		errs = append(errs, err)
 	}
-	if errs != nil {
-		return fmt.Errorf("closing connection: %w", errors.Join(errs...))
+	if err := errors.Join(errs...); err != nil {
+		return fmt.Errorf("closing connection: %w", err)
 	}
 	return nil
 }
