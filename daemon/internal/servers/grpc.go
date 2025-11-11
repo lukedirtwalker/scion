@@ -27,6 +27,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	daemonctx "github.com/scionproto/scion/daemon/context"
 	drkey_daemon "github.com/scionproto/scion/daemon/drkey"
 	"github.com/scionproto/scion/daemon/fetcher"
 	"github.com/scionproto/scion/pkg/addr"
@@ -74,6 +75,7 @@ type DaemonServer struct {
 func (s *DaemonServer) Paths(ctx context.Context,
 	req *daemon.PathsRequest,
 ) (*daemon.PathsResponse, error) {
+	ctx = daemonctx.WithPathLookup(ctx, addr.IA(req.SourceIsdAs), addr.IA(req.DestinationIsdAs))
 	start := time.Now()
 	dstI := addr.IA(req.DestinationIsdAs).ISD()
 	response, err := s.paths(ctx, req)
@@ -231,6 +233,7 @@ func (s *DaemonServer) backgroundPaths(origCtx context.Context, src, dst addr.IA
 	// should continue even in case origCtx is cancelled.
 	ctx, cancelF := context.WithTimeout(context.Background(), backgroundTimeout)
 	defer cancelF()
+	ctx = daemonctx.WithPathLookup(ctx, src, dst)
 	var spanOpts []opentracing.StartSpanOption
 	if span := opentracing.SpanFromContext(origCtx); span != nil {
 		spanOpts = append(spanOpts, opentracing.FollowsFrom(span.Context()))
