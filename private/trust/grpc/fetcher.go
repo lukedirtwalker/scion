@@ -26,14 +26,13 @@ import (
 	"github.com/scionproto/scion/pkg/addr"
 	"github.com/scionproto/scion/pkg/grpc"
 	"github.com/scionproto/scion/pkg/log"
-	"github.com/scionproto/scion/pkg/metrics"
-	"github.com/scionproto/scion/pkg/private/prom"
+	"github.com/scionproto/scion/pkg/metrics/v2"
 	"github.com/scionproto/scion/pkg/private/serrors"
 	cppb "github.com/scionproto/scion/pkg/proto/control_plane"
 	"github.com/scionproto/scion/pkg/scrypto/cppki"
 	"github.com/scionproto/scion/private/tracing"
 	"github.com/scionproto/scion/private/trust"
-	trustmetrics "github.com/scionproto/scion/private/trust/internal/metrics"
+	trustmetrics "github.com/scionproto/scion/private/trust/metrics"
 )
 
 // Fetcher fetches trust material from a remote using gRPC.
@@ -45,7 +44,7 @@ type Fetcher struct {
 
 	// Requests aggregates all the outgoing requests sent by the fetcher.
 	// If it is not initialized, nothing is reported.
-	Requests metrics.Counter
+	Requests func(reqType, trigger, peer, result string) metrics.Counter
 }
 
 // Chains fetches certificate chains over the network
@@ -54,7 +53,7 @@ func (f Fetcher) Chains(ctx context.Context, query trust.ChainQuery,
 
 	labels := requestLabels{
 		Type:    trustmetrics.ChainReq,
-		Trigger: trustmetrics.FromCtx(ctx),
+		Trigger: trustmetrics.TriggerFromCtx(ctx),
 		Peer:    trustmetrics.PeerToLabel(server, f.IA),
 	}
 
@@ -106,7 +105,7 @@ func (f Fetcher) TRC(ctx context.Context, id cppki.TRCID,
 
 	labels := requestLabels{
 		Type:    trustmetrics.TRCReq,
-		Trigger: trustmetrics.FromCtx(ctx),
+		Trigger: trustmetrics.TriggerFromCtx(ctx),
 		Peer:    trustmetrics.PeerToLabel(server, f.IA),
 	}
 	span, ctx := addTRCSpan(ctx, id)
@@ -145,7 +144,7 @@ func (f Fetcher) TRC(ctx context.Context, id cppki.TRCID,
 
 func (f Fetcher) updateMetric(span opentracing.Span, l requestLabels, err error) {
 	if f.Requests != nil {
-		f.Requests.With(l.Expand()...).Add(1)
+		metrics.CounterInc(f.Requests(l.Type, l.Trigger, l.Peer, l.Result))
 	}
 	tracing.ResultLabel(span, l.Result)
 	tracing.Error(span, err)
@@ -206,15 +205,6 @@ type requestLabels struct {
 	Trigger string
 	Peer    string
 	Result  string
-}
-
-func (l requestLabels) Expand() []string {
-	return []string{
-		"type", l.Type,
-		"trigger", l.Trigger,
-		"peer", l.Peer,
-		prom.LabelResult, l.Result,
-	}
 }
 
 func (l requestLabels) WithResult(result string) requestLabels {
