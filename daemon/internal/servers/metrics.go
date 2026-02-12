@@ -16,78 +16,61 @@ package servers
 
 import (
 	"github.com/scionproto/scion/pkg/addr"
-	"github.com/scionproto/scion/pkg/metrics"
+	"github.com/scionproto/scion/pkg/metrics/v2"
 	"github.com/scionproto/scion/pkg/private/prom"
 	"github.com/scionproto/scion/pkg/private/serrors"
-)
-
-// Labels used for metrics in the Metrics struct, those labels should be used
-// for initialization.
-var (
-	PathsRequestsLabels              = []string{prom.LabelResult, prom.LabelDst}
-	ASRequestsLabels                 = []string{prom.LabelResult}
-	InterfacesRequestsLabels         = []string{prom.LabelResult}
-	ServicesRequestsLabels           = []string{prom.LabelResult}
-	InterfaceDownNotificationsLabels = []string{prom.LabelResult, prom.LabelSrc}
-	LatencyLabels                    = []string{prom.LabelResult}
 )
 
 // Metrics can be used to inject metrics into the SCION daemon server. Each
 // field may be set individually.
 type Metrics struct {
-	PathsRequests              RequestMetrics
+	PathsRequests              PathRequestMetrics
 	ASRequests                 RequestMetrics
 	InterfacesRequests         RequestMetrics
 	ServicesRequests           RequestMetrics
-	InterfaceDownNotifications RequestMetrics
+	InterfaceDownNotifications InterfaceDownNotificationMetrics
 }
 
 // RequestMetrics contains the metrics for a given request.
 type RequestMetrics struct {
-	Requests metrics.Counter
-	Latency  metrics.Histogram
+	Requests func(result string) metrics.Counter
+	Latency  func(result string) metrics.Histogram
 }
 
-func (m RequestMetrics) inc(expander interface{ Expand() []string }, latency float64) {
+func (m RequestMetrics) inc(result string, latency float64) {
 	if m.Requests != nil {
-		m.Requests.With(expander.Expand()...).Add(1)
+		metrics.CounterInc(m.Requests(result))
 	}
 	if m.Latency != nil {
-		m.Latency.With(expander.Expand()[:2]...).Observe(latency)
+		metrics.HistogramObserve(m.Latency(result), latency)
 	}
 }
 
-type reqLabels struct {
-	Result string
+type PathRequestMetrics struct {
+	Requests func(result string, dstISD addr.ISD) metrics.Counter
+	Latency  func(result string) metrics.Histogram
 }
 
-func (l reqLabels) Expand() []string {
-	return []string{
-		prom.LabelResult, l.Result,
+func (m PathRequestMetrics) inc(result string, dstISD addr.ISD, latency float64) {
+	if m.Requests != nil {
+		metrics.CounterInc(m.Requests(result, dstISD))
+	}
+	if m.Latency != nil {
+		metrics.HistogramObserve(m.Latency(result), latency)
 	}
 }
 
-type pathReqLabels struct {
-	Result string
-	Dst    addr.ISD
+type InterfaceDownNotificationMetrics struct {
+	Requests func(result, src string) metrics.Counter
+	Latency  func(result string) metrics.Histogram
 }
 
-func (l pathReqLabels) Expand() []string {
-	return []string{
-		prom.LabelResult, l.Result,
-		prom.LabelDst, l.Dst.String(),
+func (m InterfaceDownNotificationMetrics) inc(result, src string, latency float64) {
+	if m.Requests != nil {
+		metrics.CounterInc(m.Requests(result, src))
 	}
-}
-
-type ifDownLabels struct {
-	Result string
-	Src    string
-}
-
-func (l ifDownLabels) Expand() []string {
-	return []string{
-		prom.LabelResult, l.Result,
-		prom.LabelSrc, l.Src,
+	if m.Latency != nil {
+		metrics.HistogramObserve(m.Latency(result), latency)
 	}
 }
 

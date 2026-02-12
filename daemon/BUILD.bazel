@@ -14,7 +14,7 @@ go_library(
         "//pkg/daemon:go_default_library",
         "//pkg/grpc:go_default_library",
         "//pkg/log:go_default_library",
-        "//pkg/metrics:go_default_library",
+        "//pkg/metrics/v2:go_default_library",
         "//pkg/private/prom:go_default_library",
         "//pkg/private/serrors:go_default_library",
         "//private/env:go_default_library",
